@@ -1,12 +1,15 @@
+[![Build Status](https://secure.travis-ci.org/christiangroth/json-store.svg)](http://travis-ci.org/christiangroth/json-store)
+[![Dependency Status](https://www.versioneye.com/user/projects/551efcaf971f7847ca0003e2/badge.svg?style=flat)](https://www.versioneye.com/user/projects/551efcaf971f7847ca0003e2)
+
 JSON Stores
 =====================
-Easy and simple POJO persistence using JSON (de)serialization, filesystem storage and Java stream API…
+Easy and simple POJO persistence using JSON (de)serialization, filesystem storage and Java stream API.
 
 Requirements
 ------------
 
 - [Java SDK 1.8+][1]
-- flexjson
+- flexjson[2]
 
 Usage
 -----
@@ -33,3 +36,4 @@ All further actions use java.util.Set delegations methods:
 Check the JavaDoc for a detailed explanation of the methods.
 
 [1]: http://www.oracle.com/technetwork/java/javase/downloads/index.html
+[2]: http://flexjson.sourceforge.net/
