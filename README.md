@@ -9,7 +9,7 @@ Requirements
 ------------
 
 - [Java SDK 1.8+][1]
-- flexjson[2]
+- [flexjson][2]
 
 Usage
 -----
