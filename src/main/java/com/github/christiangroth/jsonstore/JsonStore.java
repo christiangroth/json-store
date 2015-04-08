@@ -2,8 +2,10 @@ package com.github.christiangroth.jsonstore;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
@@ -22,30 +24,27 @@ import flexjson.JSONSerializer;
 import flexjson.transformer.DateTransformer;
 
 /**
- * Represents a JSON store for a concrete class. Access is provided using
- * delegate methods to Java built in stream API.
- * 
- * You may use flexjson annotations to control conversion from/to JSON.
+ * Represents a JSON store for a concrete class. Access is provided using delegate methods to Java built in stream API. You may use flexjson
+ * annotations to control conversion from/to JSON.
  * 
  * @author cgroth
- *
  * @param <T>
  *            concrete type stored in this instance
  */
 public class JsonStore<T> {
-
+	
 	private static final Logger LOG = LoggerFactory.getLogger(JsonStore.class);
-
+	
 	private static final String FILE_SEPARATOR = ".";
 	private static final String FILE_PREFIX = "storage";
 	private static final String FILE_SUFFIX = "json";
-
+	
 	private final Class<T> clazz;
 	private final Set<T> data;
 	private final File file;
 	private final boolean prettyPrint;
 	private final boolean autoSave;
-
+	
 	/**
 	 * Creates a new JSON store.
 	 * 
@@ -65,7 +64,7 @@ public class JsonStore<T> {
 		this.prettyPrint = prettyPrint;
 		this.autoSave = autoSave;
 	}
-
+	
 	/**
 	 * Returns configured class.
 	 * 
@@ -74,7 +73,7 @@ public class JsonStore<T> {
 	public Class<T> getClazz() {
 		return clazz;
 	}
-
+	
 	/**
 	 * Returns copy of data
 	 * 
@@ -83,7 +82,7 @@ public class JsonStore<T> {
 	public Set<T> copy() {
 		return new HashSet<>(data);
 	}
-
+	
 	/**
 	 * Returns store size.
 	 * 
@@ -92,7 +91,7 @@ public class JsonStore<T> {
 	public int size() {
 		return data.size();
 	}
-
+	
 	/**
 	 * Checks if store is empty
 	 * 
@@ -101,7 +100,7 @@ public class JsonStore<T> {
 	public boolean isEmpty() {
 		return data.isEmpty();
 	}
-
+	
 	/**
 	 * Checks if store contains given element.
 	 * 
@@ -112,7 +111,7 @@ public class JsonStore<T> {
 	public boolean contains(Object o) {
 		return data.contains(o);
 	}
-
+	
 	/**
 	 * Checks if store contains all objects in given collection.
 	 * 
@@ -123,10 +122,9 @@ public class JsonStore<T> {
 	public boolean containsAll(Collection<?> c) {
 		return data.containsAll(c);
 	}
-
+	
 	/**
-	 * Adds given object to store. Will invoke {@link #save()} if using
-	 * auto-save mode and store was changed.
+	 * Adds given object to store. Will invoke {@link #save()} if using auto-save mode and store was changed.
 	 * 
 	 * @param e
 	 *            object to add
@@ -139,10 +137,9 @@ public class JsonStore<T> {
 		}
 		return add;
 	}
-
+	
 	/**
-	 * Adds all objects from given collection to store. Will invoke
-	 * {@link #save()} if using auto-save mode and store was changed.
+	 * Adds all objects from given collection to store. Will invoke {@link #save()} if using auto-save mode and store was changed.
 	 * 
 	 * @param c
 	 *            objects to add
@@ -155,10 +152,9 @@ public class JsonStore<T> {
 		}
 		return addAll;
 	}
-
+	
 	/**
-	 * Retains elements in given collection.Will invoke {@link #save()} if using
-	 * auto-save mode and store was changed.
+	 * Retains elements in given collection.Will invoke {@link #save()} if using auto-save mode and store was changed.
 	 * 
 	 * @param c
 	 *            collection of elements to be retained
@@ -171,10 +167,9 @@ public class JsonStore<T> {
 		}
 		return retainAll;
 	}
-
+	
 	/**
-	 * Removed the given element from store. Will invoke {@link #save()} if
-	 * using auto-save mode and store was changed.
+	 * Removed the given element from store. Will invoke {@link #save()} if using auto-save mode and store was changed.
 	 * 
 	 * @param t
 	 *            element to be removed
@@ -187,10 +182,9 @@ public class JsonStore<T> {
 		}
 		return remove;
 	}
-
+	
 	/**
-	 * Removed all elements in given collection from store. Will invoke
-	 * {@link #save()} if using auto-save mode and store was changed.
+	 * Removed all elements in given collection from store. Will invoke {@link #save()} if using auto-save mode and store was changed.
 	 * 
 	 * @param c
 	 *            collection with elements to be removed
@@ -203,10 +197,10 @@ public class JsonStore<T> {
 		}
 		return removeAll;
 	}
-
+	
 	/**
-	 * Removes all elements satisfying given predicate from store. Will invoke
-	 * {@link #save()} if using auto-save mode and store was changed.
+	 * Removes all elements satisfying given predicate from store. Will invoke {@link #save()} if using auto-save mode and store was
+	 * changed.
 	 * 
 	 * @param filter
 	 *            predicate to be used
@@ -219,10 +213,9 @@ public class JsonStore<T> {
 		}
 		return removeIf;
 	}
-
+	
 	/**
-	 * Clears all elements in store. Will invoke {@link #save()} if using
-	 * auto-save mode.
+	 * Clears all elements in store. Will invoke {@link #save()} if using auto-save mode.
 	 */
 	public void clear() {
 		data.clear();
@@ -230,7 +223,7 @@ public class JsonStore<T> {
 			save();
 		}
 	}
-
+	
 	/**
 	 * Creates a stream over the elements in this store.
 	 * 
@@ -239,7 +232,7 @@ public class JsonStore<T> {
 	public Stream<T> stream() {
 		return data.stream();
 	}
-
+	
 	/**
 	 * Creates a parallel stream over the elements in this store.
 	 * 
@@ -248,12 +241,11 @@ public class JsonStore<T> {
 	public Stream<T> parallelStream() {
 		return data.parallelStream();
 	}
-
+	
 	/**
 	 * Performs given action on all elements in store. <br>
 	 * <br>
-	 * <b>Attention: Even if using auto-save mode you have to call
-	 * {@link #save()} yourself!!</b>
+	 * <b>Attention: Even if using auto-save mode you have to call {@link #save()} yourself!!</b>
 	 * 
 	 * @param action
 	 *            action to be performed on store elements
@@ -261,7 +253,7 @@ public class JsonStore<T> {
 	public void forEach(Consumer<? super T> action) {
 		data.forEach(action);
 	}
-
+	
 	/**
 	 * Returns file used for storage.
 	 * 
@@ -270,7 +262,7 @@ public class JsonStore<T> {
 	public File getFile() {
 		return file;
 	}
-
+	
 	/**
 	 * Checks if store is persistent.
 	 * 
@@ -279,35 +271,30 @@ public class JsonStore<T> {
 	public boolean isPersistent() {
 		return file != null;
 	}
-
+	
 	/**
-	 * Saves all data contained in store to configured file. No action if store
-	 * is not persistent.
+	 * Saves all data contained in store to configured file. No action if store is not persistent.
 	 */
 	public void save() {
-
+		
 		// abort on transient stores
 		if (!isPersistent()) {
 			return;
 		}
-
+		
 		// create json
 		String json = toJson(prettyPrint);
-
+		
 		// write to file
 		try {
 			synchronized (file) {
-				// TODO charset
-				Files.write(file.toPath(), json.getBytes(),
-						StandardOpenOption.CREATE,
-						StandardOpenOption.TRUNCATE_EXISTING,
-						StandardOpenOption.WRITE);
+				Files.write(file.toPath(), Arrays.asList(json), StandardCharsets.UTF_8, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE);
 			}
 		} catch (IOException e) {
 			LOG.error("Unable to write file content, skipping file during store: " + file.getAbsolutePath() + "!!", e);
 		}
 	}
-
+	
 	/**
 	 * Returns store elements in JSON format.
 	 * 
@@ -316,7 +303,7 @@ public class JsonStore<T> {
 	public String toJson() {
 		return toJson(false);
 	}
-
+	
 	/**
 	 * Returns store elements in JSON format with given pretty-print mode.
 	 * 
@@ -327,38 +314,33 @@ public class JsonStore<T> {
 	public String toJson(boolean prettyPrint) {
 		return transformer(prettyPrint).serialize(copy());
 	}
-
+	
 	/**
 	 * Loads store elements from configure file.
 	 */
 	public void load() {
-
+		
 		// abort on transient stores
 		if (!isPersistent()) {
 			return;
 		}
-
+		
 		// load json
 		String json = null;
 		try {
 			synchronized (file) {
-				json = Files
-						.lines(file.toPath())
-						.parallel()
-						.filter(line -> line != null && !"".equals(line.trim()))
-						.map(String::trim).collect(Collectors.joining());
+				json = Files.lines(file.toPath(), StandardCharsets.UTF_8).parallel().filter(line -> line != null && !"".equals(line.trim())).map(String::trim).collect(Collectors.joining());
 			}
 		} catch (Exception e) {
 			LOG.error("Unable to read file content, skipping file during restore: " + file.getAbsolutePath() + "!!", e);
 		}
-
+		
 		// recreate data
 		fromJson(json, false);
 	}
-
+	
 	/**
-	 * Creates store elements from given JSON data and replaces all store
-	 * contents.Will invoke {@link #save()} if using auto-save mode.
+	 * Creates store elements from given JSON data and replaces all store contents.Will invoke {@link #save()} if using auto-save mode.
 	 * 
 	 * @param json
 	 *            JSON data
@@ -366,12 +348,12 @@ public class JsonStore<T> {
 	public void fromJson(String json) {
 		fromJson(json, true);
 	}
-
+	
 	private void fromJson(String json, boolean executeSave) {
 		if (json == null || "".equals(json.trim())) {
 			return;
 		}
-
+		
 		// deserialize
 		List<T> deserialized = null;
 		try {
@@ -379,28 +361,27 @@ public class JsonStore<T> {
 		} catch (Exception e) {
 			LOG.error("Unable to restore from json content, skipping file during restore: " + file.getAbsolutePath() + "!!", e);
 		}
-
+		
 		// add data
 		if (deserialized != null) {
 			data.clear();
 			data.addAll(deserialized);
-
+			
 			// save
 			if (executeSave && autoSave) {
 				save();
 			}
 		}
 	}
-
+	
 	private JSONSerializer transformer(boolean prettyPrint) {
-		return new JSONSerializer().prettyPrint(prettyPrint).transform(
-				dateTransformer(), Date.class);
+		return new JSONSerializer().prettyPrint(prettyPrint).transform(dateTransformer(), Date.class);
 	}
-
+	
 	private DateTransformer dateTransformer() {
 		return new DateTransformer("HH:mm:ss dd.MM.yyyy");
 	}
-
+	
 	/**
 	 * Drops store file explicitly. Transient data in store remains unchanged.
 	 */
