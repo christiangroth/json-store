@@ -11,6 +11,7 @@ Requirements
 
 - [Java SDK 1.8+][1]
 - [flexjson][2]
+- [slf4j][3]
 
 Usage
 -----
@@ -38,3 +39,4 @@ Check the JavaDoc for a detailed explanation of the methods.
 
 [1]: http://www.oracle.com/technetwork/java/javase/downloads/index.html
 [2]: http://flexjson.sourceforge.net/
+[3]: http://www.slf4j.org/
