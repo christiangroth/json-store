@@ -1,4 +1,4 @@
-package de.groth.jsonstore;
+package com.github.christiangroth.jsonstore;
 
 import java.io.File;
 import java.io.IOException;

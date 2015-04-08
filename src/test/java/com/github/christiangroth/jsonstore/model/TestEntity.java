@@ -1,4 +1,4 @@
-package de.groth.jsonstore.model;
+package com.github.christiangroth.jsonstore.model;
 
 public class TestEntity {
 
