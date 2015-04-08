@@ -14,6 +14,9 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import flexjson.JSONDeserializer;
 import flexjson.JSONSerializer;
 import flexjson.transformer.DateTransformer;
@@ -30,6 +33,8 @@ import flexjson.transformer.DateTransformer;
  *            concrete type stored in this instance
  */
 public class JsonStore<T> {
+
+	private static final Logger LOG = LoggerFactory.getLogger(JsonStore.class);
 
 	private static final String FILE_SEPARATOR = ".";
 	private static final String FILE_PREFIX = "storage";
@@ -53,13 +58,10 @@ public class JsonStore<T> {
 	 * @param autoSave
 	 *            auto-save mode
 	 */
-	public JsonStore(Class<T> clazz, File storage, boolean prettyPrint,
-			boolean autoSave) {
+	public JsonStore(Class<T> clazz, File storage, boolean prettyPrint, boolean autoSave) {
 		this.clazz = clazz;
 		data = new HashSet<>();
-		this.file = storage != null ? new File(storage, FILE_PREFIX
-				+ FILE_SEPARATOR + clazz.getName() + FILE_SEPARATOR
-				+ FILE_SUFFIX) : null;
+		this.file = storage != null ? new File(storage, FILE_PREFIX + FILE_SEPARATOR + clazz.getName() + FILE_SEPARATOR + FILE_SUFFIX) : null;
 		this.prettyPrint = prettyPrint;
 		this.autoSave = autoSave;
 	}
@@ -302,11 +304,7 @@ public class JsonStore<T> {
 						StandardOpenOption.WRITE);
 			}
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			System.err
-					.println("Unable to write file content, skipping file during store: "
-							+ file.getAbsolutePath() + "!!");
-			e.printStackTrace(System.err);
+			LOG.error("Unable to write file content, skipping file during store: " + file.getAbsolutePath() + "!!", e);
 		}
 	}
 
@@ -350,11 +348,8 @@ public class JsonStore<T> {
 						.filter(line -> line != null && !"".equals(line.trim()))
 						.map(String::trim).collect(Collectors.joining());
 			}
-		} catch (Exception e1) {
-			// TODO Auto-generated catch block
-			System.err
-					.println("Unable to read file content, skipping file during restore: "
-							+ file.getAbsolutePath() + "!!");
+		} catch (Exception e) {
+			LOG.error("Unable to read file content, skipping file during restore: " + file.getAbsolutePath() + "!!", e);
 		}
 
 		// recreate data
@@ -380,14 +375,9 @@ public class JsonStore<T> {
 		// deserialize
 		List<T> deserialized = null;
 		try {
-			deserialized = new JSONDeserializer<List<T>>().use(Date.class,
-					dateTransformer()).deserialize(json);
+			deserialized = new JSONDeserializer<List<T>>().use(Date.class, dateTransformer()).deserialize(json);
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			System.err
-					.println("Unable to restore from json content, skipping file during restore: "
-							+ file.getAbsolutePath() + "!!");
-			System.err.println("Invalid JSON: " + json);
+			LOG.error("Unable to restore from json content, skipping file during restore: " + file.getAbsolutePath() + "!!", e);
 		}
 
 		// add data
@@ -421,10 +411,7 @@ public class JsonStore<T> {
 					Files.deleteIfExists(file.toPath());
 				}
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				System.err
-						.println("Unable to delete form persistent json storee: "
-								+ file.getAbsolutePath() + "!!");
+				LOG.error("Unable to delete persistent json store: " + file.getAbsolutePath() + "!!", e);
 			}
 		}
 	}

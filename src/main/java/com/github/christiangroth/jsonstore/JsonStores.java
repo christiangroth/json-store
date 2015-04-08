@@ -8,6 +8,9 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Central API class to create JSON stores. Stores are maintained per class
  * using {@link #resolve(Class)}, {@link #ensure(Class)} and
@@ -22,6 +25,8 @@ import java.util.regex.Pattern;
  */
 public class JsonStores {
 
+	private static final Logger LOG = LoggerFactory.getLogger(JsonStores.class);
+	
 	private static final String STORE_FILENAME_REGEX = "storage\\.(.+)\\.json";
 	private static final Pattern STORE_FILENAME_PATTERN = Pattern
 			.compile(STORE_FILENAME_REGEX);
@@ -88,12 +93,10 @@ public class JsonStores {
 			// check if exists
 			if (!Files.exists(storage.toPath())) {
 				try {
+					LOG.info("creating storae path " +storage.getAbsolutePath());
 					Files.createDirectories(storage.toPath());
 				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					System.err
-							.println("Unable to initialize storage directory: "
-									+ storage.getAbsolutePath() + "!!");
+					LOG.error("Unable to initialize storage path: "	+ storage.getAbsolutePath() + "!!", e);
 				}
 			}
 
@@ -122,8 +125,7 @@ public class JsonStores {
 	}
 
 	private void create(Class<?> clazz) {
-		stores.put(clazz,
-				new JsonStore<>(clazz, storage, prettyPrint, autoSave));
+		stores.put(clazz, new JsonStore<>(clazz, storage, prettyPrint, autoSave));
 	}
 
 	/**
@@ -214,18 +216,12 @@ public class JsonStores {
 										// recreate store with data
 										ensure(clazz).load();
 									} catch (Exception e) {
-										// TODO Auto-generated catch block
-										System.err.println("Unable to load class "
-												+ clazz
-												+ ", skipping file during restore: "
-												+ file.getAbsolutePath() + "!!");
+										LOG.error("Unable to load class " + clazz + ", skipping file during restore: " + file.getAbsolutePath() + "!!", e);
 									}
 								}
 							});
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			System.err.println("Unable to scan storage path "
-					+ storage.getAbsolutePath() + ", skipping data restore!!");
+			LOG.error("Unable to scan storage path " + storage.getAbsolutePath() + ", skipping data restore!!", e);
 		}
 	}
 
