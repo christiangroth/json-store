@@ -3,7 +3,7 @@
 	
 	<groupId>com.github.christiangroth</groupId>
 	<artifactId>json-store</artifactId>
-	<version>0.1.0</version>
+	<version>0.2.0</version>
 	
 	<name>json-store</name>
 	<description>JSON-Store enabled persistence using JSON (de)serialization stored in files. Access is provided through simple API based on java collections stream API.</description>
@@ -49,6 +49,11 @@
 			<groupId>net.sf.flexjson</groupId>
 			<artifactId>flexjson</artifactId>
 			<version>3.3</version>
+		</dependency>
+		<dependency>
+		    <groupId>org.slf4j</groupId>
+		    <artifactId>slf4j-api</artifactId>
+		    <version>1.7.12</version>
 		</dependency>
 		<dependency>
 			<groupId>junit</groupId>
