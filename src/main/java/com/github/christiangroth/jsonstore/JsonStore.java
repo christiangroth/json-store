@@ -327,7 +327,7 @@ public class JsonStore<T> {
 	 * @return JSON data
 	 */
 	public String toJson(boolean prettyPrint) {
-		return transformer(prettyPrint).serialize(data);
+		return transformer(prettyPrint).serialize(copy());
 	}
 
 	/**
