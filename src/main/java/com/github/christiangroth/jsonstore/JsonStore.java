@@ -225,25 +225,25 @@ public class JsonStore<T> {
 	}
 	
 	/**
-	 * Creates a stream over the elements in this store.
+	 * Creates a stream over a copy of all elements in this store.
 	 * 
 	 * @return stream over elements in store
 	 */
 	public Stream<T> stream() {
-		return data.stream();
+		return copy().stream();
 	}
 	
 	/**
-	 * Creates a parallel stream over the elements in this store.
+	 * Creates a parallel stream over a copy of all elements in this store.
 	 * 
 	 * @return parallel stream over elements in store
 	 */
 	public Stream<T> parallelStream() {
-		return data.parallelStream();
+		return copy().parallelStream();
 	}
 	
 	/**
-	 * Performs given action on all elements in store. <br>
+	 * Performs given action on a copy of all elements in store.<br>
 	 * <br>
 	 * <b>Attention: Even if using auto-save mode you have to call {@link #save()} yourself!!</b>
 	 * 
@@ -251,7 +251,7 @@ public class JsonStore<T> {
 	 *            action to be performed on store elements
 	 */
 	public void forEach(Consumer<? super T> action) {
-		data.forEach(action);
+		copy().forEach(action);
 	}
 	
 	/**
@@ -282,7 +282,7 @@ public class JsonStore<T> {
 			return;
 		}
 		
-		// create json
+		// create JSON
 		String json = toJson(prettyPrint);
 		
 		// write to file
@@ -305,7 +305,7 @@ public class JsonStore<T> {
 	}
 	
 	/**
-	 * Returns store elements in JSON format with given pretty-print mode.
+	 * Creates a copy of stored elements and returns data in JSON format with given pretty-print mode.
 	 * 
 	 * @param prettyPrint
 	 *            pretty-print mode
@@ -325,7 +325,7 @@ public class JsonStore<T> {
 			return;
 		}
 		
-		// load json
+		// load JSON
 		String json = null;
 		try {
 			synchronized (file) {
@@ -359,7 +359,7 @@ public class JsonStore<T> {
 		try {
 			deserialized = new JSONDeserializer<List<T>>().use(Date.class, dateTransformer()).deserialize(json);
 		} catch (Exception e) {
-			LOG.error("Unable to restore from json content, skipping file during restore: " + file.getAbsolutePath() + "!!", e);
+			LOG.error("Unable to restore from JSON content, skipping file during restore: " + file.getAbsolutePath() + "!!", e);
 		}
 		
 		// add data
@@ -392,7 +392,7 @@ public class JsonStore<T> {
 					Files.deleteIfExists(file.toPath());
 				}
 			} catch (IOException e) {
-				LOG.error("Unable to delete persistent json store: " + file.getAbsolutePath() + "!!", e);
+				LOG.error("Unable to delete persistent JSON store: " + file.getAbsolutePath() + "!!", e);
 			}
 		}
 	}

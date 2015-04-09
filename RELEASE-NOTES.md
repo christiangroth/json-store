@@ -1,6 +1,10 @@
 Release Notes
 =====================
 
+0.3.0 (in progress)
+-------------------
+- using copy of data internally when creating streams to avoid ConcurrentModificationException if underlying set is changed during stream handling
+
 0.2.0
 -----
 - changed package names to match Maven group id
