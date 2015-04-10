@@ -3,6 +3,6 @@ jdk:
 - oraclejdk8
 script: "mvn clean package"
 after_success:
-  - mvn clean cobertura:cobertura
+  - mvn clean cobertura:cobertura coveralls:report
 notifications:
 email: chr.groth@gmx.de
