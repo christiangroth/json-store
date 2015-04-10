@@ -3,6 +3,7 @@ package com.github.christiangroth.jsonstore.store;
 import java.io.File;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Stream;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -140,5 +141,51 @@ public class JsonStoreTest {
 		// import into copy
 		store.fromJson(null);
 		Assert.assertTrue(store.isEmpty());
+	}
+	
+	@Test
+	public void concurrentStreamAccessAndModification() {
+		concurrentStreamAccessAndModification(persistentStore);
+	}
+	
+	@Test
+	public void transientConcurrentStreamAccessAndModification() {
+		concurrentStreamAccessAndModification(transientStore);
+	}
+	
+	private void concurrentStreamAccessAndModification(JsonStore<String> store) {
+		
+		// prepare stream
+		store.addAll(testData);
+		Stream<String> stream = store.stream();
+		
+		// concurrent change
+		store.remove(testDataTwo);
+		
+		// go on with stream
+		Assert.assertEquals(2, stream.count());
+	}
+	
+	@Test
+	public void concurrentParallelStreamAccessAndModification() {
+		concurrentParallelStreamAccessAndModification(persistentStore);
+	}
+	
+	@Test
+	public void transientConcurrentParallelStreamAccessAndModification() {
+		concurrentParallelStreamAccessAndModification(transientStore);
+	}
+	
+	private void concurrentParallelStreamAccessAndModification(JsonStore<String> store) {
+		
+		// prepare stream
+		store.addAll(testData);
+		Stream<String> stream = store.parallelStream();
+		
+		// concurrent change
+		store.remove(testDataTwo);
+		
+		// go on with stream
+		Assert.assertEquals(2, stream.count());
 	}
 }
