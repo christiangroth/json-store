@@ -1,129 +1,171 @@
 package com.github.christiangroth.jsonstore;
 
 import java.io.File;
-import java.time.LocalDateTime;
-import java.util.Date;
 
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.github.christiangroth.jsonstore.model.TestEntity;
+import com.github.christiangroth.jsonstore.store.JsonSingletonStore;
+import com.github.christiangroth.jsonstore.store.JsonStore;
 import com.google.common.io.Files;
 
-// TODO enhance testing
 public class JsonStoresTest {
 	
 	private File tempDir;
-	private JsonStores stores;
+	private JsonStores persistentStores;
+	private JsonStores persistentStoresCopy;
+	private JsonStores transientStores;
+	private JsonStores transientStoresCopy;
 	
-	private TestEntity foo;
-	private TestEntity bar;
+	private String testData;
 	
 	@Before
 	public void init() {
-		
-		// stores
 		tempDir = Files.createTempDir();
-		stores = new JsonStores(tempDir, true);
-		
-		// data
-		foo = new TestEntity(1, "foo");
-		bar = new TestEntity(2, "bar");
+		persistentStores = new JsonStores(tempDir, true);
+		persistentStoresCopy = new JsonStores(tempDir, true);
+		transientStores = new JsonStores();
+		transientStoresCopy = new JsonStores();
+		testData = "test data";
 	}
 	
 	@Test
-	public void dataLifecycle() {
+	public void storeLifecycle() {
+		assertStoreLifecycle(persistentStores, persistentStoresCopy, true);
+	}
+	
+	@Test
+	public void transientStoreLifecycle() {
+		assertStoreLifecycle(transientStores, transientStoresCopy, false);
+	}
+	
+	private void assertStoreLifecycle(JsonStores stores, JsonStores storesCopy, boolean isPersistent) {
 		
-		// no stores present
-		JsonStore<TestEntity> store = stores.resolve(TestEntity.class);
+		// nothing there
+		Class<String> dataClass = String.class;
+		JsonStore<String> store = stores.resolve(dataClass);
+		Assert.assertNull(store);
+		if (isPersistent) {
+			Assert.assertTrue(tempDir.exists());
+			Assert.assertTrue(tempDir.isDirectory());
+			Assert.assertTrue(tempDir.canRead());
+			Assert.assertEquals(0, tempDir.list().length);
+		}
+		
+		// ensure store
+		store = stores.ensure(dataClass);
+		Assert.assertNotNull(store);
+		if (isPersistent) {
+			Assert.assertEquals(0, tempDir.list().length);
+		}
+		store = stores.resolve(dataClass);
+		Assert.assertNotNull(store);
+		
+		// explicit save
+		store.save();
+		if (isPersistent) {
+			Assert.assertEquals(1, tempDir.list().length);
+		}
+		
+		// drop
+		JsonStore<String> droppedStore = stores.drop(dataClass);
+		Assert.assertEquals(store, droppedStore);
+		if (isPersistent) {
+			Assert.assertEquals(0, tempDir.list().length);
+		}
+		store = stores.resolve(dataClass);
 		Assert.assertNull(store);
 		
-		// store exists, no data
-		store = stores.ensure(TestEntity.class);
-		Assert.assertNotNull(store);
-		Assert.assertTrue(store.isEmpty());
-		Assert.assertTrue(store.copy().isEmpty());
+		// create again with data
+		store = stores.ensure(dataClass);
+		store.add(testData);
+		if (isPersistent) {
+			Assert.assertEquals(1, tempDir.list().length);
+		}
 		
-		// add element
-		store.add(foo);
-		Assert.assertEquals(1, store.size());
-		Assert.assertEquals(1, store.copy().size());
+		// copy still empty
+		JsonStore<String> storeCopy = storesCopy.resolve(dataClass);
+		Assert.assertNull(storeCopy);
 		
-		// add element to copy only
-		store.copy().add(bar);
-		Assert.assertEquals(1, store.size());
-		Assert.assertEquals(1, store.copy().size());
+		// load into stores copy
+		storesCopy.load();
+		storeCopy = storesCopy.resolve(dataClass);
+		if (isPersistent) {
+			Assert.assertNotNull(storeCopy);
+			Assert.assertEquals(1, storeCopy.size());
+			Assert.assertEquals(testData, storeCopy.copy().iterator().next());
+		} else {
+			Assert.assertNull(storeCopy);
+		}
 	}
 	
 	@Test
-	public void jsonLifecycle() {
-		
-		// add data
-		JsonStore<TestEntity> store = stores.ensure(TestEntity.class);
-		Date date = new Date();
-		foo.setDate(date);
-		LocalDateTime localDateTime = LocalDateTime.now();
-		foo.setDateTime(localDateTime);
-		store.add(foo);
-		
-		// export
-		String json = store.toJson();
-		Assert.assertNotNull(json);
-		
-		// create new store and import data
-		stores.drop(TestEntity.class);
-		JsonStore<TestEntity> newStore = stores.ensure(TestEntity.class);
-		newStore.fromJson(json);
-		Assert.assertEquals(1, newStore.size());
-		
-		// assert data
-		TestEntity importedEnity = newStore.copy().iterator().next();
-		Assert.assertEquals(1, importedEnity.getId());
-		Assert.assertEquals("foo", importedEnity.getData());
-		Assert.assertEquals(date.getTime(), importedEnity.getDate().getTime());
-		Assert.assertEquals(localDateTime, importedEnity.getDateTime());
+	public void singletonStoreLifecycle() {
+		assertSingletonStoreLifecycle(persistentStores, persistentStoresCopy, true);
 	}
 	
 	@Test
-	public void fileLifecycle() {
-		
-		// empty store
-		JsonStore<TestEntity> store = stores.ensure(TestEntity.class);
-		Assert.assertNotNull(store);
-		
-		// add data
-		store.add(foo);
-		store.add(bar);
-		
-		// load from file into fresh instance
-		stores = new JsonStores(tempDir, true);
-		
-		// assert old data
-		store = stores.resolve(TestEntity.class);
-		Assert.assertNotNull(store);
-		Assert.assertEquals(2, store.size());
+	public void transientSingletonStoreLifecycle() {
+		assertSingletonStoreLifecycle(transientStores, transientStoresCopy, false);
 	}
 	
-	@Test
-	public void fileDrop() {
+	private void assertSingletonStoreLifecycle(JsonStores stores, JsonStores storesCopy, boolean isPersistent) {
 		
-		// empty store
-		JsonStore<TestEntity> store = stores.ensure(TestEntity.class);
-		Assert.assertNotNull(store);
-		
-		// add data
-		store.add(foo);
-		store.add(bar);
-		
-		// drop store
-		stores.drop(TestEntity.class);
-		
-		// load from file into fresh instance
-		stores = new JsonStores(tempDir, true);
-		
-		// assert old data
-		store = stores.resolve(TestEntity.class);
+		// nothing there
+		Class<String> dataClass = String.class;
+		JsonSingletonStore<String> store = stores.resolveSingleton(dataClass);
 		Assert.assertNull(store);
+		if (isPersistent) {
+			Assert.assertTrue(tempDir.exists());
+			Assert.assertTrue(tempDir.isDirectory());
+			Assert.assertTrue(tempDir.canRead());
+			Assert.assertTrue(tempDir.list().length < 1);
+		}
+		
+		// ensure
+		store = stores.ensureSingleton(dataClass);
+		Assert.assertNotNull(store);
+		if (isPersistent) {
+			Assert.assertEquals(0, tempDir.list().length);
+		}
+		store = stores.resolveSingleton(dataClass);
+		Assert.assertNotNull(store);
+		
+		// explicit save
+		store.save();
+		if (isPersistent) {
+			Assert.assertEquals(1, tempDir.list().length);
+		}
+		
+		// drop
+		JsonSingletonStore<String> droppedStore = stores.dropSingleton(dataClass);
+		Assert.assertEquals(store, droppedStore);
+		if (isPersistent) {
+			Assert.assertEquals(0, tempDir.list().length);
+		}
+		store = stores.resolveSingleton(dataClass);
+		Assert.assertNull(store);
+		
+		// create again with data
+		store = stores.ensureSingleton(dataClass);
+		store.set(testData);
+		if (isPersistent) {
+			Assert.assertEquals(1, tempDir.list().length);
+		}
+		
+		// copy still empty
+		JsonSingletonStore<String> storeCopy = storesCopy.resolveSingleton(dataClass);
+		Assert.assertNull(storeCopy);
+		
+		// load into stores copy
+		storesCopy.load();
+		storeCopy = storesCopy.resolveSingleton(dataClass);
+		if (isPersistent) {
+			Assert.assertNotNull(storeCopy);
+			Assert.assertEquals(testData, storeCopy.get());
+		} else {
+			Assert.assertNull(storeCopy);
+		}
 	}
 }

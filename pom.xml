@@ -45,6 +45,8 @@
 	</properties>
 	
 	<dependencies>
+		
+		<!-- runtime dependencies -->
 		<dependency>
 			<groupId>net.sf.flexjson</groupId>
 			<artifactId>flexjson</artifactId>
@@ -55,6 +57,8 @@
 		    <artifactId>slf4j-api</artifactId>
 		    <version>1.7.12</version>
 		</dependency>
+		
+		<!-- testing dependencies -->
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
