@@ -1,9 +1,15 @@
 package com.github.christiangroth.jsonstore.model;
 
+import java.time.LocalDateTime;
+import java.util.Date;
+
 public class TestEntity {
 	
 	private int id;
 	private String data;
+	
+	private Date date;
+	private LocalDateTime dateTime;
 	
 	public TestEntity() {
 		this(0, null);
@@ -30,6 +36,22 @@ public class TestEntity {
 		this.data = data;
 	}
 	
+	public Date getDate() {
+		return date;
+	}
+	
+	public void setDate(Date date) {
+		this.date = date;
+	}
+	
+	public LocalDateTime getDateTime() {
+		return dateTime;
+	}
+	
+	public void setDateTime(LocalDateTime dateTime) {
+		this.dateTime = dateTime;
+	}
+	
 	@Override
 	public int hashCode() {
 		final int prime = 31;
@@ -54,6 +76,6 @@ public class TestEntity {
 	
 	@Override
 	public String toString() {
-		return "TestEntity [id=" + id + ", data=" + data + "]";
+		return "TestEntity [id=" + id + ", data=" + data + ", date=" + date + ", localDateTime=" + dateTime + "]";
 	}
 }

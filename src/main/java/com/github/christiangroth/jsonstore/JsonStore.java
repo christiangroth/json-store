@@ -2,6 +2,7 @@ package com.github.christiangroth.jsonstore;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
@@ -36,6 +37,12 @@ import flexjson.transformer.DateTransformer;
  */
 // TODO create single value store
 public class JsonStore<T> {
+	
+	// TODO make charset configurable
+	private static final Charset FILE_CHARSET = StandardCharsets.UTF_8;
+	
+	// TODO make date time pattern configurable
+	private static final String DATE_TIME_PATTERN = "HH:mm:ss.SSS dd.MM.yyyy";
 	
 	private static final Logger LOG = LoggerFactory.getLogger(JsonStore.class);
 	
@@ -292,8 +299,7 @@ public class JsonStore<T> {
 		// write to file
 		try {
 			synchronized (file) {
-				// TODO make charset configurable
-				Files.write(file.toPath(), Arrays.asList(json), StandardCharsets.UTF_8, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE);
+				Files.write(file.toPath(), Arrays.asList(json), FILE_CHARSET, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE);
 			}
 		} catch (IOException e) {
 			LOG.error("Unable to write file content, skipping file during store: " + file.getAbsolutePath() + "!!", e);
@@ -334,8 +340,7 @@ public class JsonStore<T> {
 		String json = null;
 		try {
 			synchronized (file) {
-				// TODO make charset configurable
-				json = Files.lines(file.toPath(), StandardCharsets.UTF_8).parallel().filter(line -> line != null && !"".equals(line.trim())).map(String::trim).collect(Collectors.joining());
+				json = Files.lines(file.toPath(), FILE_CHARSET).parallel().filter(line -> line != null && !"".equals(line.trim())).map(String::trim).collect(Collectors.joining());
 			}
 		} catch (Exception e) {
 			LOG.error("Unable to read file content, skipping file during restore: " + file.getAbsolutePath() + "!!", e);
@@ -363,7 +368,7 @@ public class JsonStore<T> {
 		// deserialize
 		List<T> deserialized = null;
 		try {
-			deserialized = new JSONDeserializer<List<T>>().use(Date.class, dateTransformer()).deserialize(json);
+			deserialized = new JSONDeserializer<List<T>>().use(Date.class, dateTransformer()).use(LocalDateTime.class, dateTimeTransformer()).deserialize(json);
 		} catch (Exception e) {
 			LOG.error("Unable to restore from JSON content, skipping file during restore: " + file.getAbsolutePath() + "!!", e);
 		}
@@ -385,14 +390,11 @@ public class JsonStore<T> {
 	}
 	
 	private DateTransformer dateTransformer() {
-		// TODO make configurable
-		return new DateTransformer("HH:mm:ss dd.MM.yyyy");
+		return new DateTransformer(DATE_TIME_PATTERN);
 	}
 	
 	private DateTimeTransformer dateTimeTransformer() {
-		// TODO make configurable
-		// TODO mills / nanos
-		return new DateTimeTransformer("HH:mm:ss dd.MM.yyyy");
+		return new DateTimeTransformer(DATE_TIME_PATTERN);
 	}
 	
 	/**

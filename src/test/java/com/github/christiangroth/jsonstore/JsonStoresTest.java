@@ -1,6 +1,8 @@
 package com.github.christiangroth.jsonstore;
 
 import java.io.File;
+import java.time.LocalDateTime;
+import java.util.Date;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -59,6 +61,10 @@ public class JsonStoresTest {
 		
 		// add data
 		JsonStore<TestEntity> store = stores.ensure(TestEntity.class);
+		Date date = new Date();
+		foo.setDate(date);
+		LocalDateTime localDateTime = LocalDateTime.now();
+		foo.setDateTime(localDateTime);
 		store.add(foo);
 		
 		// export
@@ -75,6 +81,8 @@ public class JsonStoresTest {
 		TestEntity importedEnity = newStore.copy().iterator().next();
 		Assert.assertEquals(1, importedEnity.getId());
 		Assert.assertEquals("foo", importedEnity.getData());
+		Assert.assertEquals(date.getTime(), importedEnity.getDate().getTime());
+		Assert.assertEquals(localDateTime, importedEnity.getDateTime());
 	}
 	
 	@Test
