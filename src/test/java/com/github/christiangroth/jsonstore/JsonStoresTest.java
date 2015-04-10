@@ -1,6 +1,7 @@
 package com.github.christiangroth.jsonstore;
 
 import java.io.File;
+import java.util.UUID;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -50,29 +51,30 @@ public class JsonStoresTest {
 			Assert.assertTrue(tempDir.exists());
 			Assert.assertTrue(tempDir.isDirectory());
 			Assert.assertTrue(tempDir.canRead());
-			Assert.assertEquals(0, tempDir.list().length);
+			Assert.assertEquals(0, tempDir.listFiles().length);
 		}
 		
 		// ensure store
 		store = stores.ensure(dataClass);
 		Assert.assertNotNull(store);
 		if (isPersistent) {
-			Assert.assertEquals(0, tempDir.list().length);
+			Assert.assertEquals(0, tempDir.listFiles().length);
 		}
 		store = stores.resolve(dataClass);
 		Assert.assertNotNull(store);
 		
 		// explicit save
-		store.save();
+		stores.save();
 		if (isPersistent) {
-			Assert.assertEquals(1, tempDir.list().length);
+			Assert.assertEquals(1, tempDir.listFiles().length);
+			Assert.assertEquals(store.getFile(), tempDir.listFiles()[0]);
 		}
 		
 		// drop
 		JsonStore<String> droppedStore = stores.drop(dataClass);
 		Assert.assertEquals(store, droppedStore);
 		if (isPersistent) {
-			Assert.assertEquals(0, tempDir.list().length);
+			Assert.assertEquals(0, tempDir.listFiles().length);
 		}
 		store = stores.resolve(dataClass);
 		Assert.assertNull(store);
@@ -81,7 +83,7 @@ public class JsonStoresTest {
 		store = stores.ensure(dataClass);
 		store.add(testData);
 		if (isPersistent) {
-			Assert.assertEquals(1, tempDir.list().length);
+			Assert.assertEquals(1, tempDir.listFiles().length);
 		}
 		
 		// copy still empty
@@ -93,6 +95,8 @@ public class JsonStoresTest {
 		storeCopy = storesCopy.resolve(dataClass);
 		if (isPersistent) {
 			Assert.assertNotNull(storeCopy);
+			Assert.assertEquals(1, tempDir.listFiles().length);
+			Assert.assertEquals(storeCopy.getFile(), tempDir.listFiles()[0]);
 			Assert.assertEquals(1, storeCopy.size());
 			Assert.assertEquals(testData, storeCopy.copy().iterator().next());
 		} else {
@@ -120,29 +124,30 @@ public class JsonStoresTest {
 			Assert.assertTrue(tempDir.exists());
 			Assert.assertTrue(tempDir.isDirectory());
 			Assert.assertTrue(tempDir.canRead());
-			Assert.assertTrue(tempDir.list().length < 1);
+			Assert.assertTrue(tempDir.listFiles().length < 1);
 		}
 		
 		// ensure
 		store = stores.ensureSingleton(dataClass);
 		Assert.assertNotNull(store);
 		if (isPersistent) {
-			Assert.assertEquals(0, tempDir.list().length);
+			Assert.assertEquals(0, tempDir.listFiles().length);
 		}
 		store = stores.resolveSingleton(dataClass);
 		Assert.assertNotNull(store);
 		
 		// explicit save
-		store.save();
+		stores.save();
 		if (isPersistent) {
-			Assert.assertEquals(1, tempDir.list().length);
+			Assert.assertEquals(1, tempDir.listFiles().length);
+			Assert.assertEquals(store.getFile(), tempDir.listFiles()[0]);
 		}
 		
 		// drop
 		JsonSingletonStore<String> droppedStore = stores.dropSingleton(dataClass);
 		Assert.assertEquals(store, droppedStore);
 		if (isPersistent) {
-			Assert.assertEquals(0, tempDir.list().length);
+			Assert.assertEquals(0, tempDir.listFiles().length);
 		}
 		store = stores.resolveSingleton(dataClass);
 		Assert.assertNull(store);
@@ -151,7 +156,7 @@ public class JsonStoresTest {
 		store = stores.ensureSingleton(dataClass);
 		store.set(testData);
 		if (isPersistent) {
-			Assert.assertEquals(1, tempDir.list().length);
+			Assert.assertEquals(1, tempDir.listFiles().length);
 		}
 		
 		// copy still empty
@@ -163,9 +168,27 @@ public class JsonStoresTest {
 		storeCopy = storesCopy.resolveSingleton(dataClass);
 		if (isPersistent) {
 			Assert.assertNotNull(storeCopy);
+			Assert.assertEquals(1, tempDir.listFiles().length);
+			Assert.assertEquals(storeCopy.getFile(), tempDir.listFiles()[0]);
 			Assert.assertEquals(testData, storeCopy.get());
 		} else {
 			Assert.assertNull(storeCopy);
 		}
+	}
+	
+	@Test
+	public void nonExistentStorage() {
+		
+		// create stores with non existent storage directory
+		String subdir = UUID.randomUUID().toString();
+		File storage = new File(tempDir, subdir);
+		Assert.assertFalse(storage.exists());
+		
+		// check empty storage created on startup
+		new JsonStores(storage);
+		Assert.assertTrue(storage.exists());
+		Assert.assertTrue(storage.isDirectory());
+		Assert.assertTrue(storage.canRead());
+		Assert.assertEquals(0, storage.listFiles().length);
 	}
 }

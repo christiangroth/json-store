@@ -1,6 +1,8 @@
 package com.github.christiangroth.jsonstore.store;
 
 import java.io.File;
+import java.util.Arrays;
+import java.util.List;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -18,6 +20,7 @@ public class JsonStoreTest {
 	
 	private String testDataOne;
 	private String testDataTwo;
+	private List<String> testData;
 	
 	@Before
 	public void init() {
@@ -28,6 +31,7 @@ public class JsonStoreTest {
 		transientStoreCopy = new JsonStore<>(String.class, null, false, false);
 		testDataOne = "test data foo";
 		testDataTwo = "test data bar";
+		testData = Arrays.asList(testDataOne, testDataTwo);
 	}
 	
 	@Test
@@ -48,13 +52,48 @@ public class JsonStoreTest {
 		
 		// add element
 		store.add(testDataOne);
+		Assert.assertFalse(store.isEmpty());
 		Assert.assertEquals(1, store.size());
 		Assert.assertEquals(1, store.copy().size());
+		Assert.assertTrue(store.contains(testDataOne));
 		
-		// add element to copy only
+		// add element two to copy only
 		store.copy().add(testDataTwo);
 		Assert.assertEquals(1, store.size());
 		Assert.assertEquals(1, store.copy().size());
+		
+		// add element two
+		store.add(testDataTwo);
+		Assert.assertEquals(2, store.size());
+		Assert.assertTrue(store.containsAll(testData));
+		
+		// retain
+		store.retainAll(Arrays.asList(testDataOne));
+		Assert.assertEquals(1, store.size());
+		Assert.assertTrue(store.contains(testDataOne));
+		
+		// remove
+		store.remove(testDataOne);
+		Assert.assertTrue(store.isEmpty());
+		
+		// remove all
+		store.addAll(testData);
+		Assert.assertEquals(2, store.size());
+		store.removeAll(testData);
+		Assert.assertTrue(store.isEmpty());
+		
+		// remove if
+		store.addAll(testData);
+		Assert.assertEquals(2, store.size());
+		store.removeIf(s -> testDataTwo.equals(s));
+		Assert.assertEquals(1, store.size());
+		Assert.assertTrue(store.contains(testDataOne));
+		
+		// clear
+		store.addAll(testData);
+		Assert.assertEquals(2, store.size());
+		store.clear();
+		Assert.assertTrue(store.isEmpty());
 	}
 	
 	@Test
@@ -81,5 +120,25 @@ public class JsonStoreTest {
 		storeCopy.fromJson(json);
 		Assert.assertEquals(1, storeCopy.size());
 		Assert.assertEquals(store.copy().iterator().next(), storeCopy.copy().iterator().next());
+	}
+	
+	@Test
+	public void nullJson() {
+		nullJson(persistentStoreCopy);
+	}
+	
+	@Test
+	public void transientNullJson() {
+		nullJson(transientStoreCopy);
+	}
+	
+	private void nullJson(JsonStore<String> store) {
+		
+		// still empty
+		Assert.assertTrue(store.isEmpty());
+		
+		// import into copy
+		store.fromJson(null);
+		Assert.assertTrue(store.isEmpty());
 	}
 }

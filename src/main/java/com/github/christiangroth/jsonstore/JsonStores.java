@@ -271,16 +271,14 @@ public class JsonStores {
 		// detect type (singleton first due to regex matching)
 		Matcher singletonMatcher = SINGLETON_STORE_FILENAME_PATTERN.matcher(filename);
 		Matcher regularMatcher = STORE_FILENAME_PATTERN.matcher(filename);
-		Matcher matcher;
-		boolean isSingleton;
+		Matcher matcher = null;
+		boolean isSingleton = false;
 		if (singletonMatcher.matches()) {
 			matcher = singletonMatcher;
 			isSingleton = true;
 		} else if (regularMatcher.matches()) {
 			matcher = regularMatcher;
 			isSingleton = false;
-		} else {
-			throw new IllegalStateException("unimplemented storage type: " + filename + "!!");
 		}
 		
 		// load class

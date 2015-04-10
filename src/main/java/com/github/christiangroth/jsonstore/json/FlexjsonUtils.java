@@ -9,7 +9,7 @@ import flexjson.JSONDeserializer;
 import flexjson.JSONSerializer;
 import flexjson.transformer.DateTransformer;
 
-public class FlexjsonUtils {
+public final class FlexjsonUtils {
 	
 	// TODO make date time pattern configurable
 	private static final String DATE_TIME_PATTERN = "HH:mm:ss.SSS dd.MM.yyyy";
@@ -28,5 +28,9 @@ public class FlexjsonUtils {
 	
 	private static DateTimeTransformer dateTimeTransformer() {
 		return new DateTimeTransformer(DATE_TIME_PATTERN);
+	}
+	
+	private FlexjsonUtils() {
+		// private constructor, utility class
 	}
 }

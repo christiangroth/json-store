@@ -37,8 +37,6 @@ public class DateTimeTransformer extends AbstractTransformer implements ObjectFa
 			getContext().write("null");
 		} else if (object instanceof TemporalAccessor) {
 			getContext().writeQuoted(getFormatter().format((TemporalAccessor) object));
-		} else {
-			throw new JSONException(getClass().getSimpleName() + " is unable to transform non temporal accessor: " + object.getClass().getName() + "!!");
 		}
 	}
 	
