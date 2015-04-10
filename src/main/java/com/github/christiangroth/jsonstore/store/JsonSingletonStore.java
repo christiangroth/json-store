@@ -56,7 +56,7 @@ public class JsonSingletonStore<T> extends AbstractJsonStore<T> {
 	/**
 	 * Stores the given object. Will invoke {@link #save()} if using auto-save mode and store was changed.
 	 * 
-	 * @param e
+	 * @param data
 	 *            object to store
 	 * @return previous stored object or null
 	 */
