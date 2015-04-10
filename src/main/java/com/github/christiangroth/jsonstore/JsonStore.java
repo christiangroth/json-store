@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
@@ -19,6 +20,8 @@ import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.github.christiangroth.jsonstore.custom.DateTimeTransformer;
+
 import flexjson.JSONDeserializer;
 import flexjson.JSONSerializer;
 import flexjson.transformer.DateTransformer;
@@ -31,6 +34,7 @@ import flexjson.transformer.DateTransformer;
  * @param <T>
  *            concrete type stored in this instance
  */
+// TODO create single value store
 public class JsonStore<T> {
 	
 	private static final Logger LOG = LoggerFactory.getLogger(JsonStore.class);
@@ -288,6 +292,7 @@ public class JsonStore<T> {
 		// write to file
 		try {
 			synchronized (file) {
+				// TODO make charset configurable
 				Files.write(file.toPath(), Arrays.asList(json), StandardCharsets.UTF_8, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE);
 			}
 		} catch (IOException e) {
@@ -329,6 +334,7 @@ public class JsonStore<T> {
 		String json = null;
 		try {
 			synchronized (file) {
+				// TODO make charset configurable
 				json = Files.lines(file.toPath(), StandardCharsets.UTF_8).parallel().filter(line -> line != null && !"".equals(line.trim())).map(String::trim).collect(Collectors.joining());
 			}
 		} catch (Exception e) {
@@ -375,11 +381,18 @@ public class JsonStore<T> {
 	}
 	
 	private JSONSerializer transformer(boolean prettyPrint) {
-		return new JSONSerializer().prettyPrint(prettyPrint).transform(dateTransformer(), Date.class);
+		return new JSONSerializer().prettyPrint(prettyPrint).transform(dateTransformer(), Date.class).transform(dateTimeTransformer(), LocalDateTime.class);
 	}
 	
 	private DateTransformer dateTransformer() {
+		// TODO make configurable
 		return new DateTransformer("HH:mm:ss dd.MM.yyyy");
+	}
+	
+	private DateTimeTransformer dateTimeTransformer() {
+		// TODO make configurable
+		// TODO mills / nanos
+		return new DateTimeTransformer("HH:mm:ss dd.MM.yyyy");
 	}
 	
 	/**

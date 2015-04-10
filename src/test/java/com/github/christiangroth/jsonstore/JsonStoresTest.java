@@ -6,11 +6,10 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.github.christiangroth.jsonstore.JsonStore;
-import com.github.christiangroth.jsonstore.JsonStores;
 import com.github.christiangroth.jsonstore.model.TestEntity;
 import com.google.common.io.Files;
 
+// TODO enhance testing
 public class JsonStoresTest {
 	
 	private File tempDir;
