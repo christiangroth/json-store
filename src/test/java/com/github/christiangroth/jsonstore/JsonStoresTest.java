@@ -1,6 +1,7 @@
 package com.github.christiangroth.jsonstore;
 
 import java.io.File;
+import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
 import org.junit.Assert;
@@ -14,10 +15,16 @@ import com.google.common.io.Files;
 public class JsonStoresTest {
 	
 	private File tempDir;
+	
 	private JsonStores persistentStores;
 	private JsonStores persistentStoresCopy;
+	
 	private JsonStores persistentStoresNoAutoSave;
 	private JsonStores persistentStoresNoAutoSaveCopy;
+	
+	private JsonStores persistentStoresIsoCharset;
+	private JsonStores persistentStoresIsoCharsetCopy;
+	
 	private JsonStores transientStores;
 	private JsonStores transientStoresCopy;
 	
@@ -26,12 +33,19 @@ public class JsonStoresTest {
 	@Before
 	public void init() {
 		tempDir = Files.createTempDir();
-		persistentStores = JsonStores.builder().storage(tempDir, true, true).build();
-		persistentStoresCopy = JsonStores.builder().storage(tempDir, false, true).build();
-		persistentStoresNoAutoSave = JsonStores.builder().storage(tempDir, true, false).build();
-		persistentStoresNoAutoSaveCopy = JsonStores.builder().storage(tempDir, false, false).build();
+		
+		persistentStores = JsonStores.builder().storage(tempDir, StandardCharsets.UTF_8, true, true).build();
+		persistentStoresCopy = JsonStores.builder().storage(tempDir, StandardCharsets.UTF_8, false, true).build();
+		
+		persistentStoresNoAutoSave = JsonStores.builder().storage(tempDir, StandardCharsets.UTF_8, true, false).build();
+		persistentStoresNoAutoSaveCopy = JsonStores.builder().storage(tempDir, StandardCharsets.UTF_8, false, false).build();
+		
+		persistentStoresIsoCharset = JsonStores.builder().storage(tempDir, StandardCharsets.ISO_8859_1, true, true).build();
+		persistentStoresIsoCharsetCopy = JsonStores.builder().storage(tempDir, StandardCharsets.ISO_8859_1, false, true).build();
+		
 		transientStores = JsonStores.builder().build();
 		transientStoresCopy = JsonStores.builder().build();
+		
 		testData = "test data";
 	}
 	
@@ -43,6 +57,11 @@ public class JsonStoresTest {
 	@Test
 	public void storeNoAutoSaveLifecycle() {
 		assertStoreLifecycle(persistentStoresNoAutoSave, persistentStoresNoAutoSaveCopy, false, true, false);
+	}
+	
+	@Test
+	public void storeIsoCharsetLifecycle() {
+		assertStoreLifecycle(persistentStoresIsoCharset, persistentStoresIsoCharsetCopy, false, true, true);
 	}
 	
 	@Test
@@ -58,6 +77,11 @@ public class JsonStoresTest {
 	@Test
 	public void singletonStoreNoAutoSaveLifecycle() {
 		assertStoreLifecycle(persistentStoresNoAutoSave, persistentStoresNoAutoSaveCopy, true, true, false);
+	}
+	
+	@Test
+	public void singletonStoreIsoCharsetLifecycle() {
+		assertStoreLifecycle(persistentStoresIsoCharset, persistentStoresIsoCharsetCopy, true, true, true);
 	}
 	
 	@Test
@@ -181,7 +205,7 @@ public class JsonStoresTest {
 		Assert.assertFalse(storage.exists());
 		
 		// check empty storage created on startup
-		JsonStores.builder().storage(storage, false, false).build();
+		JsonStores.builder().storage(storage).build();
 		Assert.assertTrue(storage.exists());
 		Assert.assertTrue(storage.isDirectory());
 		Assert.assertTrue(storage.canRead());

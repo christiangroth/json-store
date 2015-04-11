@@ -25,7 +25,7 @@ public class JsonStoresBuilderTest {
 	
 	@Test
 	public void persistentStores() {
-		JsonStores stores = JsonStores.builder().storage(tempDir, false, false).build();
+		JsonStores stores = JsonStores.builder().storage(tempDir).build();
 		Assert.assertTrue(stores.isPersistent());
 	}
 }

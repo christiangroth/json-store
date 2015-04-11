@@ -2,6 +2,8 @@ package com.github.christiangroth.jsonstore;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
@@ -35,6 +37,7 @@ public class JsonStores {
 	private final Map<Class<?>, JsonStore<?>> stores;
 	private final Map<Class<?>, JsonSingletonStore<?>> singletonStores;
 	private final File storage;
+	private final Charset charset;
 	private final boolean prettyPrint;
 	private final boolean autoSave;
 	
@@ -45,22 +48,43 @@ public class JsonStores {
 	 */
 	public static class JsonStoresBuilder {
 		
+		private static final Charset DEFAULT_CHARSET = StandardCharsets.UTF_8;
+		
 		private File storage;
+		private Charset charset;
 		private boolean prettyPrint;
 		private boolean autoSave;
 		
 		/**
-		 * Configures persistent JSON storage with given base directory, pretty-print mode and auto-save mode.
+		 * Configures persistent JSON storage with given base directory, default UTF-8 charset, pretty-print mode disabled and auto-save
+		 * mode enabled.
 		 * 
 		 * @param storage
 		 *            base storage directory
+		 */
+		public JsonStoresBuilder storage(File storage) {
+			this.storage = storage;
+			this.charset = DEFAULT_CHARSET;
+			this.prettyPrint = false;
+			this.autoSave = true;
+			return this;
+		}
+		
+		/**
+		 * Configures persistent JSON storage with given base directory, charset, pretty-print mode and auto-save mode.
+		 * 
+		 * @param storage
+		 *            base storage directory
+		 * @param charset
+		 *            storage charset
 		 * @param prettyPrint
 		 *            pretty-print mode
 		 * @param autoSave
 		 *            auto-save mode
 		 */
-		public JsonStoresBuilder storage(File storage, boolean prettyPrint, boolean autoSave) {
+		public JsonStoresBuilder storage(File storage, Charset charset, boolean prettyPrint, boolean autoSave) {
 			this.storage = storage;
+			this.charset = charset;
 			this.prettyPrint = prettyPrint;
 			this.autoSave = autoSave;
 			return this;
@@ -72,7 +96,7 @@ public class JsonStores {
 		 * @return stores instance
 		 */
 		public JsonStores build() {
-			return new JsonStores(storage, prettyPrint, autoSave);
+			return new JsonStores(storage, charset, prettyPrint, autoSave);
 		}
 	}
 	
@@ -85,12 +109,13 @@ public class JsonStores {
 		return new JsonStoresBuilder();
 	}
 	
-	private JsonStores(File storage, boolean prettyPrint, boolean autoSave) {
+	private JsonStores(File storage, Charset charset, boolean prettyPrint, boolean autoSave) {
 		
 		// init state
 		stores = new HashMap<>();
 		singletonStores = new HashMap<>();
 		this.storage = storage == null ? null : storage.getAbsoluteFile();
+		this.charset = charset;
 		this.prettyPrint = prettyPrint;
 		this.autoSave = autoSave;
 		
@@ -132,7 +157,7 @@ public class JsonStores {
 	}
 	
 	private void create(Class<?> dataClass) {
-		stores.put(dataClass, new JsonStore<>(dataClass, storage, prettyPrint, autoSave));
+		stores.put(dataClass, new JsonStore<>(dataClass, storage, charset, prettyPrint, autoSave));
 	}
 	
 	/**
@@ -167,7 +192,7 @@ public class JsonStores {
 	}
 	
 	private void createSingleton(Class<?> dataClass) {
-		singletonStores.put(dataClass, new JsonSingletonStore<>(dataClass, storage, prettyPrint, autoSave));
+		singletonStores.put(dataClass, new JsonSingletonStore<>(dataClass, storage, charset, prettyPrint, autoSave));
 	}
 	
 	/**

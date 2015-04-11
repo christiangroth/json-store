@@ -25,9 +25,13 @@ Configure JSON stores:
 	
 	// persistent mode
 	File storageDir = new File("path/to/some/directory/that/must/not/exist");
+	JsonStores stores = JsonStores.builder().storage(storageDir).build();
+	
+	// persistent mode (full control)
+	Charset charset = ...;
 	boolean prettyPrint = true;
 	boolean autoSave = true;
-	JsonStores stores = JsonStores.builder().storage(storageDir, prettyPrint, autoSave).build();
+	JsonStores stores = JsonStores.builder().storage(storageDir, charset, prettyPrint, autoSave).build();
 
 Storing single objects:
 

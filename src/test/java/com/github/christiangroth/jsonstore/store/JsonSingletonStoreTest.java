@@ -1,6 +1,7 @@
 package com.github.christiangroth.jsonstore.store;
 
 import java.io.File;
+import java.nio.charset.StandardCharsets;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -21,10 +22,10 @@ public class JsonSingletonStoreTest {
 	@Before
 	public void init() {
 		tempDir = Files.createTempDir();
-		persistentStore = new JsonSingletonStore<>(String.class, tempDir, true, true);
-		persistentStoreCopy = new JsonSingletonStore<>(String.class, tempDir, true, true);
-		transientStore = new JsonSingletonStore<>(String.class, null, false, false);
-		transientStoreCopy = new JsonSingletonStore<>(String.class, null, false, false);
+		persistentStore = new JsonSingletonStore<>(String.class, tempDir, StandardCharsets.UTF_8, true, true);
+		persistentStoreCopy = new JsonSingletonStore<>(String.class, tempDir, StandardCharsets.UTF_8, true, true);
+		transientStore = new JsonSingletonStore<>(String.class, null, null, false, false);
+		transientStoreCopy = new JsonSingletonStore<>(String.class, null, null, false, false);
 		testDataOne = "test data";
 	}
 	

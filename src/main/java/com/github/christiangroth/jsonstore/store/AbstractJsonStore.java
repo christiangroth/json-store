@@ -3,7 +3,6 @@ package com.github.christiangroth.jsonstore.store;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
@@ -32,21 +31,20 @@ public abstract class AbstractJsonStore<T> {
 	public static final String FILE_PREFIX = "storage";
 	public static final String FILE_SUFFIX = "json";
 	
-	// TODO make charset configurable
-	private static final Charset FILE_CHARSET = StandardCharsets.UTF_8;
-	
 	protected final Class<T> dataClass;
 	protected final File file;
+	protected final Charset charset;
 	protected final boolean prettyPrint;
 	protected final boolean autoSave;
 	
-	protected AbstractJsonStore(Class<T> dataClass, File storage, boolean prettyPrint, boolean autoSave) {
-		this(dataClass, storage, "", prettyPrint, autoSave);
+	protected AbstractJsonStore(Class<T> dataClass, File storage, Charset charset, boolean prettyPrint, boolean autoSave) {
+		this(dataClass, storage, charset, "", prettyPrint, autoSave);
 	}
 	
-	protected AbstractJsonStore(Class<T> dataClass, File storage, String fileNameExtraPrefix, boolean prettyPrint, boolean autoSave) {
+	protected AbstractJsonStore(Class<T> dataClass, File storage, Charset charset, String fileNameExtraPrefix, boolean prettyPrint, boolean autoSave) {
 		this.dataClass = dataClass;
 		this.file = storage != null ? new File(storage, FILE_PREFIX + FILE_SEPARATOR + fileNameExtraPrefix + dataClass.getName() + FILE_SEPARATOR + FILE_SUFFIX) : null;
+		this.charset = charset;
 		this.prettyPrint = prettyPrint;
 		this.autoSave = autoSave;
 	}
@@ -94,7 +92,7 @@ public abstract class AbstractJsonStore<T> {
 		// write to file
 		try {
 			synchronized (file) {
-				Files.write(file.toPath(), Arrays.asList(json), FILE_CHARSET, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE);
+				Files.write(file.toPath(), Arrays.asList(json), charset, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE);
 			}
 		} catch (IOException e) {
 			LOG.error("Unable to write file content, skipping file during store: " + file.getAbsolutePath() + "!!", e);
@@ -144,7 +142,7 @@ public abstract class AbstractJsonStore<T> {
 		String json = null;
 		try {
 			synchronized (file) {
-				json = Files.lines(file.toPath(), FILE_CHARSET).parallel().filter(line -> line != null && !"".equals(line.trim())).map(String::trim).collect(Collectors.joining());
+				json = Files.lines(file.toPath(), charset).parallel().filter(line -> line != null && !"".equals(line.trim())).map(String::trim).collect(Collectors.joining());
 			}
 		} catch (Exception e) {
 			LOG.error("Unable to read file content, skipping file during restore: " + file.getAbsolutePath() + "!!", e);
