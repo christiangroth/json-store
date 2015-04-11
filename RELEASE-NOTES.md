@@ -9,6 +9,7 @@ Release Notes
 - added com.github.christiangroth.jsonstore.store.JsonSingletonStore to provide storage for single object only
 - fixed NullPointerException during initialization of transient JsonStores
 - switched to builder pattern to create JsonStores instance, use JsonStores.builder() to get started
+- made charset configurable using stores builder
 
 0.2.0
 -----
