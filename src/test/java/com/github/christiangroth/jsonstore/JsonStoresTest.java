@@ -11,6 +11,7 @@ import com.github.christiangroth.jsonstore.store.JsonSingletonStore;
 import com.github.christiangroth.jsonstore.store.JsonStore;
 import com.google.common.io.Files;
 
+// TODO text autoSave true|false explicitly
 public class JsonStoresTest {
 	
 	private File tempDir;
@@ -24,10 +25,10 @@ public class JsonStoresTest {
 	@Before
 	public void init() {
 		tempDir = Files.createTempDir();
-		persistentStores = new JsonStores(tempDir, true);
-		persistentStoresCopy = new JsonStores(tempDir, true);
-		transientStores = new JsonStores();
-		transientStoresCopy = new JsonStores();
+		persistentStores = JsonStores.builder().storage(tempDir, true, true).build();
+		persistentStoresCopy = JsonStores.builder().storage(tempDir, false, true).build();
+		transientStores = JsonStores.builder().build();
+		transientStoresCopy = JsonStores.builder().build();
 		testData = "test data";
 	}
 	
@@ -185,7 +186,7 @@ public class JsonStoresTest {
 		Assert.assertFalse(storage.exists());
 		
 		// check empty storage created on startup
-		new JsonStores(storage);
+		JsonStores.builder().storage(storage, false, false).build();
 		Assert.assertTrue(storage.exists());
 		Assert.assertTrue(storage.isDirectory());
 		Assert.assertTrue(storage.canRead());

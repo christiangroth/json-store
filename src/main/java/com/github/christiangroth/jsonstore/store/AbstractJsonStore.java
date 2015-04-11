@@ -21,7 +21,7 @@ import flexjson.JSONSerializer;
  * Represents a JSON store for a concrete class. Access is provided using delegate methods to Java built in stream API. You may use flexjson
  * annotations to control conversion from/to JSON.
  * 
- * @author cgroth
+ * @author Christian Groth
  * @param <T>
  *            concrete type stored in this instance
  */

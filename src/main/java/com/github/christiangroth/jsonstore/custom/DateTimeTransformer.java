@@ -14,7 +14,7 @@ import flexjson.transformer.AbstractTransformer;
 /**
  * Custom transformer and object factory to handle instances {@link LocalDateTime} during JSON serialization and deserialization.
  * 
- * @author Chris
+ * @author Christian Groth
  */
 public class DateTimeTransformer extends AbstractTransformer implements ObjectFactory {
 	

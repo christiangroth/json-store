@@ -8,6 +8,7 @@ Release Notes
 - refactored package structure, com.github.christiangroth.jsonstore.JsonStore moved to com.github.christiangroth.jsonstore.store subpackage
 - added com.github.christiangroth.jsonstore.store.JsonSingletonStore to provide storage for single object only
 - fixed NullPointerException during initialization of transient JsonStores
+- switched to builder pattern to create JsonStores instance, use JsonStores.builder() to get started
 
 0.2.0
 -----

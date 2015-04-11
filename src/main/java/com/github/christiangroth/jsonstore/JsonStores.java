@@ -40,46 +40,53 @@ public class JsonStores {
 	private final boolean autoSave;
 	
 	/**
-	 * Creates transient JSON stores.
+	 * Builder class to control creation of {@link JsonStores}.
+	 * 
+	 * @author Christian Groth
 	 */
-	public JsonStores() {
-		this(null, false, false);
+	public static class JsonStoresBuilder {
+		
+		private File storage;
+		private boolean prettyPrint;
+		private boolean autoSave;
+		
+		/**
+		 * Configures persistent JSON storage with given base directory, pretty-print mode and auto-save mode.
+		 * 
+		 * @param storage
+		 *            base storage directory
+		 * @param prettyPrint
+		 *            pretty-print mode
+		 * @param autoSave
+		 *            auto-save mode
+		 */
+		public JsonStoresBuilder storage(File storage, boolean prettyPrint, boolean autoSave) {
+			this.storage = storage;
+			this.prettyPrint = prettyPrint;
+			this.autoSave = autoSave;
+			return this;
+		}
+		
+		/**
+		 * Creates the {@link JsonStores} instance.
+		 * 
+		 * @return stores instance
+		 */
+		public JsonStores build() {
+			return new JsonStores(storage, prettyPrint, autoSave);
+		}
 	}
 	
 	/**
-	 * Creates persistent JSON stores with given base directory and using auto-save mode. Will also invoke {@link #load()}.
+	 * Creates a new builder instance.
 	 * 
-	 * @param storage
-	 *            base storage directory
+	 * @return stores builder
 	 */
-	public JsonStores(File storage) {
-		this(storage, true);
+	public static JsonStoresBuilder builder() {
+		return new JsonStoresBuilder();
 	}
 	
-	/**
-	 * Creates persistent JSON stores with given base directory and auto-save mode. Will invoke {@link #load()} if auto-save mode is used.
-	 * 
-	 * @param storage
-	 *            base storage directory
-	 * @param autoSave
-	 *            auto-save mode
-	 */
-	public JsonStores(File storage, boolean autoSave) {
-		this(storage, false, autoSave);
-	}
-	
-	/**
-	 * Creates persistent JSON stores with given base directory, pretty-print mode and auto-save mode. Will invoke {@link #load()} if
-	 * auto-save mode is used.
-	 * 
-	 * @param storage
-	 *            base storage directory
-	 * @param prettyPrint
-	 *            pretty-print mode
-	 * @param autoSave
-	 *            auto-save mode
-	 */
-	public JsonStores(File storage, boolean prettyPrint, boolean autoSave) {
+	private JsonStores(File storage, boolean prettyPrint, boolean autoSave) {
 		
 		// init state
 		stores = new HashMap<>();
@@ -297,7 +304,7 @@ public class JsonStores {
 		}
 	}
 	
-	private boolean isPersistent() {
+	public boolean isPersistent() {
 		return storage != null;
 	}
 }

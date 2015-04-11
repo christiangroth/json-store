@@ -1,5 +1,6 @@
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.github.christiangroth/json-store/badge.svg)](http://search.maven.org/#artifactdetails|com.github.christiangroth|json-store)
-[![Build Status](https://secure.travis-ci.org/christiangroth/json-store.svg)](http://travis-ci.org/christiangroth/json-store)
+Stable: [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.github.christiangroth/json-store/badge.svg)](http://search.maven.org/#artifactdetails|com.github.christiangroth|json-store)
+
+Development: [![Build Status](https://secure.travis-ci.org/christiangroth/json-store.svg)](http://travis-ci.org/christiangroth/json-store)
 [![Coverage Status](https://coveralls.io/repos/christiangroth/json-store/badge.svg?branch=develop)](https://coveralls.io/r/christiangroth/json-store?branch=develop)
 [![Dependency Status](https://www.versioneye.com/user/projects/551efcaf971f7847ca0003e2/badge.svg?style=flat)](https://www.versioneye.com/user/projects/551efcaf971f7847ca0003e2)
 
@@ -20,10 +21,13 @@ Usage
 Configure JSON stores:
 	
 	// transient mode
-	JsonStores stores = new JsonStores();
+	JsonStores stores = JsonStores.builder().build();
 	
 	// persistent mode
-	stores = new JsonStores(new File("..."));
+	File storageDir = new File("path/to/some/directory/that/must/not/exist");
+	boolean prettyPrint = true;
+	boolean autoSave = true;
+	JsonStores stores = JsonStores.builder().storage(storageDir, prettyPrint, autoSave).build();
 
 Storing single objects:
 

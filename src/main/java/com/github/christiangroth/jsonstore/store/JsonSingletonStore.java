@@ -9,7 +9,7 @@ import flexjson.JSONSerializer;
  * Represents a JSON store for a concrete class holding none or one instance. You may use flexjson annotations to control conversion from/to
  * JSON.
  * 
- * @author cgroth
+ * @author Christian Groth
  * @param <T>
  *            concrete type stored in this instance
  */
