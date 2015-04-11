@@ -1,8 +1,8 @@
-Stable: [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.github.christiangroth/json-store/badge.svg)](http://search.maven.org/#artifactdetails|com.github.christiangroth|json-store)
-
 Development: [![Build Status](https://secure.travis-ci.org/christiangroth/json-store.svg)](http://travis-ci.org/christiangroth/json-store)
 [![Coverage Status](https://coveralls.io/repos/christiangroth/json-store/badge.svg?branch=develop)](https://coveralls.io/r/christiangroth/json-store?branch=develop)
 [![Dependency Status](https://www.versioneye.com/user/projects/551efcaf971f7847ca0003e2/badge.svg?style=flat)](https://www.versioneye.com/user/projects/551efcaf971f7847ca0003e2)
+
+Stable: [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.github.christiangroth/json-store/badge.svg)](http://search.maven.org/#artifactdetails|com.github.christiangroth|json-store)
 
 JSON Store
 =====================

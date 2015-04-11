@@ -22,7 +22,6 @@ import com.github.christiangroth.jsonstore.store.JsonStore;
  * 
  * @author Christian Groth
  */
-// TODO switch to builder pattern
 public class JsonStores {
 	
 	private static final Logger LOG = LoggerFactory.getLogger(JsonStores.class);
