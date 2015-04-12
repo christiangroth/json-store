@@ -1,6 +1,10 @@
 Release Notes
 =====================
 
+0.4.0 (in progress)
+-------------------
+- ...
+
 0.3.0
 -----
 - using copy of data internally when creating streams to avoid ConcurrentModificationException if underlying set is changed during stream handling
