@@ -61,6 +61,7 @@ public class JsonStores {
 		 * 
 		 * @param storage
 		 *            base storage directory
+		 * @return builder
 		 */
 		public JsonStoresBuilder storage(File storage) {
 			this.storage = storage;
@@ -81,6 +82,7 @@ public class JsonStores {
 		 *            pretty-print mode
 		 * @param autoSave
 		 *            auto-save mode
+		 * @return builder
 		 */
 		public JsonStoresBuilder storage(File storage, Charset charset, boolean prettyPrint, boolean autoSave) {
 			this.storage = storage;
