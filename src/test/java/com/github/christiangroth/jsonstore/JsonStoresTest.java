@@ -1,122 +1,214 @@
 package com.github.christiangroth.jsonstore;
 
 import java.io.File;
+import java.nio.charset.StandardCharsets;
+import java.util.UUID;
 
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.github.christiangroth.jsonstore.JsonStore;
-import com.github.christiangroth.jsonstore.JsonStores;
-import com.github.christiangroth.jsonstore.model.TestEntity;
+import com.github.christiangroth.jsonstore.store.JsonSingletonStore;
+import com.github.christiangroth.jsonstore.store.JsonStore;
 import com.google.common.io.Files;
 
 public class JsonStoresTest {
 	
 	private File tempDir;
-	private JsonStores stores;
 	
-	private TestEntity foo;
-	private TestEntity bar;
+	private JsonStores persistentStores;
+	private JsonStores persistentStoresCopy;
+	
+	private JsonStores persistentStoresNoAutoSave;
+	private JsonStores persistentStoresNoAutoSaveCopy;
+	
+	private JsonStores persistentStoresIsoCharset;
+	private JsonStores persistentStoresIsoCharsetCopy;
+	
+	private JsonStores transientStores;
+	private JsonStores transientStoresCopy;
+	
+	private String testData;
 	
 	@Before
 	public void init() {
-		
-		// stores
 		tempDir = Files.createTempDir();
-		stores = new JsonStores(tempDir, true);
 		
-		// data
-		foo = new TestEntity(1, "foo");
-		bar = new TestEntity(2, "bar");
+		persistentStores = JsonStores.builder().storage(tempDir, StandardCharsets.UTF_8, true, true).build();
+		persistentStoresCopy = JsonStores.builder().storage(tempDir, StandardCharsets.UTF_8, false, true).build();
+		
+		persistentStoresNoAutoSave = JsonStores.builder().storage(tempDir, StandardCharsets.UTF_8, true, false).build();
+		persistentStoresNoAutoSaveCopy = JsonStores.builder().storage(tempDir, StandardCharsets.UTF_8, false, false).build();
+		
+		persistentStoresIsoCharset = JsonStores.builder().storage(tempDir, StandardCharsets.ISO_8859_1, true, true).build();
+		persistentStoresIsoCharsetCopy = JsonStores.builder().storage(tempDir, StandardCharsets.ISO_8859_1, false, true).build();
+		
+		transientStores = JsonStores.builder().build();
+		transientStoresCopy = JsonStores.builder().build();
+		
+		testData = "test data";
 	}
 	
 	@Test
-	public void dataLifecycle() {
+	public void storeLifecycle() {
+		assertStoreLifecycle(persistentStores, persistentStoresCopy, false, true, true);
+	}
+	
+	@Test
+	public void storeNoAutoSaveLifecycle() {
+		assertStoreLifecycle(persistentStoresNoAutoSave, persistentStoresNoAutoSaveCopy, false, true, false);
+	}
+	
+	@Test
+	public void storeIsoCharsetLifecycle() {
+		assertStoreLifecycle(persistentStoresIsoCharset, persistentStoresIsoCharsetCopy, false, true, true);
+	}
+	
+	@Test
+	public void transientStoreLifecycle() {
+		assertStoreLifecycle(transientStores, transientStoresCopy, false, false, false);
+	}
+	
+	@Test
+	public void singletonStoreLifecycle() {
+		assertStoreLifecycle(persistentStores, persistentStoresCopy, true, true, true);
+	}
+	
+	@Test
+	public void singletonStoreNoAutoSaveLifecycle() {
+		assertStoreLifecycle(persistentStoresNoAutoSave, persistentStoresNoAutoSaveCopy, true, true, false);
+	}
+	
+	@Test
+	public void singletonStoreIsoCharsetLifecycle() {
+		assertStoreLifecycle(persistentStoresIsoCharset, persistentStoresIsoCharsetCopy, true, true, true);
+	}
+	
+	@Test
+	public void transientSingletonStoreLifecycle() {
+		assertStoreLifecycle(transientStores, transientStoresCopy, true, false, false);
+	}
+	
+	private void assertStoreLifecycle(JsonStores stores, JsonStores storesCopy, boolean isSingleton, boolean isPersistent, boolean isAutoSave) {
 		
-		// no stores present
-		JsonStore<TestEntity> store = stores.resolve(TestEntity.class);
+		// nothing there
+		Class<String> dataClass = String.class;
+		Object store = resolve(stores, isSingleton, dataClass);
+		Assert.assertNull(store);
+		Assert.assertTrue(tempDir.exists());
+		Assert.assertTrue(tempDir.isDirectory());
+		Assert.assertTrue(tempDir.canRead());
+		Assert.assertEquals(0, tempDir.listFiles().length);
+		
+		// ensure
+		store = ensure(stores, isSingleton, dataClass);
+		Assert.assertNotNull(store);
+		Assert.assertEquals(0, tempDir.listFiles().length);
+		store = resolve(stores, isSingleton, dataClass);
+		Assert.assertNotNull(store);
+		
+		// explicit save
+		stores.save();
+		if (isPersistent) {
+			Assert.assertEquals(1, tempDir.listFiles().length);
+			Assert.assertEquals(file(store, isSingleton), tempDir.listFiles()[0]);
+		} else {
+			Assert.assertEquals(0, tempDir.listFiles().length);
+		}
+		
+		// drop
+		Object droppedStore = drop(stores, isSingleton, dataClass);
+		Assert.assertEquals(store, droppedStore);
+		Assert.assertEquals(0, tempDir.listFiles().length);
+		store = resolve(stores, isSingleton, dataClass);
 		Assert.assertNull(store);
 		
-		// store exists, no data
-		store = stores.ensure(TestEntity.class);
-		Assert.assertNotNull(store);
-		Assert.assertTrue(store.isEmpty());
-		Assert.assertTrue(store.copy().isEmpty());
+		// create again with data
+		store = ensure(stores, isSingleton, dataClass);
+		setOrAddData(store, isSingleton);
+		if (isPersistent) {
+			if (isAutoSave) {
+				Assert.assertEquals(1, tempDir.listFiles().length);
+			} else {
+				Assert.assertEquals(0, tempDir.listFiles().length);
+				save(store, isSingleton);
+				Assert.assertEquals(1, tempDir.listFiles().length);
+			}
+		} else {
+			Assert.assertEquals(0, tempDir.listFiles().length);
+			save(store, isSingleton);
+			Assert.assertEquals(0, tempDir.listFiles().length);
+		}
 		
-		// add element
-		store.add(foo);
-		Assert.assertEquals(1, store.size());
-		Assert.assertEquals(1, store.copy().size());
+		// copy still empty
+		Object storeCopy = resolve(storesCopy, isSingleton, dataClass);
+		Assert.assertNull(storeCopy);
 		
-		// add element to copy only
-		store.copy().add(bar);
-		Assert.assertEquals(1, store.size());
-		Assert.assertEquals(1, store.copy().size());
+		// load into stores copy
+		storesCopy.load();
+		storeCopy = resolve(storesCopy, isSingleton, dataClass);
+		if (isPersistent) {
+			Assert.assertNotNull(storeCopy);
+			Assert.assertEquals(file(storeCopy, isSingleton), tempDir.listFiles()[0]);
+			Assert.assertEquals(testData, getData(storeCopy, isSingleton));
+			Assert.assertEquals(1, tempDir.listFiles().length);
+		} else {
+			Assert.assertNull(storeCopy);
+		}
+	}
+	
+	private Object resolve(JsonStores stores, boolean isSingleton, Class<String> dataClass) {
+		return isSingleton ? stores.resolveSingleton(dataClass) : stores.resolve(dataClass);
+	}
+	
+	private Object ensure(JsonStores stores, boolean isSingleton, Class<String> dataClass) {
+		return isSingleton ? stores.ensureSingleton(dataClass) : stores.ensure(dataClass);
+	}
+	
+	private Object drop(JsonStores stores, boolean isSingleton, Class<String> dataClass) {
+		return isSingleton ? stores.dropSingleton(dataClass) : stores.drop(dataClass);
+	}
+	
+	private File file(Object store, boolean isSingleton) {
+		return isSingleton ? ((JsonSingletonStore<?>) store).getFile() : ((JsonStore<?>) store).getFile();
+	}
+	
+	@SuppressWarnings("unchecked")
+	private void setOrAddData(Object store, boolean isSingleton) {
+		if (isSingleton) {
+			((JsonSingletonStore<String>) store).set(testData);
+		} else {
+			((JsonStore<String>) store).add(testData);
+		}
+	}
+	
+	@SuppressWarnings("unchecked")
+	private String getData(Object store, boolean isSingleton) {
+		return isSingleton ? ((JsonSingletonStore<String>) store).get() : ((JsonStore<String>) store).copy().iterator().next();
+	}
+	
+	@SuppressWarnings("unchecked")
+	private void save(Object store, boolean isSingleton) {
+		if (isSingleton) {
+			((JsonSingletonStore<String>) store).save();
+		} else {
+			((JsonStore<String>) store).save();
+		}
 	}
 	
 	@Test
-	public void jsonLifecycle() {
+	public void nonExistentStorage() {
 		
-		// add data
-		JsonStore<TestEntity> store = stores.ensure(TestEntity.class);
-		store.add(foo);
+		// create stores with non existent storage directory
+		String subdir = UUID.randomUUID().toString();
+		File storage = new File(tempDir, subdir);
+		Assert.assertFalse(storage.exists());
 		
-		// export
-		String json = store.toJson();
-		Assert.assertNotNull(json);
-		
-		// create new store and import data
-		stores.drop(TestEntity.class);
-		JsonStore<TestEntity> newStore = stores.ensure(TestEntity.class);
-		newStore.fromJson(json);
-		Assert.assertEquals(1, newStore.size());
-		
-		// assert data
-		TestEntity importedEnity = newStore.copy().iterator().next();
-		Assert.assertEquals(1, importedEnity.getId());
-		Assert.assertEquals("foo", importedEnity.getData());
-	}
-	
-	@Test
-	public void fileLifecycle() {
-		
-		// empty store
-		JsonStore<TestEntity> store = stores.ensure(TestEntity.class);
-		Assert.assertNotNull(store);
-		
-		// add data
-		store.add(foo);
-		store.add(bar);
-		
-		// load from file into fresh instance
-		stores = new JsonStores(tempDir, true);
-		
-		// assert old data
-		store = stores.resolve(TestEntity.class);
-		Assert.assertNotNull(store);
-		Assert.assertEquals(2, store.size());
-	}
-	
-	@Test
-	public void fileDrop() {
-		
-		// empty store
-		JsonStore<TestEntity> store = stores.ensure(TestEntity.class);
-		Assert.assertNotNull(store);
-		
-		// add data
-		store.add(foo);
-		store.add(bar);
-		
-		// drop store
-		stores.drop(TestEntity.class);
-		
-		// load from file into fresh instance
-		stores = new JsonStores(tempDir, true);
-		
-		// assert old data
-		store = stores.resolve(TestEntity.class);
-		Assert.assertNull(store);
+		// check empty storage created on startup
+		JsonStores.builder().storage(storage).build();
+		Assert.assertTrue(storage.exists());
+		Assert.assertTrue(storage.isDirectory());
+		Assert.assertTrue(storage.canRead());
+		Assert.assertEquals(0, storage.listFiles().length);
 	}
 }
