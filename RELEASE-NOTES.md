@@ -1,8 +1,8 @@
 Release Notes
 =====================
 
-0.3.0 (in progress)
--------------------
+0.3.0
+-----
 - using copy of data internally when creating streams to avoid ConcurrentModificationException if underlying set is changed during stream handling
 - added support for Java 8 Time API. Beneath java.util.date you may also use java.time.LocalDateTime in JSON entities
 - refactored package structure, com.github.christiangroth.jsonstore.JsonStore moved to com.github.christiangroth.jsonstore.store subpackage

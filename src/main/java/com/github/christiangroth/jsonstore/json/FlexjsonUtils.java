@@ -39,6 +39,8 @@ public final class FlexjsonUtils {
 	 * @param dataClass
 	 *            data class to be deserialized.
 	 * @return deserializer
+	 * @param <T>
+	 *            data class
 	 */
 	public static <T> JSONDeserializer<T> deserializer(Class<T> dataClass) {
 		return new JSONDeserializer<T>().use(Date.class, DATE_TRANSFORMER).use(LocalDateTime.class, DATE_TIME_TRANSFORMER);
