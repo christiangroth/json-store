@@ -4,6 +4,8 @@ Release Notes
 0.4.0 (in progress)
 -------------------
 - made date time pattern configurable
+- refactored package structure from com.github.christiangroth to de.chrgroth
+- changed maven group id from com.github.christiangroth to de.chrgroth.json-store
 - ...
 
 0.3.0

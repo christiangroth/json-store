@@ -1,4 +1,4 @@
-package com.github.christiangroth.jsonstore.json.model;
+package de.chrgroth.jsonstore.json.model;
 
 import java.time.LocalDateTime;
 import java.util.Date;

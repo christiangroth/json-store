@@ -1,10 +1,9 @@
-package com.github.christiangroth.jsonstore.json;
+package de.chrgroth.jsonstore.json;
 
 import java.time.LocalDateTime;
 import java.util.Date;
 
-import com.github.christiangroth.jsonstore.json.custom.DateTimeTransformer;
-
+import de.chrgroth.jsonstore.json.custom.DateTimeTransformer;
 import flexjson.JSONDeserializer;
 import flexjson.JSONSerializer;
 import flexjson.transformer.DateTransformer;

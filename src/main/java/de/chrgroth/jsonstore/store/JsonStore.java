@@ -1,4 +1,4 @@
-package com.github.christiangroth.jsonstore.store;
+package de.chrgroth.jsonstore.store;
 
 import java.io.File;
 import java.nio.charset.Charset;

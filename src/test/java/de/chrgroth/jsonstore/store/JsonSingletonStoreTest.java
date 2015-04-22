@@ -1,4 +1,4 @@
-package com.github.christiangroth.jsonstore.store;
+package de.chrgroth.jsonstore.store;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;
@@ -7,8 +7,10 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.github.christiangroth.jsonstore.json.FlexjsonHelperTest;
 import com.google.common.io.Files;
+
+import de.chrgroth.jsonstore.json.FlexjsonHelperTest;
+import de.chrgroth.jsonstore.store.JsonSingletonStore;
 
 public class JsonSingletonStoreTest {
 	

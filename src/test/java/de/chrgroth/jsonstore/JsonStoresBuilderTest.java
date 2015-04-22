@@ -1,4 +1,4 @@
-package com.github.christiangroth.jsonstore;
+package de.chrgroth.jsonstore;
 
 import java.io.File;
 
@@ -7,6 +7,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.google.common.io.Files;
+
+import de.chrgroth.jsonstore.JsonStores;
 
 public class JsonStoresBuilderTest {
 	

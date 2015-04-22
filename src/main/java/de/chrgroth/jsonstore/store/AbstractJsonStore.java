@@ -1,4 +1,4 @@
-package com.github.christiangroth.jsonstore.store;
+package de.chrgroth.jsonstore.store;
 
 import java.io.File;
 import java.io.IOException;
@@ -11,8 +11,7 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.github.christiangroth.jsonstore.json.FlexjsonHelper;
-
+import de.chrgroth.jsonstore.json.FlexjsonHelper;
 import flexjson.JSONDeserializer;
 import flexjson.JSONSerializer;
 

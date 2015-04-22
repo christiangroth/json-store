@@ -1,4 +1,4 @@
-package com.github.christiangroth.jsonstore;
+package de.chrgroth.jsonstore;
 
 import java.io.File;
 import java.io.IOException;
@@ -15,8 +15,8 @@ import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.github.christiangroth.jsonstore.store.JsonSingletonStore;
-import com.github.christiangroth.jsonstore.store.JsonStore;
+import de.chrgroth.jsonstore.store.JsonSingletonStore;
+import de.chrgroth.jsonstore.store.JsonStore;
 
 /**
  * Central API class to create JSON stores. Stores are maintained per class using {@link #resolve(Class)}, {@link #ensure(Class)} and
