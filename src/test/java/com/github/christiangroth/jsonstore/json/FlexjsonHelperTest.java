@@ -9,14 +9,17 @@ import org.junit.Test;
 
 import com.github.christiangroth.jsonstore.json.model.DateTestEntity;
 
-public class FlexjsonUtilsTest {
+public class FlexjsonHelperTest {
+	public static final String DATE_TIME_PATTERN = "HH:mm:ss.SSS dd.MM.yyyy";
 	
+	private FlexjsonHelper flexjsonHelper;
 	private DateTestEntity entity;
 	private Date date;
 	private LocalDateTime localDateTime;
 	
 	@Before
 	public void init() {
+		flexjsonHelper = new FlexjsonHelper(DATE_TIME_PATTERN);
 		entity = new DateTestEntity();
 		date = new Date();
 		entity.setDate(date);
@@ -28,8 +31,8 @@ public class FlexjsonUtilsTest {
 	public void jsonLifecycle() {
 		
 		// JSON roundtrip
-		String json = FlexjsonUtils.serializer(false).serialize(entity);
-		DateTestEntity deserialized = FlexjsonUtils.deserializer(DateTestEntity.class).deserialize(json);
+		String json = flexjsonHelper.serializer(false).serialize(entity);
+		DateTestEntity deserialized = flexjsonHelper.deserializer(DateTestEntity.class).deserialize(json);
 		
 		// assert data
 		Assert.assertNotNull(deserialized);
@@ -47,8 +50,8 @@ public class FlexjsonUtilsTest {
 		entity.setDateTime(null);
 		
 		// JSON roundtrip
-		String json = FlexjsonUtils.serializer(false).serialize(entity);
-		DateTestEntity deserialized = FlexjsonUtils.deserializer(DateTestEntity.class).deserialize(json);
+		String json = flexjsonHelper.serializer(false).serialize(entity);
+		DateTestEntity deserialized = flexjsonHelper.deserializer(DateTestEntity.class).deserialize(json);
 		
 		// assert data
 		Assert.assertNotNull(deserialized);

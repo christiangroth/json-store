@@ -3,6 +3,7 @@ Release Notes
 
 0.4.0 (in progress)
 -------------------
+- made date time pattern configurable
 - ...
 
 0.3.0

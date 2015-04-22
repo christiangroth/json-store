@@ -25,6 +25,8 @@ public class JsonSingletonStore<T> extends AbstractJsonStore<T> {
 	 * 
 	 * @param dataClass
 	 *            type of objects to be stored
+	 * @param dateTimePattern
+	 *            date time pattern
 	 * @param storage
 	 *            global storage path
 	 * @param charset
@@ -34,8 +36,8 @@ public class JsonSingletonStore<T> extends AbstractJsonStore<T> {
 	 * @param autoSave
 	 *            auto-save mode
 	 */
-	public JsonSingletonStore(Class<T> dataClass, File storage, Charset charset, boolean prettyPrint, boolean autoSave) {
-		super(dataClass, storage, charset, FILE_SINGLETON + FILE_SEPARATOR, prettyPrint, autoSave);
+	public JsonSingletonStore(Class<T> dataClass, String dateTimePattern, File storage, Charset charset, boolean prettyPrint, boolean autoSave) {
+		super(dataClass, dateTimePattern, storage, charset, FILE_SINGLETON + FILE_SEPARATOR, prettyPrint, autoSave);
 	}
 	
 	/**

@@ -1,4 +1,4 @@
-package com.github.christiangroth.jsonstore.custom;
+package com.github.christiangroth.jsonstore.json.custom;
 
 import java.lang.reflect.Type;
 import java.time.LocalDateTime;
