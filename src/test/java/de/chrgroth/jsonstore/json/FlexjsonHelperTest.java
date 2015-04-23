@@ -7,9 +7,9 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import de.chrgroth.jsonstore.json.FlexjsonHelper;
 import de.chrgroth.jsonstore.json.model.DateTestEntity;
 
+// TODO create test to check different data settings: list, set, map
 public class FlexjsonHelperTest {
 	public static final String DATE_TIME_PATTERN = "HH:mm:ss.SSS dd.MM.yyyy";
 	

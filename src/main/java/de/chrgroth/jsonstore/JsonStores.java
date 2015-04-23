@@ -25,6 +25,7 @@ import de.chrgroth.jsonstore.store.JsonStore;
  * 
  * @author Christian Groth
  */
+// TODO make JSON framework configurable?
 public class JsonStores {
 	
 	private static final Logger LOG = LoggerFactory.getLogger(JsonStores.class);
