@@ -1,6 +1,10 @@
 Release Notes
 =====================
 
+0.5.0 (in progress)
+-------------------
+- ...
+
 0.4.0
 -----
 - made date time pattern configurable
