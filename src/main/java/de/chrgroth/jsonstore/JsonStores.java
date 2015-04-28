@@ -1,4 +1,4 @@
-package com.github.christiangroth.jsonstore;
+package de.chrgroth.jsonstore;
 
 import java.io.File;
 import java.io.IOException;
@@ -6,6 +6,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -14,8 +15,8 @@ import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.github.christiangroth.jsonstore.store.JsonSingletonStore;
-import com.github.christiangroth.jsonstore.store.JsonStore;
+import de.chrgroth.jsonstore.store.JsonSingletonStore;
+import de.chrgroth.jsonstore.store.JsonStore;
 
 /**
  * Central API class to create JSON stores. Stores are maintained per class using {@link #resolve(Class)}, {@link #ensure(Class)} and
@@ -24,6 +25,7 @@ import com.github.christiangroth.jsonstore.store.JsonStore;
  * 
  * @author Christian Groth
  */
+// TODO make JSON framework configurable?
 public class JsonStores {
 	
 	private static final Logger LOG = LoggerFactory.getLogger(JsonStores.class);
@@ -34,6 +36,7 @@ public class JsonStores {
 	private static final String SINGLETON_STORE_FILENAME_REGEX = "storage\\.singleton\\.(.+)\\.json";
 	private static final Pattern SINGLETON_STORE_FILENAME_PATTERN = Pattern.compile(SINGLETON_STORE_FILENAME_REGEX);
 	
+	private String dateTimePattern;
 	private final Map<Class<?>, JsonStore<?>> stores;
 	private final Map<Class<?>, JsonSingletonStore<?>> singletonStores;
 	private final File storage;
@@ -48,12 +51,30 @@ public class JsonStores {
 	 */
 	public static class JsonStoresBuilder {
 		
+		private static final String DEFAULT_DATE_TIME_PATTERN = "HH:mm:ss.SSS dd.MM.yyyy";
 		private static final Charset DEFAULT_CHARSET = StandardCharsets.UTF_8;
 		
+		private String dateTimePattern;
 		private File storage;
 		private Charset charset;
 		private boolean prettyPrint;
 		private boolean autoSave;
+		
+		public JsonStoresBuilder() {
+			dateTimePattern = DEFAULT_DATE_TIME_PATTERN;
+		}
+		
+		/**
+		 * Configures given date time pattern for JSON transformation. Take a look at {@link DateTimeFormatter} for concrete syntax.
+		 * 
+		 * @param dateTimePattern
+		 *            date time pattern to be used.
+		 * @return builder
+		 */
+		public JsonStoresBuilder dateTimePattern(String dateTimePattern) {
+			this.dateTimePattern = dateTimePattern;
+			return this;
+		}
 		
 		/**
 		 * Configures persistent JSON storage with given base directory, default UTF-8 charset, pretty-print mode disabled and auto-save
@@ -98,7 +119,7 @@ public class JsonStores {
 		 * @return stores instance
 		 */
 		public JsonStores build() {
-			return new JsonStores(storage, charset, prettyPrint, autoSave);
+			return new JsonStores(dateTimePattern, storage, charset, prettyPrint, autoSave);
 		}
 	}
 	
@@ -111,9 +132,10 @@ public class JsonStores {
 		return new JsonStoresBuilder();
 	}
 	
-	private JsonStores(File storage, Charset charset, boolean prettyPrint, boolean autoSave) {
+	private JsonStores(String dateTimePattern, File storage, Charset charset, boolean prettyPrint, boolean autoSave) {
 		
 		// init state
+		this.dateTimePattern = dateTimePattern;
 		stores = new HashMap<>();
 		singletonStores = new HashMap<>();
 		this.storage = storage == null ? null : storage.getAbsoluteFile();
@@ -159,7 +181,7 @@ public class JsonStores {
 	}
 	
 	private void create(Class<?> dataClass) {
-		stores.put(dataClass, new JsonStore<>(dataClass, storage, charset, prettyPrint, autoSave));
+		stores.put(dataClass, new JsonStore<>(dataClass, dateTimePattern, storage, charset, prettyPrint, autoSave));
 	}
 	
 	/**
@@ -194,7 +216,7 @@ public class JsonStores {
 	}
 	
 	private void createSingleton(Class<?> dataClass) {
-		singletonStores.put(dataClass, new JsonSingletonStore<>(dataClass, storage, charset, prettyPrint, autoSave));
+		singletonStores.put(dataClass, new JsonSingletonStore<>(dataClass, dateTimePattern, storage, charset, prettyPrint, autoSave));
 	}
 	
 	/**

@@ -1,4 +1,4 @@
-package com.github.christiangroth.jsonstore.store;
+package de.chrgroth.jsonstore.store;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;
@@ -11,6 +11,9 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.google.common.io.Files;
+
+import de.chrgroth.jsonstore.json.FlexjsonHelperTest;
+import de.chrgroth.jsonstore.store.JsonStore;
 
 public class JsonStoreTest {
 	
@@ -27,10 +30,10 @@ public class JsonStoreTest {
 	@Before
 	public void init() {
 		tempDir = Files.createTempDir();
-		persistentStore = new JsonStore<>(String.class, tempDir, StandardCharsets.UTF_8, true, true);
-		persistentStoreCopy = new JsonStore<>(String.class, tempDir, StandardCharsets.UTF_8, true, true);
-		transientStore = new JsonStore<>(String.class, null, null, false, false);
-		transientStoreCopy = new JsonStore<>(String.class, null, null, false, false);
+		persistentStore = new JsonStore<>(String.class, FlexjsonHelperTest.DATE_TIME_PATTERN, tempDir, StandardCharsets.UTF_8, true, true);
+		persistentStoreCopy = new JsonStore<>(String.class, FlexjsonHelperTest.DATE_TIME_PATTERN, tempDir, StandardCharsets.UTF_8, true, true);
+		transientStore = new JsonStore<>(String.class, FlexjsonHelperTest.DATE_TIME_PATTERN, null, null, false, false);
+		transientStoreCopy = new JsonStore<>(String.class, FlexjsonHelperTest.DATE_TIME_PATTERN, null, null, false, false);
 		testDataOne = "test data foo";
 		testDataTwo = "test data bar";
 		testData = Arrays.asList(testDataOne, testDataTwo);

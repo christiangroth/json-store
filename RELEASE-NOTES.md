@@ -1,6 +1,13 @@
 Release Notes
 =====================
 
+0.4.0
+-----
+- made date time pattern configurable
+- refactored package structure from com.github.christiangroth to de.chrgroth
+- changed maven group id from com.github.christiangroth to de.chrgroth.json-store
+- including java debug information
+
 0.3.0
 -----
 - using copy of data internally when creating streams to avoid ConcurrentModificationException if underlying set is changed during stream handling

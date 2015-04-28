@@ -1,4 +1,4 @@
-package com.github.christiangroth.jsonstore.store;
+package de.chrgroth.jsonstore.store;
 
 import java.io.File;
 import java.io.IOException;
@@ -11,8 +11,7 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.github.christiangroth.jsonstore.json.FlexjsonUtils;
-
+import de.chrgroth.jsonstore.json.FlexjsonHelper;
 import flexjson.JSONDeserializer;
 import flexjson.JSONSerializer;
 
@@ -31,18 +30,20 @@ public abstract class AbstractJsonStore<T> {
 	public static final String FILE_PREFIX = "storage";
 	public static final String FILE_SUFFIX = "json";
 	
+	protected final FlexjsonHelper flexjsonHelper;
 	protected final Class<T> dataClass;
 	protected final File file;
 	protected final Charset charset;
 	protected final boolean prettyPrint;
 	protected final boolean autoSave;
 	
-	protected AbstractJsonStore(Class<T> dataClass, File storage, Charset charset, boolean prettyPrint, boolean autoSave) {
-		this(dataClass, storage, charset, "", prettyPrint, autoSave);
+	protected AbstractJsonStore(Class<T> dataClass, String dateTimePattern, File storage, Charset charset, boolean prettyPrint, boolean autoSave) {
+		this(dataClass, dateTimePattern, storage, charset, "", prettyPrint, autoSave);
 	}
 	
-	protected AbstractJsonStore(Class<T> dataClass, File storage, Charset charset, String fileNameExtraPrefix, boolean prettyPrint, boolean autoSave) {
+	protected AbstractJsonStore(Class<T> dataClass, String dateTimePattern, File storage, Charset charset, String fileNameExtraPrefix, boolean prettyPrint, boolean autoSave) {
 		this.dataClass = dataClass;
+		flexjsonHelper = new FlexjsonHelper(dateTimePattern);
 		this.file = storage != null ? new File(storage, FILE_PREFIX + FILE_SEPARATOR + fileNameExtraPrefix + dataClass.getName() + FILE_SEPARATOR + FILE_SUFFIX) : null;
 		this.charset = charset;
 		this.prettyPrint = prettyPrint;
@@ -116,7 +117,7 @@ public abstract class AbstractJsonStore<T> {
 	 * @return JSON data
 	 */
 	public final String toJson(boolean prettyPrint) {
-		return serialize(FlexjsonUtils.serializer(prettyPrint));
+		return serialize(flexjsonHelper.serializer(prettyPrint));
 	}
 	
 	/**
@@ -170,7 +171,7 @@ public abstract class AbstractJsonStore<T> {
 		// deserialize
 		Object deserialized = null;
 		try {
-			deserialized = deserialize(FlexjsonUtils.deserializer(getDataClass()), json);
+			deserialized = deserialize(flexjsonHelper.deserializer(getDataClass()), json);
 		} catch (Exception e) {
 			LOG.error("Unable to restore from JSON content, skipping file during restore: " + file.getAbsolutePath() + "!!", e);
 		}

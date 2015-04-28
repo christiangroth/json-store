@@ -1,4 +1,4 @@
-package com.github.christiangroth.jsonstore.store;
+package de.chrgroth.jsonstore.store;
 
 import java.io.File;
 import java.nio.charset.Charset;
@@ -30,6 +30,8 @@ public class JsonStore<T> extends AbstractJsonStore<T> {
 	 * 
 	 * @param dataClass
 	 *            type of objects to be stored
+	 * @param dateTimePattern
+	 *            date time pattern
 	 * @param storage
 	 *            global storage path
 	 * @param charset
@@ -39,8 +41,8 @@ public class JsonStore<T> extends AbstractJsonStore<T> {
 	 * @param autoSave
 	 *            auto-save mode
 	 */
-	public JsonStore(Class<T> dataClass, File storage, Charset charset, boolean prettyPrint, boolean autoSave) {
-		super(dataClass, storage, charset, prettyPrint, autoSave);
+	public JsonStore(Class<T> dataClass, String dateTimePattern, File storage, Charset charset, boolean prettyPrint, boolean autoSave) {
+		super(dataClass, dateTimePattern, storage, charset, prettyPrint, autoSave);
 		data = new HashSet<>();
 	}
 	
