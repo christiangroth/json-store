@@ -20,6 +20,8 @@ public class JsonSingletonStore<T> extends AbstractJsonStore<T, T> {
 	 * 
 	 * @param payloadClass
 	 *          type of objects to be stored
+	 * @param payloadTypeVersion
+	 *          version of payload type class
 	 * @param dateTimePattern
 	 *          date time pattern
 	 * @param storage
@@ -31,8 +33,8 @@ public class JsonSingletonStore<T> extends AbstractJsonStore<T, T> {
 	 * @param autoSave
 	 *          auto-save mode
 	 */
-	public JsonSingletonStore(Class<T> payloadClass, String dateTimePattern, File storage, Charset charset, boolean prettyPrint, boolean autoSave) {
-		super(payloadClass, dateTimePattern, storage, charset, FILE_SINGLETON + FILE_SEPARATOR, prettyPrint, autoSave);
+	public JsonSingletonStore(Class<T> payloadClass, Integer payloadTypeVersion, String dateTimePattern, File storage, Charset charset, boolean prettyPrint, boolean autoSave) {
+		super(payloadClass, payloadTypeVersion, true, dateTimePattern, storage, charset, FILE_SINGLETON + FILE_SEPARATOR, prettyPrint, autoSave);
 	}
 	
 	@Override

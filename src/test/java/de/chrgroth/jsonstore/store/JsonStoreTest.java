@@ -29,10 +29,10 @@ public class JsonStoreTest {
 	@Before
 	public void init() {
 		tempDir = Files.createTempDir();
-		persistentStore = new JsonStore<>(String.class, FlexjsonHelperTest.DATE_TIME_PATTERN, tempDir, StandardCharsets.UTF_8, true, true);
-		persistentStoreCopy = new JsonStore<>(String.class, FlexjsonHelperTest.DATE_TIME_PATTERN, tempDir, StandardCharsets.UTF_8, true, true);
-		transientStore = new JsonStore<>(String.class, FlexjsonHelperTest.DATE_TIME_PATTERN, null, null, false, false);
-		transientStoreCopy = new JsonStore<>(String.class, FlexjsonHelperTest.DATE_TIME_PATTERN, null, null, false, false);
+		persistentStore = new JsonStore<>(String.class, null, FlexjsonHelperTest.DATE_TIME_PATTERN, tempDir, StandardCharsets.UTF_8, true, true);
+		persistentStoreCopy = new JsonStore<>(String.class, null, FlexjsonHelperTest.DATE_TIME_PATTERN, tempDir, StandardCharsets.UTF_8, true, true);
+		transientStore = new JsonStore<>(String.class, null, FlexjsonHelperTest.DATE_TIME_PATTERN, null, null, false, false);
+		transientStoreCopy = new JsonStore<>(String.class, null, FlexjsonHelperTest.DATE_TIME_PATTERN, null, null, false, false);
 		testDataOne = "test data foo";
 		testDataTwo = "test data bar";
 		testData = Arrays.asList(testDataOne, testDataTwo);

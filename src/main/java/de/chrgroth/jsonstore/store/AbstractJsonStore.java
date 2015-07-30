@@ -6,6 +6,7 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -23,7 +24,6 @@ import de.chrgroth.jsonstore.json.FlexjsonHelper;
  * @param concrete
  *          type structure used for storage of instances of type T
  */
-// TODO maintain version migration handler
 public abstract class AbstractJsonStore<T, P> {
 	private static final Logger LOG = LoggerFactory.getLogger(AbstractJsonStore.class);
 	
@@ -32,24 +32,25 @@ public abstract class AbstractJsonStore<T, P> {
 	public static final String FILE_SUFFIX = "json";
 	
 	protected final FlexjsonHelper flexjsonHelper;
-	// TODO ensure never null!
-	// TODO maintain created and modified dates
-	// TODO maintain version
 	protected JsonStoreMetadata<T, P> metadata;
 	protected final File file;
 	protected final Charset charset;
 	protected final boolean prettyPrint;
 	protected final boolean autoSave;
 	
-	protected AbstractJsonStore(Class<T> payloadClass, String dateTimePattern, File storage, Charset charset, boolean prettyPrint, boolean autoSave) {
-		this(payloadClass, dateTimePattern, storage, charset, "", prettyPrint, autoSave);
+	protected AbstractJsonStore(Class<T> payloadClass, Integer payloadTypeVersion, boolean singleton, String dateTimePattern, File storage, Charset charset, boolean prettyPrint, boolean autoSave) {
+		this(payloadClass, payloadTypeVersion, singleton, dateTimePattern, storage, charset, "", prettyPrint, autoSave);
 	}
 	
-	protected AbstractJsonStore(Class<T> payloadClass, String dateTimePattern, File storage, Charset charset, String fileNameExtraPrefix, boolean prettyPrint, boolean autoSave) {
+	protected AbstractJsonStore(Class<T> payloadClass, Integer payloadTypeVersion, boolean singleton, String dateTimePattern, File storage, Charset charset, String fileNameExtraPrefix, boolean prettyPrint, boolean autoSave) {
 		flexjsonHelper = new FlexjsonHelper(dateTimePattern);
 		metadata = new JsonStoreMetadata<>();
 		metadata.setPayloadType(payloadClass.getName());
-		// TODO maintain singleton flag!
+		metadata.setPayloadTypeVersion(payloadTypeVersion);
+		metadata.setSingleton(singleton);
+		Date now = new Date();
+		metadata.setCreated(now);
+		metadata.setModified(now);
 		this.file = storage != null ? new File(storage, FILE_PREFIX + FILE_SEPARATOR + fileNameExtraPrefix + payloadClass.getName() + FILE_SEPARATOR + FILE_SUFFIX) : null;
 		this.charset = charset;
 		this.prettyPrint = prettyPrint;
@@ -123,6 +124,11 @@ public abstract class AbstractJsonStore<T, P> {
 	 * @return JSON data
 	 */
 	public final String toJson(boolean prettyPrint) {
+		
+		// update metadata
+		metadata.setModified(new Date());
+		
+		// create json data
 		return flexjsonHelper.serializer(prettyPrint).serialize(metadata);
 	}
 	
@@ -166,17 +172,23 @@ public abstract class AbstractJsonStore<T, P> {
 		return;
 		}
 		
+		// TODO 1. deserialize to generic structure
+		// TODO 2. migrate json files not containing metadata yet
+		// TODO 3. abort on newer version than available as code
+		// TODO 4. run all available version migrators and update metadata accordingly
+		// TODO 5. proceed with deserialization to metadata with correvt version
+		
 		// deserialize
 		try {
-		// TODO preserve all old metadata values but payload
 		metadata = flexjsonHelper.deserializer(JsonStoreMetadata.class).deserialize(json);
 		} catch (Exception e) {
 		LOG.error("Unable to restore from JSON content, skipping file during restore: " + file.getAbsolutePath() + "!!", e);
-		}
+		} finally {
 		
 		// avoid null metadata
 		if (metadata == null) {
-		metadata = new JsonStoreMetadata<>();
+			metadata = new JsonStoreMetadata<>();
+		}
 		}
 		
 		// metadata refresh callback

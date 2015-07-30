@@ -24,6 +24,8 @@ public class JsonStore<T> extends AbstractJsonStore<T, Set<T>> {
 	 * 
 	 * @param payloadClass
 	 *          type of objects to be stored
+	 * @param payloadTypeVersion
+	 *          version of payload type class
 	 * @param dateTimePattern
 	 *          date time pattern
 	 * @param storage
@@ -35,8 +37,8 @@ public class JsonStore<T> extends AbstractJsonStore<T, Set<T>> {
 	 * @param autoSave
 	 *          auto-save mode
 	 */
-	public JsonStore(Class<T> payloadClass, String dateTimePattern, File storage, Charset charset, boolean prettyPrint, boolean autoSave) {
-		super(payloadClass, dateTimePattern, storage, charset, prettyPrint, autoSave);
+	public JsonStore(Class<T> payloadClass, Integer payloadTypeVersion, String dateTimePattern, File storage, Charset charset, boolean prettyPrint, boolean autoSave) {
+		super(payloadClass, payloadTypeVersion, false, dateTimePattern, storage, charset, prettyPrint, autoSave);
 		getMetadata().setPayload(new HashSet<>());
 	}
 	

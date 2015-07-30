@@ -10,7 +10,6 @@ import org.junit.Test;
 import com.google.common.io.Files;
 
 import de.chrgroth.jsonstore.json.FlexjsonHelperTest;
-import de.chrgroth.jsonstore.store.JsonSingletonStore;
 
 public class JsonSingletonStoreTest {
 	
@@ -25,10 +24,10 @@ public class JsonSingletonStoreTest {
 	@Before
 	public void init() {
 		tempDir = Files.createTempDir();
-		persistentStore = new JsonSingletonStore<>(String.class, FlexjsonHelperTest.DATE_TIME_PATTERN, tempDir, StandardCharsets.UTF_8, true, true);
-		persistentStoreCopy = new JsonSingletonStore<>(String.class, FlexjsonHelperTest.DATE_TIME_PATTERN, tempDir, StandardCharsets.UTF_8, true, true);
-		transientStore = new JsonSingletonStore<>(String.class, FlexjsonHelperTest.DATE_TIME_PATTERN, null, null, false, false);
-		transientStoreCopy = new JsonSingletonStore<>(String.class, FlexjsonHelperTest.DATE_TIME_PATTERN, null, null, false, false);
+		persistentStore = new JsonSingletonStore<>(String.class, null, FlexjsonHelperTest.DATE_TIME_PATTERN, tempDir, StandardCharsets.UTF_8, true, true);
+		persistentStoreCopy = new JsonSingletonStore<>(String.class, null, FlexjsonHelperTest.DATE_TIME_PATTERN, tempDir, StandardCharsets.UTF_8, true, true);
+		transientStore = new JsonSingletonStore<>(String.class, null, FlexjsonHelperTest.DATE_TIME_PATTERN, null, null, false, false);
+		transientStoreCopy = new JsonSingletonStore<>(String.class, null, FlexjsonHelperTest.DATE_TIME_PATTERN, null, null, false, false);
 		testDataOne = "test data";
 	}
 	

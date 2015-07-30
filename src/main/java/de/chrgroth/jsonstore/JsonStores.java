@@ -25,7 +25,6 @@ import de.chrgroth.jsonstore.store.JsonStore;
  * 
  * @author Christian Groth
  */
-// TODO make JSON framework configurable?
 public class JsonStores {
 	
 	private static final Logger LOG = LoggerFactory.getLogger(JsonStores.class);
@@ -61,56 +60,56 @@ public class JsonStores {
 		private boolean autoSave;
 		
 		public JsonStoresBuilder() {
-			dateTimePattern = DEFAULT_DATE_TIME_PATTERN;
+		dateTimePattern = DEFAULT_DATE_TIME_PATTERN;
 		}
 		
 		/**
 		 * Configures given date time pattern for JSON transformation. Take a look at {@link DateTimeFormatter} for concrete syntax.
 		 * 
 		 * @param dateTimePattern
-		 *            date time pattern to be used.
+		 *          date time pattern to be used.
 		 * @return builder
 		 */
 		public JsonStoresBuilder dateTimePattern(String dateTimePattern) {
-			this.dateTimePattern = dateTimePattern;
-			return this;
+		this.dateTimePattern = dateTimePattern;
+		return this;
 		}
 		
 		/**
-		 * Configures persistent JSON storage with given base directory, default UTF-8 charset, pretty-print mode disabled and auto-save
-		 * mode enabled.
+		 * Configures persistent JSON storage with given base directory, default UTF-8 charset, pretty-print mode disabled and auto-save mode
+		 * enabled.
 		 * 
 		 * @param storage
-		 *            base storage directory
+		 *          base storage directory
 		 * @return builder
 		 */
 		public JsonStoresBuilder storage(File storage) {
-			this.storage = storage;
-			this.charset = DEFAULT_CHARSET;
-			this.prettyPrint = false;
-			this.autoSave = true;
-			return this;
+		this.storage = storage;
+		this.charset = DEFAULT_CHARSET;
+		this.prettyPrint = false;
+		this.autoSave = true;
+		return this;
 		}
 		
 		/**
 		 * Configures persistent JSON storage with given base directory, charset, pretty-print mode and auto-save mode.
 		 * 
 		 * @param storage
-		 *            base storage directory
+		 *          base storage directory
 		 * @param charset
-		 *            storage charset
+		 *          storage charset
 		 * @param prettyPrint
-		 *            pretty-print mode
+		 *          pretty-print mode
 		 * @param autoSave
-		 *            auto-save mode
+		 *          auto-save mode
 		 * @return builder
 		 */
 		public JsonStoresBuilder storage(File storage, Charset charset, boolean prettyPrint, boolean autoSave) {
-			this.storage = storage;
-			this.charset = charset;
-			this.prettyPrint = prettyPrint;
-			this.autoSave = autoSave;
-			return this;
+		this.storage = storage;
+		this.charset = charset;
+		this.prettyPrint = prettyPrint;
+		this.autoSave = autoSave;
+		return this;
 		}
 		
 		/**
@@ -119,7 +118,7 @@ public class JsonStores {
 		 * @return stores instance
 		 */
 		public JsonStores build() {
-			return new JsonStores(dateTimePattern, storage, charset, prettyPrint, autoSave);
+		return new JsonStores(dateTimePattern, storage, charset, prettyPrint, autoSave);
 		}
 	}
 	
@@ -145,53 +144,72 @@ public class JsonStores {
 		
 		// prepare storage
 		if (isPersistent()) {
-			
-			// check if exists
-			if (!Files.exists(storage.toPath())) {
-				try {
-					LOG.info("creating storage path " + storage.getAbsolutePath());
-					Files.createDirectories(storage.toPath());
-				} catch (IOException e) {
-					LOG.error("Unable to initialize storage path: " + storage.getAbsolutePath() + "!!", e);
-				}
+		
+		// check if exists
+		if (!Files.exists(storage.toPath())) {
+			try {
+				LOG.info("creating storage path " + storage.getAbsolutePath());
+				Files.createDirectories(storage.toPath());
+			} catch (IOException e) {
+				LOG.error("Unable to initialize storage path: " + storage.getAbsolutePath() + "!!", e);
 			}
-			
-			// auto load
-			if (autoSave) {
-				load();
-			}
+		}
+		
+		// auto load
+		if (autoSave) {
+			load();
+		}
 		}
 	}
 	
 	/**
 	 * Ensures existence of JSON store for given class.
 	 * 
-	 * @param dataClass
-	 *            class for JSON store
+	 * @param payloadClass
+	 *          class for JSON store
 	 * @return existing or created JSON store
 	 * @param <T>
-	 *            concrete type of data
+	 *          concrete type of data
+	 * @deprecated When using JSON stores without payload class version it's impossible to use json store payload version update concept if
+	 *             given version number of payload class changes. If you're sure your data structure will never change and lead to unloadable
+	 *             JSON files, you may use a constant version.
 	 */
-	public <T> JsonStore<T> ensure(Class<T> dataClass) {
-		if (!stores.containsKey(dataClass)) {
-			create(dataClass);
-		}
-		
-		return resolve(dataClass);
+	@Deprecated
+	public <T> JsonStore<T> ensure(Class<T> payloadClass) {
+		return ensure(payloadClass, null);
 	}
 	
-	private void create(Class<?> dataClass) {
-		stores.put(dataClass, new JsonStore<>(dataClass, dateTimePattern, storage, charset, prettyPrint, autoSave));
+	/**
+	 * Ensures existence of JSON store for given class.
+	 * 
+	 * @param payloadClass
+	 *          class for JSON store
+	 * @param payloadClassVersion
+	 *          version of payload class
+	 * @return existing or created JSON store
+	 * @param <T>
+	 *          concrete type of data
+	 */
+	public <T> JsonStore<T> ensure(Class<T> payloadClass, Integer payloadClassVersion) {
+		if (!stores.containsKey(payloadClass)) {
+		create(payloadClass, payloadClassVersion);
+		}
+		
+		return resolve(payloadClass);
+	}
+	
+	private void create(Class<?> payloadClass, Integer payloadClassVersion) {
+		stores.put(payloadClass, new JsonStore<>(payloadClass, payloadClassVersion, dateTimePattern, storage, charset, prettyPrint, autoSave));
 	}
 	
 	/**
 	 * Resolves JSON store for given class.
 	 * 
 	 * @param dataClass
-	 *            class for JSON store
+	 *          class for JSON store
 	 * @return existing JSON store, may be null
 	 * @param <T>
-	 *            concrete type of data
+	 *          concrete type of data
 	 */
 	@SuppressWarnings("unchecked")
 	public <T> JsonStore<T> resolve(Class<T> dataClass) {
@@ -202,31 +220,48 @@ public class JsonStores {
 	 * Ensures existence of JSON singleton store for given class.
 	 * 
 	 * @param dataClass
-	 *            class for JSON store
+	 *          class for JSON store
 	 * @return existing or created JSON singleton store
 	 * @param <T>
-	 *            concrete type of data
+	 *          concrete type of data
+	 * @deprecated When using JSON stores without payload class version it's impossible to use json store payload version update concept if
+	 *             given version number of payload class changes. If you're sure your data structure will never change and lead to unloadable
+	 *             JSON files, you may use a constant version.
 	 */
+	@Deprecated
 	public <T> JsonSingletonStore<T> ensureSingleton(Class<T> dataClass) {
+		return ensureSingleton(dataClass, null);
+	}
+	
+	/**
+	 * Ensures existence of JSON singleton store for given class.
+	 * 
+	 * @param dataClass
+	 *          class for JSON store
+	 * @return existing or created JSON singleton store
+	 * @param <T>
+	 *          concrete type of data
+	 */
+	public <T> JsonSingletonStore<T> ensureSingleton(Class<T> dataClass, Integer payloadClassVersion) {
 		if (!singletonStores.containsKey(dataClass)) {
-			createSingleton(dataClass);
+		createSingleton(dataClass, payloadClassVersion);
 		}
 		
 		return resolveSingleton(dataClass);
 	}
 	
-	private void createSingleton(Class<?> dataClass) {
-		singletonStores.put(dataClass, new JsonSingletonStore<>(dataClass, dateTimePattern, storage, charset, prettyPrint, autoSave));
+	private void createSingleton(Class<?> payloadClass, Integer payloadClassVersion) {
+		singletonStores.put(payloadClass, new JsonSingletonStore<>(payloadClass, payloadClassVersion, dateTimePattern, storage, charset, prettyPrint, autoSave));
 	}
 	
 	/**
 	 * Resolves JSON singleton store for given class.
 	 * 
 	 * @param dataClass
-	 *            class for JSON store
+	 *          class for JSON store
 	 * @return existing JSON singleton store, may be null
 	 * @param <T>
-	 *            concrete type of data
+	 *          concrete type of data
 	 */
 	@SuppressWarnings("unchecked")
 	public <T> JsonSingletonStore<T> resolveSingleton(Class<T> dataClass) {
@@ -237,10 +272,10 @@ public class JsonStores {
 	 * Drops JSON store for given class, is existent. Results in calling {@link JsonStore#drop()} if using auto-save mode and store exists.
 	 * 
 	 * @param dataClass
-	 *            class for JSON store
+	 *          class for JSON store
 	 * @return dropped JSON store
 	 * @param <T>
-	 *            concrete type of data
+	 *          concrete type of data
 	 */
 	@SuppressWarnings("unchecked")
 	public <T> JsonStore<T> drop(Class<T> dataClass) {
@@ -248,9 +283,9 @@ public class JsonStores {
 		// drop in memory
 		JsonStore<T> store = (JsonStore<T>) stores.remove(dataClass);
 		if (store != null && isPersistent()) {
-			
-			// remove file
-			store.drop();
+		
+		// remove file
+		store.drop();
 		}
 		
 		// done
@@ -262,10 +297,10 @@ public class JsonStores {
 	 * and store exists.
 	 * 
 	 * @param dataClass
-	 *            class for JSON store
+	 *          class for JSON store
 	 * @return dropped JSON singleton store
 	 * @param <T>
-	 *            concrete type of data
+	 *          concrete type of data
 	 */
 	@SuppressWarnings("unchecked")
 	public <T> JsonSingletonStore<T> dropSingleton(Class<T> dataClass) {
@@ -273,9 +308,9 @@ public class JsonStores {
 		// drop in memory
 		JsonSingletonStore<T> store = (JsonSingletonStore<T>) singletonStores.remove(dataClass);
 		if (store != null && isPersistent()) {
-			
-			// remove file
-			store.drop();
+		
+		// remove file
+		store.drop();
 		}
 		
 		// done
@@ -289,7 +324,7 @@ public class JsonStores {
 		
 		// abort on transient stores
 		if (!isPersistent()) {
-			return;
+		return;
 		}
 		
 		// delegate to all stores
@@ -304,16 +339,16 @@ public class JsonStores {
 		
 		// abort on transient stores
 		if (!isPersistent()) {
-			return;
+		return;
 		}
 		
 		// walk all files in path
 		try {
-			Files.walk(storage.toPath(), 1)
-					.filter(child -> Files.isReadable(child) && Files.isRegularFile(child)
-							&& (child.getFileName().toFile().getName().matches(STORE_FILENAME_REGEX) || child.getFileName().toFile().getName().matches(SINGLETON_STORE_FILENAME_REGEX))).forEach(storeFile -> loadStore(storeFile));
+		Files.walk(storage.toPath(), 1)
+				.filter(child -> Files.isReadable(child) && Files.isRegularFile(child) && (child.getFileName().toFile().getName().matches(STORE_FILENAME_REGEX) || child.getFileName().toFile().getName().matches(SINGLETON_STORE_FILENAME_REGEX)))
+				.forEach(storeFile -> loadStore(storeFile));
 		} catch (IOException e) {
-			LOG.error("Unable to scan storage path " + storage.getAbsolutePath() + ", skipping data restore!!", e);
+		LOG.error("Unable to scan storage path " + storage.getAbsolutePath() + ", skipping data restore!!", e);
 		}
 	}
 	
@@ -329,26 +364,26 @@ public class JsonStores {
 		Matcher matcher = null;
 		boolean isSingleton = false;
 		if (singletonMatcher.matches()) {
-			matcher = singletonMatcher;
-			isSingleton = true;
+		matcher = singletonMatcher;
+		isSingleton = true;
 		} else if (regularMatcher.matches()) {
-			matcher = regularMatcher;
-			isSingleton = false;
+		matcher = regularMatcher;
+		isSingleton = false;
 		}
 		
 		// load class
 		Class<?> dataClass = null;
 		try {
-			dataClass = Class.forName(matcher.group(1));
-			
-			// ensure store and load data
-			if (!isSingleton) {
-				ensure(dataClass).load();
-			} else {
-				ensureSingleton(dataClass).load();
-			}
+		dataClass = Class.forName(matcher.group(1));
+		
+		// ensure store and load data
+		if (!isSingleton) {
+			ensure(dataClass).load();
+		} else {
+			ensureSingleton(dataClass).load();
+		}
 		} catch (Exception e) {
-			LOG.error("Unable to load data class " + dataClass + ", skipping file during restore: " + file.getAbsolutePath() + "!!", e);
+		LOG.error("Unable to load data class " + dataClass + ", skipping file during restore: " + file.getAbsolutePath() + "!!", e);
 		}
 	}
 	
