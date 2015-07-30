@@ -13,7 +13,6 @@ import org.junit.Test;
 import com.google.common.io.Files;
 
 import de.chrgroth.jsonstore.json.FlexjsonHelperTest;
-import de.chrgroth.jsonstore.store.JsonStore;
 
 public class JsonStoreTest {
 	
@@ -115,7 +114,7 @@ public class JsonStoreTest {
 		
 		// export data
 		store.add(testDataOne);
-		String json = store.toJson();
+		String json = store.toJson(true);
 		Assert.assertNotNull(json);
 		
 		// copy still empty

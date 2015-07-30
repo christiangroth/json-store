@@ -4,14 +4,10 @@ import java.io.File;
 import java.nio.charset.Charset;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
-
-import flexjson.JSONDeserializer;
-import flexjson.JSONSerializer;
 
 /**
  * Represents a JSON store for a concrete class holding zero to many instances. Access is provided using delegate methods to Java built in
@@ -19,31 +15,38 @@ import flexjson.JSONSerializer;
  * 
  * @author Christian Groth
  * @param <T>
- *            concrete type stored in this instance
+ *          concrete type stored in this instance
  */
-public class JsonStore<T> extends AbstractJsonStore<T> {
-	
-	private final Set<T> data;
+public class JsonStore<T> extends AbstractJsonStore<T, Set<T>> {
 	
 	/**
 	 * Creates a new JSON store.
 	 * 
-	 * @param dataClass
-	 *            type of objects to be stored
+	 * @param payloadClass
+	 *          type of objects to be stored
 	 * @param dateTimePattern
-	 *            date time pattern
+	 *          date time pattern
 	 * @param storage
-	 *            global storage path
+	 *          global storage path
 	 * @param charset
-	 *            storage charset
+	 *          storage charset
 	 * @param prettyPrint
-	 *            pretty-print mode
+	 *          pretty-print mode
 	 * @param autoSave
-	 *            auto-save mode
+	 *          auto-save mode
 	 */
-	public JsonStore(Class<T> dataClass, String dateTimePattern, File storage, Charset charset, boolean prettyPrint, boolean autoSave) {
-		super(dataClass, dateTimePattern, storage, charset, prettyPrint, autoSave);
-		data = new HashSet<>();
+	public JsonStore(Class<T> payloadClass, String dateTimePattern, File storage, Charset charset, boolean prettyPrint, boolean autoSave) {
+		super(payloadClass, dateTimePattern, storage, charset, prettyPrint, autoSave);
+		getMetadata().setPayload(new HashSet<>());
+	}
+	
+	@Override
+	protected void metadataRefreshed() {
+		
+		// change payload to set, gets loaded as list by flexjson
+		Set<T> payload = new HashSet<T>();
+		payload.addAll(getMetadata().getPayload());
+		getMetadata().setPayload(payload);
 	}
 	
 	/**
@@ -52,7 +55,7 @@ public class JsonStore<T> extends AbstractJsonStore<T> {
 	 * @return copy of data
 	 */
 	public Set<T> copy() {
-		return new HashSet<>(data);
+		return new HashSet<>(getMetadata().getPayload());
 	}
 	
 	/**
@@ -61,7 +64,7 @@ public class JsonStore<T> extends AbstractJsonStore<T> {
 	 * @return size
 	 */
 	public int size() {
-		return data.size();
+		return getMetadata().getPayload().size();
 	}
 	
 	/**
@@ -70,42 +73,42 @@ public class JsonStore<T> extends AbstractJsonStore<T> {
 	 * @return true if empty, false otherwise
 	 */
 	public boolean isEmpty() {
-		return data.isEmpty();
+		return getMetadata().getPayload().isEmpty();
 	}
 	
 	/**
 	 * Checks if store contains given element.
 	 * 
 	 * @param o
-	 *            object to be checked
+	 *          object to be checked
 	 * @return true if object is contained, false otherwise
 	 */
 	public boolean contains(Object o) {
-		return data.contains(o);
+		return getMetadata().getPayload().contains(o);
 	}
 	
 	/**
 	 * Checks if store contains all objects in given collection.
 	 * 
 	 * @param c
-	 *            collection to be checked
+	 *          collection to be checked
 	 * @return true if all objects are contained, false otherwise
 	 */
 	public boolean containsAll(Collection<?> c) {
-		return data.containsAll(c);
+		return getMetadata().getPayload().containsAll(c);
 	}
 	
 	/**
 	 * Adds given object to store. Will invoke {@link #save()} if using auto-save mode and store was changed.
 	 * 
 	 * @param e
-	 *            object to add
+	 *          object to add
 	 * @return true if store was changed, false otherwise
 	 */
 	public boolean add(T e) {
-		boolean add = data.add(e);
+		boolean add = getMetadata().getPayload().add(e);
 		if (autoSave && add) {
-			save();
+		save();
 		}
 		return add;
 	}
@@ -114,13 +117,13 @@ public class JsonStore<T> extends AbstractJsonStore<T> {
 	 * Adds all objects from given collection to store. Will invoke {@link #save()} if using auto-save mode and store was changed.
 	 * 
 	 * @param c
-	 *            objects to add
+	 *          objects to add
 	 * @return true if store was changed, false otherwise
 	 */
 	public boolean addAll(Collection<? extends T> c) {
-		boolean addAll = data.addAll(c);
+		boolean addAll = getMetadata().getPayload().addAll(c);
 		if (autoSave && addAll) {
-			save();
+		save();
 		}
 		return addAll;
 	}
@@ -129,13 +132,13 @@ public class JsonStore<T> extends AbstractJsonStore<T> {
 	 * Retains elements in given collection.Will invoke {@link #save()} if using auto-save mode and store was changed.
 	 * 
 	 * @param c
-	 *            collection of elements to be retained
+	 *          collection of elements to be retained
 	 * @return true if store was changed, false otherwise
 	 */
 	public boolean retainAll(Collection<?> c) {
-		boolean retainAll = data.retainAll(c);
+		boolean retainAll = getMetadata().getPayload().retainAll(c);
 		if (autoSave && retainAll) {
-			save();
+		save();
 		}
 		return retainAll;
 	}
@@ -144,13 +147,13 @@ public class JsonStore<T> extends AbstractJsonStore<T> {
 	 * Removed the given element from store. Will invoke {@link #save()} if using auto-save mode and store was changed.
 	 * 
 	 * @param t
-	 *            element to be removed
+	 *          element to be removed
 	 * @return true if store was changed, false otherwise
 	 */
 	public boolean remove(T t) {
-		boolean remove = data.remove(t);
+		boolean remove = getMetadata().getPayload().remove(t);
 		if (autoSave) {
-			save();
+		save();
 		}
 		return remove;
 	}
@@ -159,29 +162,28 @@ public class JsonStore<T> extends AbstractJsonStore<T> {
 	 * Removed all elements in given collection from store. Will invoke {@link #save()} if using auto-save mode and store was changed.
 	 * 
 	 * @param c
-	 *            collection with elements to be removed
+	 *          collection with elements to be removed
 	 * @return true if store was changed, false otherwise
 	 */
 	public boolean removeAll(Collection<T> c) {
-		boolean removeAll = data.removeAll(c);
+		boolean removeAll = getMetadata().getPayload().removeAll(c);
 		if (autoSave) {
-			save();
+		save();
 		}
 		return removeAll;
 	}
 	
 	/**
-	 * Removes all elements satisfying given predicate from store. Will invoke {@link #save()} if using auto-save mode and store was
-	 * changed.
+	 * Removes all elements satisfying given predicate from store. Will invoke {@link #save()} if using auto-save mode and store was changed.
 	 * 
 	 * @param filter
-	 *            predicate to be used
+	 *          predicate to be used
 	 * @return true if store was changed, false otherwise
 	 */
 	public boolean removeIf(Predicate<? super T> filter) {
-		boolean removeIf = data.removeIf(filter);
+		boolean removeIf = getMetadata().getPayload().removeIf(filter);
 		if (autoSave) {
-			save();
+		save();
 		}
 		return removeIf;
 	}
@@ -190,9 +192,9 @@ public class JsonStore<T> extends AbstractJsonStore<T> {
 	 * Clears all elements in store. Will invoke {@link #save()} if using auto-save mode.
 	 */
 	public void clear() {
-		data.clear();
+		getMetadata().getPayload().clear();
 		if (autoSave) {
-			save();
+		save();
 		}
 	}
 	
@@ -220,29 +222,9 @@ public class JsonStore<T> extends AbstractJsonStore<T> {
 	 * <b>Attention: Even if using auto-save mode you have to call {@link #save()} yourself!!</b>
 	 * 
 	 * @param action
-	 *            action to be performed on store elements
+	 *          action to be performed on store elements
 	 */
 	public void forEach(Consumer<? super T> action) {
 		copy().forEach(action);
-	}
-	
-	@Override
-	protected String serialize(JSONSerializer serializer) {
-		return serializer.serialize(copy());
-	}
-	
-	@Override
-	protected Object deserialize(JSONDeserializer<?> deserializer, String json) {
-		@SuppressWarnings("unchecked")
-		List<T> deserialized = (List<T>) deserializer.deserialize(json);
-		
-		// add data
-		if (deserialized != null) {
-			data.clear();
-			data.addAll(deserialized);
-		}
-		
-		// done
-		return deserialized;
 	}
 }

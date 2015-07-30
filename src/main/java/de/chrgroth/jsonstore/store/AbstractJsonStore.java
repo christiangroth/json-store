@@ -12,8 +12,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.chrgroth.jsonstore.json.FlexjsonHelper;
-import flexjson.JSONDeserializer;
-import flexjson.JSONSerializer;
 
 /**
  * Represents a JSON store for a concrete class. Access is provided using delegate methods to Java built in stream API. You may use flexjson
@@ -21,9 +19,12 @@ import flexjson.JSONSerializer;
  * 
  * @author Christian Groth
  * @param <T>
- *            concrete type stored in this instance
+ *          concrete type stored in this instance
+ * @param concrete
+ *          type structure used for storage of instances of type T
  */
-public abstract class AbstractJsonStore<T> {
+// TODO maintain version migration handler
+public abstract class AbstractJsonStore<T, P> {
 	private static final Logger LOG = LoggerFactory.getLogger(AbstractJsonStore.class);
 	
 	public static final String FILE_SEPARATOR = ".";
@@ -31,32 +32,37 @@ public abstract class AbstractJsonStore<T> {
 	public static final String FILE_SUFFIX = "json";
 	
 	protected final FlexjsonHelper flexjsonHelper;
-	protected final Class<T> dataClass;
+	// TODO ensure never null!
+	// TODO maintain created and modified dates
+	// TODO maintain version
+	protected JsonStoreMetadata<T, P> metadata;
 	protected final File file;
 	protected final Charset charset;
 	protected final boolean prettyPrint;
 	protected final boolean autoSave;
 	
-	protected AbstractJsonStore(Class<T> dataClass, String dateTimePattern, File storage, Charset charset, boolean prettyPrint, boolean autoSave) {
-		this(dataClass, dateTimePattern, storage, charset, "", prettyPrint, autoSave);
+	protected AbstractJsonStore(Class<T> payloadClass, String dateTimePattern, File storage, Charset charset, boolean prettyPrint, boolean autoSave) {
+		this(payloadClass, dateTimePattern, storage, charset, "", prettyPrint, autoSave);
 	}
 	
-	protected AbstractJsonStore(Class<T> dataClass, String dateTimePattern, File storage, Charset charset, String fileNameExtraPrefix, boolean prettyPrint, boolean autoSave) {
-		this.dataClass = dataClass;
+	protected AbstractJsonStore(Class<T> payloadClass, String dateTimePattern, File storage, Charset charset, String fileNameExtraPrefix, boolean prettyPrint, boolean autoSave) {
 		flexjsonHelper = new FlexjsonHelper(dateTimePattern);
-		this.file = storage != null ? new File(storage, FILE_PREFIX + FILE_SEPARATOR + fileNameExtraPrefix + dataClass.getName() + FILE_SEPARATOR + FILE_SUFFIX) : null;
+		metadata = new JsonStoreMetadata<>();
+		metadata.setPayloadType(payloadClass.getName());
+		// TODO maintain singleton flag!
+		this.file = storage != null ? new File(storage, FILE_PREFIX + FILE_SEPARATOR + fileNameExtraPrefix + payloadClass.getName() + FILE_SEPARATOR + FILE_SUFFIX) : null;
 		this.charset = charset;
 		this.prettyPrint = prettyPrint;
 		this.autoSave = autoSave;
 	}
 	
 	/**
-	 * Returns configured class.
+	 * Returns stores metadata.
 	 * 
-	 * @return type of stored objects
+	 * @return JSON store metadata
 	 */
-	public final Class<T> getDataClass() {
-		return dataClass;
+	public JsonStoreMetadata<T, P> getMetadata() {
+		return metadata;
 	}
 	
 	/**
@@ -84,19 +90,19 @@ public abstract class AbstractJsonStore<T> {
 		
 		// abort on transient stores
 		if (!isPersistent()) {
-			return;
+		return;
 		}
 		
 		// create JSON
-		String json = toJson(prettyPrint);
+		String json = toJson();
 		
 		// write to file
 		try {
-			synchronized (file) {
-				Files.write(file.toPath(), Arrays.asList(json), charset, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE);
-			}
+		synchronized (file) {
+			Files.write(file.toPath(), Arrays.asList(json), charset, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE);
+		}
 		} catch (IOException e) {
-			LOG.error("Unable to write file content, skipping file during store: " + file.getAbsolutePath() + "!!", e);
+		LOG.error("Unable to write file content, skipping file during store: " + file.getAbsolutePath() + "!!", e);
 		}
 	}
 	
@@ -113,21 +119,12 @@ public abstract class AbstractJsonStore<T> {
 	 * Creates a copy of stored data in JSON format with given pretty-print mode.
 	 * 
 	 * @param prettyPrint
-	 *            pretty-print mode
+	 *          pretty-print mode
 	 * @return JSON data
 	 */
 	public final String toJson(boolean prettyPrint) {
-		return serialize(flexjsonHelper.serializer(prettyPrint));
+		return flexjsonHelper.serializer(prettyPrint).serialize(metadata);
 	}
-	
-	/**
-	 * Serializes all stored data to JSON using given serializer.
-	 * 
-	 * @param serializer
-	 *            serializer to be used
-	 * @return JSON data
-	 */
-	protected abstract String serialize(JSONSerializer serializer);
 	
 	/**
 	 * Loads store elements from configure file.
@@ -136,17 +133,17 @@ public abstract class AbstractJsonStore<T> {
 		
 		// abort on transient stores
 		if (!isPersistent()) {
-			return;
+		return;
 		}
 		
 		// load JSON
 		String json = null;
 		try {
-			synchronized (file) {
-				json = Files.lines(file.toPath(), charset).parallel().filter(line -> line != null && !"".equals(line.trim())).map(String::trim).collect(Collectors.joining());
-			}
+		synchronized (file) {
+			json = Files.lines(file.toPath(), charset).parallel().filter(line -> line != null && !"".equals(line.trim())).map(String::trim).collect(Collectors.joining());
+		}
 		} catch (Exception e) {
-			LOG.error("Unable to read file content, skipping file during restore: " + file.getAbsolutePath() + "!!", e);
+		LOG.error("Unable to read file content, skipping file during restore: " + file.getAbsolutePath() + "!!", e);
 		}
 		
 		// recreate data
@@ -157,55 +154,57 @@ public abstract class AbstractJsonStore<T> {
 	 * Creates store elements from given JSON data and replaces all store contents.Will invoke {@link #save()} if using auto-save mode.
 	 * 
 	 * @param json
-	 *            JSON data
+	 *          JSON data
 	 */
 	public final void fromJson(String json) {
 		fromJson(json, true);
 	}
 	
-	private void fromJson(String json, boolean executeSave) {
+	@SuppressWarnings("unchecked")
+	private void fromJson(String json, boolean explicitSave) {
 		if (json == null || "".equals(json.trim())) {
-			return;
+		return;
 		}
 		
 		// deserialize
-		Object deserialized = null;
 		try {
-			deserialized = deserialize(flexjsonHelper.deserializer(getDataClass()), json);
+		// TODO preserve all old metadata values but payload
+		metadata = flexjsonHelper.deserializer(JsonStoreMetadata.class).deserialize(json);
 		} catch (Exception e) {
-			LOG.error("Unable to restore from JSON content, skipping file during restore: " + file.getAbsolutePath() + "!!", e);
+		LOG.error("Unable to restore from JSON content, skipping file during restore: " + file.getAbsolutePath() + "!!", e);
 		}
 		
+		// avoid null metadata
+		if (metadata == null) {
+		metadata = new JsonStoreMetadata<>();
+		}
+		
+		// metadata refresh callback
+		metadataRefreshed();
+		
 		// save
-		if (deserialized != null && executeSave && autoSave) {
-			save();
+		if (metadata != null && explicitSave && autoSave) {
+		save();
 		}
 	}
 	
 	/**
-	 * Deserializes given JSON data to store data. Do not catch any exceptions to due generic handling in this base class.
-	 * 
-	 * @param deserializer
-	 *            deserializer to be used
-	 * @param json
-	 *            JSON data
-	 * @return deserialized data or null if nothing was deserialized. If return value is not null and auto save mode is used, then
-	 *         {@link #save()} will be invoked automatically.
+	 * Gets called after metadata was refreshed on loading new JSON data.
 	 */
-	protected abstract Object deserialize(JSONDeserializer<?> deserializer, String json);
+	protected abstract void metadataRefreshed();
 	
 	/**
 	 * Drops store file explicitly. Transient data in store remains unchanged.
 	 */
 	public final void drop() {
 		if (isPersistent()) {
-			try {
-				synchronized (file) {
-					Files.deleteIfExists(file.toPath());
-				}
-			} catch (IOException e) {
-				LOG.error("Unable to delete persistent JSON store: " + file.getAbsolutePath() + "!!", e);
+		try {
+			synchronized (file) {
+				Files.deleteIfExists(file.toPath());
 			}
+		} catch (IOException e) {
+			LOG.error("Unable to delete persistent JSON store: " + file.getAbsolutePath() + "!!", e);
+		}
 		}
 	}
 }
