@@ -2,17 +2,22 @@ package de.chrgroth.jsonstore.store;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.chrgroth.jsonstore.json.FlexjsonHelper;
+import flexjson.JSONDeserializer;
+import flexjson.JSONTokener;
+import flexjson.ObjectBinder;
 
 /**
  * Represents a JSON store for a concrete class. Access is provided using delegate methods to Java built in stream API. You may use flexjson
@@ -24,6 +29,10 @@ import de.chrgroth.jsonstore.json.FlexjsonHelper;
  * @param concrete
  *          type structure used for storage of instances of type T
  */
+// TODO test migration from non metadata to metadata
+// TODO test migrating versions
+// TODO update docs
+// TODO update release notes
 public abstract class AbstractJsonStore<T, P> {
 	private static final Logger LOG = LoggerFactory.getLogger(AbstractJsonStore.class);
 	
@@ -166,21 +175,57 @@ public abstract class AbstractJsonStore<T, P> {
 		fromJson(json, true);
 	}
 	
+	// TODO define constants
 	@SuppressWarnings("unchecked")
 	private void fromJson(String json, boolean explicitSave) {
+		
+		// null guard
 		if (json == null || "".equals(json.trim())) {
 		return;
 		}
 		
-		// TODO 1. deserialize to generic structure
-		// TODO 2. migrate json files not containing metadata yet
-		// TODO 3. abort on newer version than available as code
-		// TODO 4. run all available version migrators and update metadata accordingly
-		// TODO 5. proceed with deserialization to metadata with correvt version
+		// deserialize to generic structure
+		Map<String, Object> genericStructure = (Map<String, Object>) new JSONTokener(json).nextValue();
+		Object topLevelType = genericStructure.get("class");
+		if (!JsonStoreMetadata.class.getName().equals(topLevelType)) {
 		
-		// deserialize
+		// TODO load data the old way, and wrap to new metadata object
+		throw new IllegalStateException("json data is not wrapped in json store metadata and thus can't be loaded!!");
+		} else {
+		
+		// compare version information
+		Integer topLevelTypeVersion = (Integer) genericStructure.get("payloadTypeVersion");
+		Integer payloadTypeVersion = metadata.getPayloadTypeVersion();
+		if (topLevelTypeVersion != null & payloadTypeVersion != null) {
+			
+			// abort on newer version than available as code
+			if (topLevelTypeVersion > payloadTypeVersion) {
+				// TODO crash somehow
+				throw new IllegalStateException("loaded version is newer than specified version in code: " + topLevelTypeVersion + " > " + payloadTypeVersion + "!!");
+			}
+			
+			// TODO 4. run all available version migrators and update metadata accordingly
+			if (topLevelTypeVersion < payloadTypeVersion) {
+				// rawData.put("class", TestDataParentNewVersion.class.getName()); // FAKED same cluss but different structure in production
+				// environments
+				// rawData.put("id", "CHANGED");
+				// rawData.put("newProperty", "addedValue");
+				// rawData.remove("bools");
+			}
+		}
+		}
+		
+		// proceed with deserialization to metadata with correvt version
 		try {
-		metadata = flexjsonHelper.deserializer(JsonStoreMetadata.class).deserialize(json);
+		// TODO this is a bad hack for the moment!!
+		@SuppressWarnings("rawtypes")
+		JSONDeserializer<JsonStoreMetadata> deserializer = flexjsonHelper.deserializer(JsonStoreMetadata.class);
+		Method method = deserializer.getClass().getDeclaredMethod("createObjectBinder");
+		method.setAccessible(true);
+		ObjectBinder binder = (ObjectBinder) method.invoke(deserializer);
+		
+		// proceed deserialization
+		metadata = (JsonStoreMetadata<T, P>) binder.bind(genericStructure);
 		} catch (Exception e) {
 		LOG.error("Unable to restore from JSON content, skipping file during restore: " + file.getAbsolutePath() + "!!", e);
 		} finally {

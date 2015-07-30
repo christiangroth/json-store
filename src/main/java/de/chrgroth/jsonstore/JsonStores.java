@@ -48,6 +48,7 @@ public class JsonStores {
 	 * 
 	 * @author Christian Groth
 	 */
+	// TODO allow registration of custom type and path factories
 	public static class JsonStoresBuilder {
 		
 		private static final String DEFAULT_DATE_TIME_PATTERN = "HH:mm:ss.SSS dd.MM.yyyy";

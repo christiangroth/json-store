@@ -19,6 +19,7 @@ import flexjson.JSONSerializer;
 import flexjson.JSONTokener;
 import flexjson.ObjectBinder;
 
+// TODO test logic moved to AbstractJsonStore
 public class JSONDeserializerVersioningHookTest {
 	
 	private static final String DATE_TIME_PATTERN = "HH:mm:ss.SSS dd.MM.yyyy";
