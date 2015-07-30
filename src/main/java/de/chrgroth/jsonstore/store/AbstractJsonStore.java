@@ -8,6 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -47,6 +48,7 @@ public abstract class AbstractJsonStore<T, P> {
 	protected final Charset charset;
 	protected final boolean prettyPrint;
 	protected final boolean autoSave;
+	protected final Map<Integer, VersionMigrationHandler> migrationHandlers;
 	
 	protected AbstractJsonStore(Class<T> payloadClass, Integer payloadTypeVersion, boolean singleton, String dateTimePattern, File storage, Charset charset, boolean prettyPrint, boolean autoSave) {
 		this(payloadClass, payloadTypeVersion, singleton, dateTimePattern, storage, charset, "", prettyPrint, autoSave);
@@ -65,6 +67,8 @@ public abstract class AbstractJsonStore<T, P> {
 		this.charset = charset;
 		this.prettyPrint = prettyPrint;
 		this.autoSave = autoSave;
+		// TODO add as parameters
+		this.migrationHandlers = new HashMap<>();
 	}
 	
 	/**
@@ -205,18 +209,30 @@ public abstract class AbstractJsonStore<T, P> {
 				throw new IllegalStateException("loaded version is newer than specified version in code: " + topLevelTypeVersion + " > " + payloadTypeVersion + "!!");
 			}
 			
-			// TODO 4. run all available version migrators and update metadata accordingly
+			// run all available version migrators
 			if (topLevelTypeVersion < payloadTypeVersion) {
-				// rawData.put("class", TestDataParentNewVersion.class.getName()); // FAKED same cluss but different structure in production
-				// environments
-				// rawData.put("id", "CHANGED");
-				// rawData.put("newProperty", "addedValue");
-				// rawData.remove("bools");
+				
+				// update per version
+				for (int i = topLevelTypeVersion; i <= payloadTypeVersion; i++) {
+				
+				// check for migration handler
+				VersionMigrationHandler migrationHandler = migrationHandlers.get(i);
+				if (migrationHandler == null) {
+					continue;
+				}
+				
+				// TODO try-catch-paranoia
+				try {
+					migrationHandler.migrate((Map<String, Object>) genericStructure.get("payload"));
+				} catch (Exception e) {
+					throw new IllegalStateException("faild to migrate " + metadata.getPayloadType() + "from version " + i + " to " + (i + 1) + "!!");
+				}
+				}
 			}
 		}
 		}
 		
-		// proceed with deserialization to metadata with correvt version
+		// proceed with deserialization to metadata using correct version
 		try {
 		// TODO this is a bad hack for the moment!!
 		@SuppressWarnings("rawtypes")
