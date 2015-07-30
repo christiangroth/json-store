@@ -239,6 +239,8 @@ public class JsonStores {
 	 * 
 	 * @param dataClass
 	 *          class for JSON store
+	 * @param payloadClassVersion
+	 *          version of payload class
 	 * @return existing or created JSON singleton store
 	 * @param <T>
 	 *          concrete type of data

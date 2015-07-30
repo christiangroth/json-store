@@ -26,8 +26,9 @@ import flexjson.ObjectBinder;
  * @author Christian Groth
  * @param <T>
  *          concrete type stored in this instance
- * @param concrete
- *          type structure used for storage of instances of type T
+ * @param
+ * 			<P>
+ *          concrete type structure used for storage of instances of type T
  */
 // TODO test migration from non metadata to metadata
 // TODO test migrating versions
