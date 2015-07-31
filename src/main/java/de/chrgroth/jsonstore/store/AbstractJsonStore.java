@@ -198,7 +198,8 @@ public abstract class AbstractJsonStore<T, P> {
 		} else {
 		
 		// compare version information
-		Integer topLevelTypeVersion = ((JsonNumber) genericStructure.get(JSON_FIELD_PAYLOAD_TYPE_VERSION)).toInteger();
+		Object topLevelTypeVersionRaw = genericStructure.get(JSON_FIELD_PAYLOAD_TYPE_VERSION);
+		Integer topLevelTypeVersion = topLevelTypeVersionRaw != null ? ((JsonNumber) topLevelTypeVersionRaw).toInteger() : null;
 		Integer payloadTypeVersion = metadata.getPayloadTypeVersion();
 		if (topLevelTypeVersion != null & payloadTypeVersion != null) {
 			
@@ -210,37 +211,41 @@ public abstract class AbstractJsonStore<T, P> {
 			// run all available version migrators
 			if (topLevelTypeVersion < payloadTypeVersion) {
 				
+				// get payload
+				Object genericStructurePayload = genericStructure.get(JSON_FIELD_PAYLOAD);
+				if (genericStructurePayload != null) {
+				
 				// update per version
 				for (int i = topLevelTypeVersion; i <= payloadTypeVersion; i++) {
-				
-				// check for migration handler
-				VersionMigrationHandler migrationHandler = migrationHandlers.get(i);
-				if (migrationHandler == null) {
-					continue;
-				}
-				
-				// invoke handler per instance, so you don't have to deal with wrapping list by yourself
-				try {
-					Object genericStructurePayload = genericStructure.get(JSON_FIELD_PAYLOAD);
-					if (genericStructurePayload instanceof List<?>) {
+					
+					// check for migration handler
+					VersionMigrationHandler migrationHandler = migrationHandlers.get(i);
+					if (migrationHandler == null) {
+						continue;
+					}
+					
+					// invoke handler per instance, so you don't have to deal with wrapping list by yourself
+					try {
+						if (genericStructurePayload instanceof List<?>) {
 						
 						// might be a non singleton store
 						for (Object genericStructurePayloadItem : (List<Object>) genericStructurePayload) {
-						migrationHandler.migrate((Map<String, Object>) genericStructurePayloadItem);
+							migrationHandler.migrate((Map<String, Object>) genericStructurePayloadItem);
 						}
-					} else {
+						} else {
 						
 						// might be a singleton store
 						migrationHandler.migrate((Map<String, Object>) genericStructurePayload);
+						}
+					} catch (Exception e) {
+						throw new IllegalStateException("faild to migrate " + metadata.getPayloadType() + "from version " + i + " to " + (i + 1) + ": " + e.getMessage() + "!!", e);
 					}
-				} catch (Exception e) {
-					throw new IllegalStateException("faild to migrate " + metadata.getPayloadType() + "from version " + i + " to " + (i + 1) + ": " + e.getMessage() + "!!", e);
-				}
 				}
 				
 				// save migrated data, if auto save is enabled
 				if (autoSave) {
-				save();
+					save();
+				}
 				}
 			}
 		}
