@@ -19,7 +19,7 @@ Requirements
 Creating stores
 ---------------
 
-JSON Store instances are created using static builder invoked via de.chrgroth.jsonstore.JsonStores. You may create transient in-memory only instances or persistent instances saving contents to one file per store in given directory.
+JSON Store instances are created using static builder invoked via de.chrgroth.jsonstore.JsonStores. This central object is responsible for managing all your concrete store instances. You may create transient in-memory only instances or persistent instances saving contents to one file per store in given directory.
 	
 	// transient mode, do not provide any storage options
 	JsonStores stores = JsonStores.builder().build();
@@ -48,6 +48,26 @@ A concrete JSON store instance is created for it's root type and might be a sing
 	// multiple instances store
 	JsonStore<MyEntity> store = stores.ensure(MyEntity.class, dataVersion);
 	store.add(new MyEntity(...));
+
+Define payload classes
+----------------------
+
+Defining payload classes and class hierarchies does not require to implement special interfaces or extend base classes. Just restrict to simple java POJO classes and everything is fine. However to control flexjsons shallow serialization be sure to annotate all non-primite members with @flexjson.JSON to include this data otherwise it won't be recognized.
+
+	public class MyEntity {
+		private int id;
+		private String name;
+		
+		@JSON
+		private Map<String, String> data;
+		
+		@JSON
+		private MyEntity parent;
+		
+		// provide getters and setters
+	}
+
+Also be sure to have an default no-arg contructor in order flexjson may create new instances for deserialization.
 
 Add and remove data
 -------------------
@@ -92,6 +112,8 @@ Let's assume the following simplified code for first version when our project st
 		public static final int VERSION = 1;
 		String id;
 		String name;
+		
+		// provide getters and setters
 	}
 
 	// store creation	
@@ -110,6 +132,8 @@ For next version we might change the entity but still reuse and migrate our exis
 		int id;
 		String name;
 		String description;
+		
+		// provide getters and setters
 	}
 
 	public class MyEntityVersionOneMigration implements VersionMigrationHandler {
@@ -133,6 +157,24 @@ During load of data JSON store will execute all registered migration handlers an
 
 	MyEntity#1 -> id="1", name="first entity", description="Some auto-generated description for first entity"
 	MyEntity#2 -> id="2", name="a second one", description="Some auto-generated description for a second one"
+
+Flexjson configuration
+----------------------
+
+FlexjsonHelper is used to configure JSON serialization and deserialization of payload in JSON stores. To influence configuration of flexjson the JsonStoresBuilder provides some configuration methods. If you want to create and maintain instances of JsonStore and JsonSingletonStore by yourself, you may use FlexjsonHelperBuilder.
+
+You may configure the date/time pattern used to serialize and deserialize instances of types java.util.Date and java.time.LocalDateTime. Please refer to java.time.format.DateTimeFormatter to specify the pattern.
+
+	JsonStores.builder().dateTimePattern("HH:mm:ss.SSS dd.MM.yyyy").build();
+
+You may also provide custom handlers for serialization (transformer) and deserialization (object factory). The abstract ase class de.chrgroth.jsonstore.json.AbstractFlexjsonTypeHandler is used to provide both transformations with one implementation. In case the date timer pattern configured will also be passed to a predefined custom handler of this type. 
+
+You don't need to implement this classes to be able to handle your POJOs in a generic way (see Define payload classes). However if you want to customize JSON serialization and deserialization you may provide your custom handlers using the following methods.
+
+	JsonStores.builder().handler(MyEntity.class, new MyEntityTypeHandler()).build();
+	JsonStores.builder().handler("myEntity.someAttribute", new MyEntityPathBasedTypeHandler()).build();
+
+Please refer to [flexjson][2] documentation for more details about custom type object factories and transformers.
 
 [1]: http://www.oracle.com/technetwork/java/javase/downloads/index.html
 [2]: http://flexjson.sourceforge.net/

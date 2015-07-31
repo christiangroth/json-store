@@ -14,13 +14,12 @@ import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import de.chrgroth.jsonstore.json.AbstractFlexjsonTypeHandler;
 import de.chrgroth.jsonstore.json.FlexjsonHelper;
 import de.chrgroth.jsonstore.json.FlexjsonHelper.FlexjsonHelperBuilder;
 import de.chrgroth.jsonstore.store.JsonSingletonStore;
 import de.chrgroth.jsonstore.store.JsonStore;
 import de.chrgroth.jsonstore.store.VersionMigrationHandler;
-import flexjson.ObjectFactory;
-import flexjson.transformer.Transformer;
 
 /**
  * Central API class to create JSON stores. Stores are maintained per class using {@link #resolve(Class)}, {@link #ensure(Class)} and
@@ -79,58 +78,30 @@ public class JsonStores {
 			}
 			
 			/**
-			 * {@link FlexjsonHelperBuilder#factory(Class, ObjectFactory)}
+			 * {@link FlexjsonHelperBuilder#handler(Class, AbstractFlexjsonTypeHandler)}
 			 * 
 			 * @param type
-			 *            type the factory applies on
-			 * @param factory
-			 *            factory to be applied
+			 *            type the handler applies on
+			 * @param handler
+			 *            handler to be applied
 			 * @return builder
 			 */
-			public JsonStoresBuilder factory(Class<?> type, ObjectFactory factory) {
-				flexjsonHelperBuilder.factory(type, factory);
+			public JsonStoresBuilder factory(Class<?> type, AbstractFlexjsonTypeHandler handler) {
+				flexjsonHelperBuilder.handler(type, handler);
 				return this;
 			}
 			
 			/**
-			 * {@link FlexjsonHelperBuilder#factory(String, ObjectFactory)}
+			 * {@link FlexjsonHelperBuilder#handler(String, AbstractFlexjsonTypeHandler)}
 			 * 
 			 * @param path
-			 *            path the factory applies on
-			 * @param factory
-			 *            factory to be applied
+			 *            path the handler applies on
+			 * @param handler
+			 *            handler to be applied
 			 * @return builder
 			 */
-			public JsonStoresBuilder factory(String path, ObjectFactory factory) {
-				flexjsonHelperBuilder.factory(path, factory);
-				return this;
-			}
-			
-			/**
-			 * {@link FlexjsonHelperBuilder#transformer(Class, Transformer)}
-			 * 
-			 * @param type
-			 *            type the transformer applies on
-			 * @param transformer
-			 *            transformer to be applied
-			 * @return builder
-			 */
-			public JsonStoresBuilder transformer(Class<?> type, Transformer transformer) {
-				flexjsonHelperBuilder.transformer(type, transformer);
-				return this;
-			}
-			
-			/**
-			 * {@link FlexjsonHelperBuilder#transformer(String, Transformer)}
-			 * 
-			 * @param path
-			 *            path the transformer applies on
-			 * @param transformer
-			 *            transformer to be applied
-			 * @return builder
-			 */
-			public JsonStoresBuilder transformer(String path, Transformer transformer) {
-				flexjsonHelperBuilder.transformer(path, transformer);
+			public JsonStoresBuilder factory(String path, AbstractFlexjsonTypeHandler handler) {
+				flexjsonHelperBuilder.handler(path, handler);
 				return this;
 			}
 			

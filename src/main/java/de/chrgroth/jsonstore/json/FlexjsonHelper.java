@@ -7,12 +7,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 import de.chrgroth.jsonstore.JsonStores;
-import de.chrgroth.jsonstore.json.custom.DateTimeTransformer;
+import de.chrgroth.jsonstore.json.custom.DateTimeTypeHandler;
+import de.chrgroth.jsonstore.json.custom.DateTypeHandler;
 import flexjson.JSONDeserializer;
 import flexjson.JSONSerializer;
-import flexjson.ObjectFactory;
-import flexjson.transformer.DateTransformer;
-import flexjson.transformer.Transformer;
 
 /**
  * Helper class encapsulating flexjson configuration.
@@ -33,18 +31,14 @@ public final class FlexjsonHelper {
 			
 			private String dateTimePattern;
 			
-			private final Map<Class<?>, ObjectFactory> factories;
-			private final Map<String, ObjectFactory> pathFactories;
-			private final Map<Class<?>, Transformer> transformers;
-			private final Map<String, Transformer> pathTransformers;
+			private final Map<Class<?>, AbstractFlexjsonTypeHandler> handlers;
+			private final Map<String, AbstractFlexjsonTypeHandler> pathHandlers;
 			
 			public FlexjsonHelperBuilder() {
 				dateTimePattern = DEFAULT_DATE_TIME_PATTERN;
 				
-				factories = new HashMap<>();
-				pathFactories = new HashMap<>();
-				transformers = new HashMap<>();
-				pathTransformers = new HashMap<>();
+				handlers = new HashMap<>();
+				pathHandlers = new HashMap<>();
 			}
 			
 			/**
@@ -60,62 +54,32 @@ public final class FlexjsonHelper {
 			}
 			
 			/**
-			 * Registers a type based factory for JSON deserialization.
+			 * Registers a custom flexjson type handler.
 			 * 
 			 * @param type
-			 *            type the factory applies on
-			 * @param factory
-			 *            factory to be applied
+			 *            type the handler applies on
+			 * @param handler
+			 *            handler to be applied
 			 * @return builder
 			 * @see JSONDeserializer
 			 */
-			public FlexjsonHelperBuilder factory(Class<?> type, ObjectFactory factory) {
-				this.factories.put(type, factory);
+			public FlexjsonHelperBuilder handler(Class<?> type, AbstractFlexjsonTypeHandler handler) {
+				this.handlers.put(type, handler);
 				return this;
 			}
 			
 			/**
-			 * Registers a path based factory for JSON deserialization.
+			 * Registers a path based flexjson type handler.
 			 * 
 			 * @param path
 			 *            path the factory applies on
-			 * @param factory
-			 *            factory to be applied
+			 * @param handler
+			 *            handler to be applied
 			 * @return builder
 			 * @see JSONDeserializer
 			 */
-			public FlexjsonHelperBuilder factory(String path, ObjectFactory factory) {
-				this.pathFactories.put(path, factory);
-				return this;
-			}
-			
-			/**
-			 * Registers a type based transformer for JSON serialization.
-			 * 
-			 * @param type
-			 *            type the transformer applies on
-			 * @param transformer
-			 *            transformer to be applied
-			 * @return builder
-			 * @see JSONDeserializer
-			 */
-			public FlexjsonHelperBuilder transformer(Class<?> type, Transformer transformer) {
-				this.transformers.put(type, transformer);
-				return this;
-			}
-			
-			/**
-			 * Registers a path based transformer for JSON serialization.
-			 * 
-			 * @param path
-			 *            path the transformer applies on
-			 * @param transformer
-			 *            transformer to be applied
-			 * @return builder
-			 * @see JSONDeserializer
-			 */
-			public FlexjsonHelperBuilder transformer(String path, Transformer transformer) {
-				this.pathTransformers.put(path, transformer);
+			public FlexjsonHelperBuilder handler(String path, AbstractFlexjsonTypeHandler handler) {
+				this.pathHandlers.put(path, handler);
 				return this;
 			}
 			
@@ -126,18 +90,14 @@ public final class FlexjsonHelper {
 			 */
 			public FlexjsonHelper build() {
 				
-				// create date transformer and object factory
-				DateTransformer dateTransformer = new DateTransformer(dateTimePattern);
-				factories.put(Date.class, dateTransformer);
-				transformers.put(Date.class, dateTransformer);
-				
-				// create locate date time transformer and object factory
-				DateTimeTransformer dateTimeTransformer = new DateTimeTransformer(dateTimePattern);
-				factories.put(LocalDateTime.class, dateTimeTransformer);
-				transformers.put(LocalDateTime.class, dateTimeTransformer);
+				// create type handlers for date and local date time
+				DateTypeHandler dateTransformer = new DateTypeHandler(dateTimePattern);
+				handlers.put(Date.class, dateTransformer);
+				DateTimeTypeHandler dateTimeTransformer = new DateTimeTypeHandler(dateTimePattern);
+				handlers.put(LocalDateTime.class, dateTimeTransformer);
 				
 				// create flexjson helper
-				return new FlexjsonHelper(factories, pathFactories, transformers, pathTransformers);
+				return new FlexjsonHelper(handlers, pathHandlers);
 			}
 		}
 		
@@ -154,28 +114,28 @@ public final class FlexjsonHelper {
 		private JSONSerializer prettyPrintSerializer;
 		private JSONDeserializer<?> deserializer;
 		
-		private FlexjsonHelper(Map<Class<?>, ObjectFactory> factories, Map<String, ObjectFactory> pathFactories, Map<Class<?>, Transformer> transformers, Map<String, Transformer> pathTransformers) {
+		private FlexjsonHelper(Map<Class<?>, AbstractFlexjsonTypeHandler> handlers, Map<String, AbstractFlexjsonTypeHandler> pathHandlers) {
 			
 			// create serializers
-			serializer = createSerializer(transformers, pathTransformers, false);
-			prettyPrintSerializer = createSerializer(transformers, pathTransformers, true);
+			serializer = createSerializer(handlers, pathHandlers, false);
+			prettyPrintSerializer = createSerializer(handlers, pathHandlers, true);
 			
 			// create deserializers
-			deserializer = createDeserializer(factories, pathFactories);
+			deserializer = createDeserializer(handlers, pathHandlers);
 		}
 		
-		private JSONSerializer createSerializer(Map<Class<?>, Transformer> transformers, Map<String, Transformer> pathTransformers, boolean prettyPrint) {
+		private JSONSerializer createSerializer(Map<Class<?>, AbstractFlexjsonTypeHandler> handlers, Map<String, AbstractFlexjsonTypeHandler> pathHandlers, boolean prettyPrint) {
 			JSONSerializer serializer = new JSONSerializer();
 			serializer.prettyPrint(prettyPrint);
-			transformers.forEach((k, v) -> serializer.transform(v, k));
-			pathTransformers.forEach((k, v) -> serializer.transform(v, k));
+			handlers.forEach((k, v) -> serializer.transform(v, k));
+			pathHandlers.forEach((k, v) -> serializer.transform(v, k));
 			return serializer;
 		}
 		
-		private JSONDeserializer<?> createDeserializer(Map<Class<?>, ObjectFactory> factories, Map<String, ObjectFactory> pathFactories) {
+		private JSONDeserializer<?> createDeserializer(Map<Class<?>, AbstractFlexjsonTypeHandler> handlers, Map<String, AbstractFlexjsonTypeHandler> pathHandlers) {
 			JSONDeserializer<?> deserializer = new JSONDeserializer<>();
-			factories.forEach((k, v) -> deserializer.use(k, v));
-			pathFactories.forEach((k, v) -> deserializer.use(k, v));
+			handlers.forEach((k, v) -> deserializer.use(k, v));
+			pathHandlers.forEach((k, v) -> deserializer.use(k, v));
 			return deserializer;
 		}
 		
