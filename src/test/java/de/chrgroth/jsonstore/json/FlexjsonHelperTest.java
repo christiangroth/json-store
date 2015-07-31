@@ -26,7 +26,7 @@ public class FlexjsonHelperTest {
 		
 		@Before
 		public void init() {
-			flexjsonHelper = new FlexjsonHelper(DATE_TIME_PATTERN);
+			flexjsonHelper = FlexjsonHelper.builder().dateTimePattern(DATE_TIME_PATTERN).build();
 			date = new Date();
 			localDateTime = LocalDateTime.now();
 			entity1 = new DateTestEntity();
@@ -42,7 +42,7 @@ public class FlexjsonHelperTest {
 			
 			// JSON roundtrip
 			String json = flexjsonHelper.serializer(false).serialize(entity1);
-			DateTestEntity deserialized = flexjsonHelper.deserializer(DateTestEntity.class).deserialize(json);
+			DateTestEntity deserialized = (DateTestEntity) flexjsonHelper.deserializer().deserialize(json);
 			
 			// assert data
 			Assert.assertNotNull(deserialized);
@@ -61,7 +61,7 @@ public class FlexjsonHelperTest {
 			
 			// JSON roundtrip
 			String json = flexjsonHelper.serializer(false).serialize(entity1);
-			DateTestEntity deserialized = flexjsonHelper.deserializer(DateTestEntity.class).deserialize(json);
+			DateTestEntity deserialized = (DateTestEntity) flexjsonHelper.deserializer().deserialize(json);
 			
 			// assert data
 			Assert.assertNotNull(deserialized);
@@ -75,7 +75,7 @@ public class FlexjsonHelperTest {
 			// JSON roundtrip
 			Boolean data = Boolean.TRUE;
 			String json = flexjsonHelper.serializer(false).serialize(data);
-			Boolean deserialized = flexjsonHelper.deserializer(Boolean.class).deserialize(json);
+			Boolean deserialized = (Boolean) flexjsonHelper.deserializer().deserialize(json);
 			
 			// assert data
 			Assert.assertNotNull(deserialized);
@@ -89,7 +89,7 @@ public class FlexjsonHelperTest {
 			Character data = new Character('-');
 			String json = flexjsonHelper.serializer(false).serialize(data);
 			// Character is handled as String internally
-			String deserialized = flexjsonHelper.deserializer(String.class).deserialize(json);
+			String deserialized = (String) flexjsonHelper.deserializer().deserialize(json);
 			
 			// assert data
 			Assert.assertNotNull(deserialized);
@@ -103,7 +103,7 @@ public class FlexjsonHelperTest {
 			Integer data = new Integer(13);
 			String json = flexjsonHelper.serializer(false).serialize(data);
 			// integer will be handled as long internally
-			Long deserialized = flexjsonHelper.deserializer(Long.class).deserialize(json);
+			Long deserialized = (Long) flexjsonHelper.deserializer().deserialize(json);
 			
 			// assert data
 			Assert.assertNotNull(deserialized);
@@ -117,7 +117,7 @@ public class FlexjsonHelperTest {
 			Float data = new Float(1.23);
 			String json = flexjsonHelper.serializer(false).serialize(data);
 			// float will be handled as double internally
-			Double deserialized = flexjsonHelper.deserializer(Double.class).deserialize(json);
+			Double deserialized = (Double) flexjsonHelper.deserializer().deserialize(json);
 			
 			// assert data
 			Assert.assertNotNull(deserialized);
@@ -130,7 +130,7 @@ public class FlexjsonHelperTest {
 			// JSON roundtrip
 			Double data = new Double(1.23);
 			String json = flexjsonHelper.serializer(false).serialize(data);
-			Double deserialized = flexjsonHelper.deserializer(Double.class).deserialize(json);
+			Double deserialized = (Double) flexjsonHelper.deserializer().deserialize(json);
 			
 			// assert data
 			Assert.assertNotNull(deserialized);
@@ -143,7 +143,7 @@ public class FlexjsonHelperTest {
 			// JSON roundtrip
 			String data = "foo-bar";
 			String json = flexjsonHelper.serializer(false).serialize(data);
-			String deserialized = flexjsonHelper.deserializer(String.class).deserialize(json);
+			String deserialized = (String) flexjsonHelper.deserializer().deserialize(json);
 			
 			// assert data
 			Assert.assertNotNull(deserialized);
@@ -161,7 +161,7 @@ public class FlexjsonHelperTest {
 			String json = flexjsonHelper.serializer(false).serialize(data);
 			// always deserialized as list
 			@SuppressWarnings("unchecked")
-			List<Double> deserializedRaw = flexjsonHelper.deserializer(List.class).deserialize(json);
+			List<Double> deserializedRaw = (List<Double>) flexjsonHelper.deserializer().deserialize(json);
 			Set<Double> deserialized = new HashSet<>();
 			deserialized.addAll(deserializedRaw);
 			
@@ -180,7 +180,7 @@ public class FlexjsonHelperTest {
 			String json = flexjsonHelper.serializer(false).serialize(data);
 			// always deserialized as list
 			@SuppressWarnings("unchecked")
-			List<DateTestEntity> deserializedRaw = flexjsonHelper.deserializer(List.class).deserialize(json);
+			List<DateTestEntity> deserializedRaw = (List<DateTestEntity>) flexjsonHelper.deserializer().deserialize(json);
 			Set<DateTestEntity> deserialized = new HashSet<>();
 			deserialized.addAll(deserializedRaw);
 			
@@ -200,7 +200,7 @@ public class FlexjsonHelperTest {
 			String json = flexjsonHelper.serializer(false).serialize(data);
 			// always deserialized as list
 			@SuppressWarnings("unchecked")
-			List<String> deserializedRaw = flexjsonHelper.deserializer(List.class).deserialize(json);
+			List<String> deserializedRaw = (List<String>) flexjsonHelper.deserializer().deserialize(json);
 			Set<String> deserialized = new HashSet<>();
 			deserialized.addAll(deserializedRaw);
 			
@@ -216,7 +216,7 @@ public class FlexjsonHelperTest {
 			List<Double> data = Arrays.asList(1.23d, 2.733d, -1.15d);
 			String json = flexjsonHelper.serializer(false).serialize(data);
 			@SuppressWarnings("unchecked")
-			List<Double> deserialized = flexjsonHelper.deserializer(List.class).deserialize(json);
+			List<Double> deserialized = (List<Double>) flexjsonHelper.deserializer().deserialize(json);
 			
 			// assert data
 			Assert.assertNotNull(deserialized);
@@ -230,7 +230,7 @@ public class FlexjsonHelperTest {
 			List<String> data = Arrays.asList("foo", "bar", "...");
 			String json = flexjsonHelper.serializer(false).serialize(data);
 			@SuppressWarnings("unchecked")
-			List<String> deserialized = flexjsonHelper.deserializer(List.class).deserialize(json);
+			List<String> deserialized = (List<String>) flexjsonHelper.deserializer().deserialize(json);
 			
 			// assert data
 			Assert.assertNotNull(deserialized);
@@ -244,7 +244,7 @@ public class FlexjsonHelperTest {
 			List<DateTestEntity> data = Arrays.asList(entity1, entity2);
 			String json = flexjsonHelper.serializer(false).serialize(data);
 			@SuppressWarnings("unchecked")
-			List<DateTestEntity> deserialized = flexjsonHelper.deserializer(List.class).deserialize(json);
+			List<DateTestEntity> deserialized = (List<DateTestEntity>) flexjsonHelper.deserializer().deserialize(json);
 			
 			// assert data
 			Assert.assertNotNull(deserialized);
@@ -262,7 +262,7 @@ public class FlexjsonHelperTest {
 			String json = flexjsonHelper.serializer(false).serialize(data);
 			// map key is String always
 			@SuppressWarnings("unchecked")
-			Map<?, String> deserialized = flexjsonHelper.deserializer(Map.class).deserialize(json);
+			Map<?, String> deserialized = (Map<?, String>) flexjsonHelper.deserializer().deserialize(json);
 			
 			// assert data
 			Assert.assertNotNull(deserialized);
@@ -284,7 +284,7 @@ public class FlexjsonHelperTest {
 			data.put("3", "...");
 			String json = flexjsonHelper.serializer(false).serialize(data);
 			@SuppressWarnings("unchecked")
-			Map<String, String> deserialized = flexjsonHelper.deserializer(Map.class).deserialize(json);
+			Map<String, String> deserialized = (Map<String, String>) flexjsonHelper.deserializer().deserialize(json);
 			
 			// assert data
 			Assert.assertNotNull(deserialized);
@@ -300,7 +300,7 @@ public class FlexjsonHelperTest {
 			data.put("2", entity2);
 			String json = flexjsonHelper.serializer(false).serialize(data);
 			@SuppressWarnings("unchecked")
-			Map<String, DateTestEntity> deserialized = flexjsonHelper.deserializer(Map.class).deserialize(json);
+			Map<String, DateTestEntity> deserialized = (Map<String, DateTestEntity>) flexjsonHelper.deserializer().deserialize(json);
 			
 			// assert data
 			Assert.assertNotNull(deserialized);
@@ -316,7 +316,7 @@ public class FlexjsonHelperTest {
 			data.put(entity2, "2");
 			String json = flexjsonHelper.serializer(false).serialize(data);
 			@SuppressWarnings("unchecked")
-			Map<?, String> deserialized = flexjsonHelper.deserializer(Map.class).deserialize(json);
+			Map<?, String> deserialized = (Map<?, String>) flexjsonHelper.deserializer().deserialize(json);
 			
 			// assert data
 			Assert.assertNotNull(deserialized);
@@ -336,7 +336,7 @@ public class FlexjsonHelperTest {
 			data.put(entity2, entity2);
 			String json = flexjsonHelper.serializer(false).serialize(data);
 			@SuppressWarnings("unchecked")
-			Map<?, DateTestEntity> deserialized = flexjsonHelper.deserializer(Map.class).deserialize(json);
+			Map<?, DateTestEntity> deserialized = (Map<?, DateTestEntity>) flexjsonHelper.deserializer().deserialize(json);
 			
 			// assert data
 			Assert.assertNotNull(deserialized);

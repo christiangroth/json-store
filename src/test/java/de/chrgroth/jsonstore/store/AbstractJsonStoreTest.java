@@ -13,7 +13,6 @@ import org.junit.Test;
 import com.google.common.io.Files;
 
 import de.chrgroth.jsonstore.json.FlexjsonHelper;
-import de.chrgroth.jsonstore.json.FlexjsonHelperTest;
 import de.chrgroth.jsonstore.store.model.TestDataVersion1;
 import de.chrgroth.jsonstore.store.model.TestDataVersion2;
 import flexjson.JsonNumber;
@@ -26,6 +25,7 @@ public class AbstractJsonStoreTest {
 		private File tempDir;
 		
 		// untyped stores because different classes are used to simulate class changes
+		private FlexjsonHelper flexjsonHelper;
 		private JsonStore<Object> persistentStore;
 		private JsonSingletonStore<Object> persistentSingletonStore;
 		
@@ -39,9 +39,6 @@ public class AbstractJsonStoreTest {
 		
 		@Before
 		public void init() {
-			tempDir = Files.createTempDir();
-			createStores(1);
-			
 			testData1_1 = new TestDataVersion1();
 			testData1_1.id = "#1";
 			testData1_1.name = "first";
@@ -49,7 +46,7 @@ public class AbstractJsonStoreTest {
 			testData1_2.id = "#2";
 			testData1_2.name = "second";
 			
-			FlexjsonHelper flexjsonHelper = new FlexjsonHelper(DATE_TIME_PATTERN);
+			flexjsonHelper = FlexjsonHelper.builder().dateTimePattern(DATE_TIME_PATTERN).build();
 			testData1_1_json = flexjsonHelper.serializer(false).serialize(testData1_1);
 			testData1_2_json = flexjsonHelper.serializer(false).serialize(testData1_2);
 			testData1 = new HashSet<>();
@@ -79,6 +76,9 @@ public class AbstractJsonStoreTest {
 						genericPayload.put("description", ((JsonNumber) genericPayload.get("id")).intValue() + ": " + genericPayload.get("name"));
 				}
 			};
+			
+			tempDir = Files.createTempDir();
+			createStores(1);
 		}
 		
 		@Test
@@ -154,7 +154,7 @@ public class AbstractJsonStoreTest {
 		}
 		
 		private void createStores(Integer version, VersionMigrationHandler... migrationHandlers) {
-			persistentStore = new JsonStore<>(Object.class, version, FlexjsonHelperTest.DATE_TIME_PATTERN, tempDir, StandardCharsets.UTF_8, true, true, migrationHandlers);
-			persistentSingletonStore = new JsonSingletonStore<>(Object.class, version, FlexjsonHelperTest.DATE_TIME_PATTERN, tempDir, StandardCharsets.UTF_8, true, true, migrationHandlers);
+			persistentStore = new JsonStore<>(Object.class, version, flexjsonHelper, tempDir, StandardCharsets.UTF_8, true, true, migrationHandlers);
+			persistentSingletonStore = new JsonSingletonStore<>(Object.class, version, flexjsonHelper, tempDir, StandardCharsets.UTF_8, true, true, migrationHandlers);
 		}
 }

@@ -51,14 +51,14 @@ public abstract class AbstractJsonStore<T, P> {
 		protected final boolean autoSave;
 		protected final Map<Integer, VersionMigrationHandler> migrationHandlers;
 		
-		protected AbstractJsonStore(Class<T> payloadClass, Integer payloadTypeVersion, boolean singleton, String dateTimePattern, File storage, Charset charset, boolean prettyPrint, boolean autoSave,
+		protected AbstractJsonStore(Class<T> payloadClass, Integer payloadTypeVersion, boolean singleton, FlexjsonHelper flexjsonHelper, File storage, Charset charset, boolean prettyPrint, boolean autoSave,
 				VersionMigrationHandler... migrationHandlers) {
-			this(payloadClass, payloadTypeVersion, singleton, dateTimePattern, storage, charset, "", prettyPrint, autoSave, migrationHandlers);
+			this(payloadClass, payloadTypeVersion, singleton, flexjsonHelper, storage, charset, "", prettyPrint, autoSave, migrationHandlers);
 		}
 		
-		protected AbstractJsonStore(Class<T> payloadClass, Integer payloadTypeVersion, boolean singleton, String dateTimePattern, File storage, Charset charset, String fileNameExtraPrefix, boolean prettyPrint, boolean autoSave,
+		protected AbstractJsonStore(Class<T> payloadClass, Integer payloadTypeVersion, boolean singleton, FlexjsonHelper flexjsonHelper, File storage, Charset charset, String fileNameExtraPrefix, boolean prettyPrint, boolean autoSave,
 				VersionMigrationHandler... migrationHandlers) {
-			flexjsonHelper = new FlexjsonHelper(dateTimePattern);
+			this.flexjsonHelper = flexjsonHelper;
 			metadata = new JsonStoreMetadata<>();
 			metadata.setPayloadType(payloadClass.getName());
 			metadata.setPayloadTypeVersion(payloadTypeVersion);
@@ -247,8 +247,7 @@ public abstract class AbstractJsonStore<T, P> {
 				// proceed with deserialization to metadata using correct version
 				try {
 						// TODO this is a bad hack for the moment!!
-						@SuppressWarnings("rawtypes")
-						JSONDeserializer<JsonStoreMetadata> deserializer = flexjsonHelper.deserializer(JsonStoreMetadata.class);
+						JSONDeserializer<?> deserializer = flexjsonHelper.deserializer();
 						Method method = deserializer.getClass().getDeclaredMethod("createObjectBinder");
 						method.setAccessible(true);
 						ObjectBinder binder = (ObjectBinder) method.invoke(deserializer);
