@@ -8,8 +8,6 @@ import org.junit.Test;
 
 import com.google.common.io.Files;
 
-import de.chrgroth.jsonstore.JsonStores;
-
 public class JsonStoresBuilderTest {
 	
 	private File tempDir;
@@ -18,6 +16,8 @@ public class JsonStoresBuilderTest {
 	public void init() {
 		tempDir = Files.createTempDir();
 	}
+	
+	// TODO enhance testcases
 	
 	@Test
 	public void transientStores() {
