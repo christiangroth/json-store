@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 
 import de.chrgroth.jsonstore.store.JsonSingletonStore;
 import de.chrgroth.jsonstore.store.JsonStore;
+import de.chrgroth.jsonstore.store.VersionMigrationHandler;
 
 /**
  * Central API class to create JSON stores. Stores are maintained per class using {@link #resolve(Class)}, {@link #ensure(Class)} and
@@ -186,21 +187,24 @@ public class JsonStores {
 	 * @param payloadClass
 	 *          class for JSON store
 	 * @param payloadClassVersion
-	 *          version of payload class
+	 *          version of payload class, next version is always supposed to be increased by one
+	 * @param versionMigrationHandlers
+	 *          all migration handlers
 	 * @return existing or created JSON store
 	 * @param <T>
 	 *          concrete type of data
+	 * @see VersionMigrationHandler
 	 */
-	public <T> JsonStore<T> ensure(Class<T> payloadClass, Integer payloadClassVersion) {
+	public <T> JsonStore<T> ensure(Class<T> payloadClass, Integer payloadClassVersion, VersionMigrationHandler... versionMigrationHandlers) {
 		if (!stores.containsKey(payloadClass)) {
-		create(payloadClass, payloadClassVersion);
+		create(payloadClass, payloadClassVersion, versionMigrationHandlers);
 		}
 		
 		return resolve(payloadClass);
 	}
 	
-	private void create(Class<?> payloadClass, Integer payloadClassVersion) {
-		stores.put(payloadClass, new JsonStore<>(payloadClass, payloadClassVersion, dateTimePattern, storage, charset, prettyPrint, autoSave));
+	private void create(Class<?> payloadClass, Integer payloadClassVersion, VersionMigrationHandler... versionMigrationHandlers) {
+		stores.put(payloadClass, new JsonStore<>(payloadClass, payloadClassVersion, dateTimePattern, storage, charset, prettyPrint, autoSave, versionMigrationHandlers));
 	}
 	
 	/**
@@ -240,21 +244,24 @@ public class JsonStores {
 	 * @param dataClass
 	 *          class for JSON store
 	 * @param payloadClassVersion
-	 *          version of payload class
+	 *          version of payload class, next version is always supposed to be increased by one
+	 * @param versionMigrationHandlers
+	 *          all migration handlers
 	 * @return existing or created JSON singleton store
 	 * @param <T>
 	 *          concrete type of data
+	 * @see VersionMigrationHandler
 	 */
-	public <T> JsonSingletonStore<T> ensureSingleton(Class<T> dataClass, Integer payloadClassVersion) {
+	public <T> JsonSingletonStore<T> ensureSingleton(Class<T> dataClass, Integer payloadClassVersion, VersionMigrationHandler... versionMigrationHandlers) {
 		if (!singletonStores.containsKey(dataClass)) {
-		createSingleton(dataClass, payloadClassVersion);
+		createSingleton(dataClass, payloadClassVersion, versionMigrationHandlers);
 		}
 		
 		return resolveSingleton(dataClass);
 	}
 	
-	private void createSingleton(Class<?> payloadClass, Integer payloadClassVersion) {
-		singletonStores.put(payloadClass, new JsonSingletonStore<>(payloadClass, payloadClassVersion, dateTimePattern, storage, charset, prettyPrint, autoSave));
+	private void createSingleton(Class<?> payloadClass, Integer payloadClassVersion, VersionMigrationHandler... versionMigrationHandlers) {
+		singletonStores.put(payloadClass, new JsonSingletonStore<>(payloadClass, payloadClassVersion, dateTimePattern, storage, charset, prettyPrint, autoSave, versionMigrationHandlers));
 	}
 	
 	/**

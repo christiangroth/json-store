@@ -36,10 +36,12 @@ public class JsonStore<T> extends AbstractJsonStore<T, Set<T>> {
 	 *          pretty-print mode
 	 * @param autoSave
 	 *          auto-save mode
+	 * @param migrationHandlers
+	 *          all migration handlers to be applied
 	 */
-	public JsonStore(Class<T> payloadClass, Integer payloadTypeVersion, String dateTimePattern, File storage, Charset charset, boolean prettyPrint, boolean autoSave) {
-		super(payloadClass, payloadTypeVersion, false, dateTimePattern, storage, charset, prettyPrint, autoSave);
-		getMetadata().setPayload(new HashSet<>());
+	public JsonStore(Class<T> payloadClass, Integer payloadTypeVersion, String dateTimePattern, File storage, Charset charset, boolean prettyPrint, boolean autoSave, VersionMigrationHandler... migrationHandlers) {
+		super(payloadClass, payloadTypeVersion, false, dateTimePattern, storage, charset, prettyPrint, autoSave, migrationHandlers);
+		metadata.setPayload(new HashSet<>());
 	}
 	
 	@Override
@@ -47,8 +49,8 @@ public class JsonStore<T> extends AbstractJsonStore<T, Set<T>> {
 		
 		// change payload to set, gets loaded as list by flexjson
 		Set<T> payload = new HashSet<T>();
-		payload.addAll(getMetadata().getPayload());
-		getMetadata().setPayload(payload);
+		payload.addAll(metadata.getPayload());
+		metadata.setPayload(payload);
 	}
 	
 	/**
@@ -57,7 +59,7 @@ public class JsonStore<T> extends AbstractJsonStore<T, Set<T>> {
 	 * @return copy of data
 	 */
 	public Set<T> copy() {
-		return new HashSet<>(getMetadata().getPayload());
+		return new HashSet<>(metadata.getPayload());
 	}
 	
 	/**
@@ -66,7 +68,7 @@ public class JsonStore<T> extends AbstractJsonStore<T, Set<T>> {
 	 * @return size
 	 */
 	public int size() {
-		return getMetadata().getPayload().size();
+		return metadata.getPayload().size();
 	}
 	
 	/**
@@ -75,7 +77,7 @@ public class JsonStore<T> extends AbstractJsonStore<T, Set<T>> {
 	 * @return true if empty, false otherwise
 	 */
 	public boolean isEmpty() {
-		return getMetadata().getPayload().isEmpty();
+		return metadata.getPayload().isEmpty();
 	}
 	
 	/**
@@ -86,7 +88,7 @@ public class JsonStore<T> extends AbstractJsonStore<T, Set<T>> {
 	 * @return true if object is contained, false otherwise
 	 */
 	public boolean contains(Object o) {
-		return getMetadata().getPayload().contains(o);
+		return metadata.getPayload().contains(o);
 	}
 	
 	/**
@@ -97,7 +99,7 @@ public class JsonStore<T> extends AbstractJsonStore<T, Set<T>> {
 	 * @return true if all objects are contained, false otherwise
 	 */
 	public boolean containsAll(Collection<?> c) {
-		return getMetadata().getPayload().containsAll(c);
+		return metadata.getPayload().containsAll(c);
 	}
 	
 	/**
@@ -108,7 +110,7 @@ public class JsonStore<T> extends AbstractJsonStore<T, Set<T>> {
 	 * @return true if store was changed, false otherwise
 	 */
 	public boolean add(T e) {
-		boolean add = getMetadata().getPayload().add(e);
+		boolean add = metadata.getPayload().add(e);
 		if (autoSave && add) {
 		save();
 		}
@@ -123,7 +125,7 @@ public class JsonStore<T> extends AbstractJsonStore<T, Set<T>> {
 	 * @return true if store was changed, false otherwise
 	 */
 	public boolean addAll(Collection<? extends T> c) {
-		boolean addAll = getMetadata().getPayload().addAll(c);
+		boolean addAll = metadata.getPayload().addAll(c);
 		if (autoSave && addAll) {
 		save();
 		}
@@ -138,7 +140,7 @@ public class JsonStore<T> extends AbstractJsonStore<T, Set<T>> {
 	 * @return true if store was changed, false otherwise
 	 */
 	public boolean retainAll(Collection<?> c) {
-		boolean retainAll = getMetadata().getPayload().retainAll(c);
+		boolean retainAll = metadata.getPayload().retainAll(c);
 		if (autoSave && retainAll) {
 		save();
 		}
@@ -153,7 +155,7 @@ public class JsonStore<T> extends AbstractJsonStore<T, Set<T>> {
 	 * @return true if store was changed, false otherwise
 	 */
 	public boolean remove(T t) {
-		boolean remove = getMetadata().getPayload().remove(t);
+		boolean remove = metadata.getPayload().remove(t);
 		if (autoSave) {
 		save();
 		}
@@ -168,7 +170,7 @@ public class JsonStore<T> extends AbstractJsonStore<T, Set<T>> {
 	 * @return true if store was changed, false otherwise
 	 */
 	public boolean removeAll(Collection<T> c) {
-		boolean removeAll = getMetadata().getPayload().removeAll(c);
+		boolean removeAll = metadata.getPayload().removeAll(c);
 		if (autoSave) {
 		save();
 		}
@@ -183,7 +185,7 @@ public class JsonStore<T> extends AbstractJsonStore<T, Set<T>> {
 	 * @return true if store was changed, false otherwise
 	 */
 	public boolean removeIf(Predicate<? super T> filter) {
-		boolean removeIf = getMetadata().getPayload().removeIf(filter);
+		boolean removeIf = metadata.getPayload().removeIf(filter);
 		if (autoSave) {
 		save();
 		}
@@ -194,7 +196,7 @@ public class JsonStore<T> extends AbstractJsonStore<T, Set<T>> {
 	 * Clears all elements in store. Will invoke {@link #save()} if using auto-save mode.
 	 */
 	public void clear() {
-		getMetadata().getPayload().clear();
+		metadata.getPayload().clear();
 		if (autoSave) {
 		save();
 		}

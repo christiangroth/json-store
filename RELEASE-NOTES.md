@@ -3,6 +3,9 @@ Release Notes
 
 0.5.0 (in progress)
 -------------------
+- added metadata to JSON store wrapping stored payload
+- added payload version information
+- added payload version migration before deserialization to java instances which may fail on certain version changes like missing fields or changed field types
 - ...
 
 0.4.0

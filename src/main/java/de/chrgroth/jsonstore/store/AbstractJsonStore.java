@@ -9,6 +9,7 @@ import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -18,6 +19,7 @@ import org.slf4j.LoggerFactory;
 import de.chrgroth.jsonstore.json.FlexjsonHelper;
 import flexjson.JSONDeserializer;
 import flexjson.JSONTokener;
+import flexjson.JsonNumber;
 import flexjson.ObjectBinder;
 
 /**
@@ -32,15 +34,16 @@ import flexjson.ObjectBinder;
  *          concrete type structure used for storage of instances of type T
  */
 // TODO test migration from non metadata to metadata
-// TODO test migrating versions
-// TODO update docs
-// TODO update release notes
 public abstract class AbstractJsonStore<T, P> {
 	private static final Logger LOG = LoggerFactory.getLogger(AbstractJsonStore.class);
 	
 	public static final String FILE_SEPARATOR = ".";
 	public static final String FILE_PREFIX = "storage";
 	public static final String FILE_SUFFIX = "json";
+	
+	private static final String JSON_FIELD_CLASS = "class";
+	private static final String JSON_FIELD_PAYLOAD = "payload";
+	private static final String JSON_FIELD_PAYLOAD_TYPE_VERSION = "payloadTypeVersion";
 	
 	protected final FlexjsonHelper flexjsonHelper;
 	protected JsonStoreMetadata<T, P> metadata;
@@ -50,11 +53,13 @@ public abstract class AbstractJsonStore<T, P> {
 	protected final boolean autoSave;
 	protected final Map<Integer, VersionMigrationHandler> migrationHandlers;
 	
-	protected AbstractJsonStore(Class<T> payloadClass, Integer payloadTypeVersion, boolean singleton, String dateTimePattern, File storage, Charset charset, boolean prettyPrint, boolean autoSave) {
-		this(payloadClass, payloadTypeVersion, singleton, dateTimePattern, storage, charset, "", prettyPrint, autoSave);
+	protected AbstractJsonStore(Class<T> payloadClass, Integer payloadTypeVersion, boolean singleton, String dateTimePattern, File storage, Charset charset, boolean prettyPrint, boolean autoSave,
+		VersionMigrationHandler... migrationHandlers) {
+		this(payloadClass, payloadTypeVersion, singleton, dateTimePattern, storage, charset, "", prettyPrint, autoSave, migrationHandlers);
 	}
 	
-	protected AbstractJsonStore(Class<T> payloadClass, Integer payloadTypeVersion, boolean singleton, String dateTimePattern, File storage, Charset charset, String fileNameExtraPrefix, boolean prettyPrint, boolean autoSave) {
+	protected AbstractJsonStore(Class<T> payloadClass, Integer payloadTypeVersion, boolean singleton, String dateTimePattern, File storage, Charset charset, String fileNameExtraPrefix, boolean prettyPrint, boolean autoSave,
+		VersionMigrationHandler... migrationHandlers) {
 		flexjsonHelper = new FlexjsonHelper(dateTimePattern);
 		metadata = new JsonStoreMetadata<>();
 		metadata.setPayloadType(payloadClass.getName());
@@ -67,17 +72,12 @@ public abstract class AbstractJsonStore<T, P> {
 		this.charset = charset;
 		this.prettyPrint = prettyPrint;
 		this.autoSave = autoSave;
-		// TODO add as parameters
 		this.migrationHandlers = new HashMap<>();
-	}
-	
-	/**
-	 * Returns stores metadata.
-	 * 
-	 * @return JSON store metadata
-	 */
-	public JsonStoreMetadata<T, P> getMetadata() {
-		return metadata;
+		if (migrationHandlers != null) {
+		for (VersionMigrationHandler migrationHandler : migrationHandlers) {
+			this.migrationHandlers.put(migrationHandler.sourceVersion(), migrationHandler);
+		}
+		}
 	}
 	
 	/**
@@ -180,7 +180,6 @@ public abstract class AbstractJsonStore<T, P> {
 		fromJson(json, true);
 	}
 	
-	// TODO define constants
 	@SuppressWarnings("unchecked")
 	private void fromJson(String json, boolean explicitSave) {
 		
@@ -191,7 +190,7 @@ public abstract class AbstractJsonStore<T, P> {
 		
 		// deserialize to generic structure
 		Map<String, Object> genericStructure = (Map<String, Object>) new JSONTokener(json).nextValue();
-		Object topLevelType = genericStructure.get("class");
+		Object topLevelType = genericStructure.get(JSON_FIELD_CLASS);
 		if (!JsonStoreMetadata.class.getName().equals(topLevelType)) {
 		
 		// TODO load data the old way, and wrap to new metadata object
@@ -199,13 +198,12 @@ public abstract class AbstractJsonStore<T, P> {
 		} else {
 		
 		// compare version information
-		Integer topLevelTypeVersion = (Integer) genericStructure.get("payloadTypeVersion");
+		Integer topLevelTypeVersion = ((JsonNumber) genericStructure.get(JSON_FIELD_PAYLOAD_TYPE_VERSION)).toInteger();
 		Integer payloadTypeVersion = metadata.getPayloadTypeVersion();
 		if (topLevelTypeVersion != null & payloadTypeVersion != null) {
 			
 			// abort on newer version than available as code
 			if (topLevelTypeVersion > payloadTypeVersion) {
-				// TODO crash somehow
 				throw new IllegalStateException("loaded version is newer than specified version in code: " + topLevelTypeVersion + " > " + payloadTypeVersion + "!!");
 			}
 			
@@ -221,12 +219,28 @@ public abstract class AbstractJsonStore<T, P> {
 					continue;
 				}
 				
-				// TODO try-catch-paranoia
+				// invoke handler per instance, so you don't have to deal with wrapping list by yourself
 				try {
-					migrationHandler.migrate((Map<String, Object>) genericStructure.get("payload"));
+					Object genericStructurePayload = genericStructure.get(JSON_FIELD_PAYLOAD);
+					if (genericStructurePayload instanceof List<?>) {
+						
+						// might be a non singleton store
+						for (Object genericStructurePayloadItem : (List<Object>) genericStructurePayload) {
+						migrationHandler.migrate((Map<String, Object>) genericStructurePayloadItem);
+						}
+					} else {
+						
+						// might be a singleton store
+						migrationHandler.migrate((Map<String, Object>) genericStructurePayload);
+					}
 				} catch (Exception e) {
-					throw new IllegalStateException("faild to migrate " + metadata.getPayloadType() + "from version " + i + " to " + (i + 1) + "!!");
+					throw new IllegalStateException("faild to migrate " + metadata.getPayloadType() + "from version " + i + " to " + (i + 1) + ": " + e.getMessage() + "!!", e);
 				}
+				}
+				
+				// save migrated data, if auto save is enabled
+				if (autoSave) {
+				save();
 				}
 			}
 		}

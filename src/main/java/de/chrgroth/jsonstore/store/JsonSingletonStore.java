@@ -32,9 +32,11 @@ public class JsonSingletonStore<T> extends AbstractJsonStore<T, T> {
 	 *          pretty-print mode
 	 * @param autoSave
 	 *          auto-save mode
+	 * @param migrationHandlers
+	 *          all migration handlers to be applied
 	 */
-	public JsonSingletonStore(Class<T> payloadClass, Integer payloadTypeVersion, String dateTimePattern, File storage, Charset charset, boolean prettyPrint, boolean autoSave) {
-		super(payloadClass, payloadTypeVersion, true, dateTimePattern, storage, charset, FILE_SINGLETON + FILE_SEPARATOR, prettyPrint, autoSave);
+	public JsonSingletonStore(Class<T> payloadClass, Integer payloadTypeVersion, String dateTimePattern, File storage, Charset charset, boolean prettyPrint, boolean autoSave, VersionMigrationHandler... migrationHandlers) {
+		super(payloadClass, payloadTypeVersion, true, dateTimePattern, storage, charset, FILE_SINGLETON + FILE_SEPARATOR, prettyPrint, autoSave, migrationHandlers);
 	}
 	
 	@Override
@@ -48,7 +50,7 @@ public class JsonSingletonStore<T> extends AbstractJsonStore<T, T> {
 	 * @return data, may be null
 	 */
 	public T get() {
-		return getMetadata().getPayload();
+		return metadata.getPayload();
 	}
 	
 	/**
@@ -71,7 +73,7 @@ public class JsonSingletonStore<T> extends AbstractJsonStore<T, T> {
 		
 		// switch data
 		T old = payload;
-		getMetadata().setPayload(payload);
+		metadata.setPayload(payload);
 		
 		// save
 		if (autoSave) {
