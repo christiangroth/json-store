@@ -1,6 +1,10 @@
 Release Notes
 =====================
 
+0.6.0 (in progress)
+-----
+- ...
+
 0.5.0
 -----
 - introduced metadata to JSON store wrapping stored payload, existing persistent data will be converted automatically during first load

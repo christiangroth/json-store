@@ -3,7 +3,7 @@
 	
 	<groupId>de.chrgroth.json-store</groupId>
 	<artifactId>json-store</artifactId>
-	<version>0.5.0</version>
+	<version>0.6.0-SNAPSHOT</version>
 	
 	<name>json-store</name>
 	<description>JSON-Store enabled persistence using JSON (de)serialization stored in files. Access is provided through simple API based on java collections stream API.</description>
