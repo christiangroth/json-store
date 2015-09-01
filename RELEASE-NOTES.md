@@ -1,13 +1,12 @@
 Release Notes
 =====================
 
-0.5.0 (in progress)
--------------------
-- introduced metadata to JSON store wrapping stored payload, existing persistent data will be converted automatically during load
+0.5.0
+-----
+- introduced metadata to JSON store wrapping stored payload, existing persistent data will be converted automatically during first load
 - added payload version migration before deserialization to java instances based on metadata
-- enhanced testcases
 - added options to provide flexjson transformers and object factories for JSON serialization and deserialization using AbstractFlexjsonTypeHandler
-- ...
+- enhanced testcases
 
 0.4.0
 -----
