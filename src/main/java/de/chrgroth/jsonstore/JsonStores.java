@@ -19,10 +19,11 @@ import de.chrgroth.jsonstore.store.JsonStore;
 import de.chrgroth.jsonstore.store.VersionMigrationHandler;
 
 /**
- * Central API class to create JSON stores. Stores are maintained per class using {@link #resolve(Class)}, {@link #ensure(Class)} and {@link #drop(Class)}. Each
- * JSON store will create a separate file. The {@link #save()} method acts as shortcut to save all stores. If an instance is created with auto save mode enabled
- * (see {@link #builder()}) then {@link #ensure(Class, Integer, VersionMigrationHandler...)} and
- * {@link #ensureSingleton(Class, Integer, VersionMigrationHandler...)} will automatically load possibly existing data from configured storage path.
+ * Central API class to create JSON stores. Stores are maintained per class using {@link #resolve(Class)},
+ * {@link #ensure(Class, Integer, VersionMigrationHandler...)} and {@link #drop(Class)} and similar methods for singleton stores. Each JSON store will create a
+ * separate file. The {@link #save()} method acts as shortcut to save all stores. If an instance is created with auto save mode enabled (see {@link #builder()})
+ * then {@link #ensure(Class, Integer, VersionMigrationHandler...)} and {@link #ensureSingleton(Class, Integer, VersionMigrationHandler...)} will automatically
+ * load possibly existing data from configured storage path.
  *
  * @author Christian Groth
  */
