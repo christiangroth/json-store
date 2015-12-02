@@ -123,8 +123,7 @@ public final class FlexjsonHelper {
         deserializer = createDeserializer(handlers, pathHandlers);
     }
     
-    private JSONSerializer createSerializer(Map<Class<?>, AbstractFlexjsonTypeHandler> handlers,
-            Map<String, AbstractFlexjsonTypeHandler> pathHandlers, boolean prettyPrint) {
+    private JSONSerializer createSerializer(Map<Class<?>, AbstractFlexjsonTypeHandler> handlers, Map<String, AbstractFlexjsonTypeHandler> pathHandlers, boolean prettyPrint) {
         JSONSerializer serializer = new JSONSerializer();
         serializer.prettyPrint(prettyPrint);
         handlers.forEach((k, v) -> serializer.transform(v, k));
@@ -132,8 +131,7 @@ public final class FlexjsonHelper {
         return serializer;
     }
     
-    private JSONDeserializer<?> createDeserializer(Map<Class<?>, AbstractFlexjsonTypeHandler> handlers,
-            Map<String, AbstractFlexjsonTypeHandler> pathHandlers) {
+    private JSONDeserializer<?> createDeserializer(Map<Class<?>, AbstractFlexjsonTypeHandler> handlers, Map<String, AbstractFlexjsonTypeHandler> pathHandlers) {
         JSONDeserializer<?> deserializer = new JSONDeserializer<>();
         handlers.forEach((k, v) -> deserializer.use(k, v));
         pathHandlers.forEach((k, v) -> deserializer.use(k, v));
