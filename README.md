@@ -38,16 +38,15 @@ Persistent mode may also be configured using some more details, like charset, pr
 
 A concrete JSON store instance is created for it's root type and might be a singleton store for exactly one instance only or a regular store containing multiple instances backed by a Set. Additionally you may specify the version of your data (see Migration of existing data on class changes).
 
-	// just for simple demo cases
-	Integer dataVersion = 1;
-	
 	// single instance store
-	JsonSingletonStore<MyEntity> singletonStore = stores.ensureSingleton(MyEntity.class, dataVersion);	
+	JsonSingletonStore<MyEntity> singletonStore = stores.ensureSingleton(MyEntity.class, MyEntity.VERSION);	
 	singletonStore.set(new MyEntity(...));
 
 	// multiple instances store
-	JsonStore<MyEntity> store = stores.ensure(MyEntity.class, dataVersion);
+	JsonStore<MyEntity> store = stores.ensure(MyEntity.class, MyEntity.VERSION);
 	store.add(new MyEntity(...));
+
+**Please use a payload version value >= 1 to start with. The version with value 0 is expected for old legacy stores running on json-store version prior to 0.5.0. These stores do not contain any any metadata and get converted on first load to version 0. Afterwards all migration handlers are applied, see also Migration of existing data on class changes. **
 
 Define payload classes
 ----------------------

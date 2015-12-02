@@ -3,6 +3,8 @@ Release Notes
 
 0.6.0 (in progress)
 -----
+- fixed payload migration without metadats
+- payload without metadata is considered to have version number 0, allowing direct migration
 - ...
 
 0.5.0
