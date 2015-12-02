@@ -5,11 +5,8 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,8 +19,10 @@ import de.chrgroth.jsonstore.store.JsonStore;
 import de.chrgroth.jsonstore.store.VersionMigrationHandler;
 
 /**
- * Central API class to create JSON stores. Stores are maintained per class using {@link #resolve(Class)}, {@link #ensure(Class)} and {@link #drop(Class)}.
- * Explicit saving to and loading from file system can be done using {@link #save()} and {@link #load()}. Each JSON store will create a separate file.
+ * Central API class to create JSON stores. Stores are maintained per class using {@link #resolve(Class)}, {@link #ensure(Class)} and {@link #drop(Class)}. Each
+ * JSON store will create a separate file. The {@link #save()} method acts as shortcut to save all stores. If an instance is created with auto save mode enabled
+ * (see {@link #builder()}) then {@link #ensure(Class, Integer, VersionMigrationHandler...)} and
+ * {@link #ensureSingleton(Class, Integer, VersionMigrationHandler...)} will automatically load possibly existing data from configured storage path.
  *
  * @author Christian Groth
  */
@@ -31,12 +30,6 @@ import de.chrgroth.jsonstore.store.VersionMigrationHandler;
 public class JsonStores {
 
     private static final Logger LOG = LoggerFactory.getLogger(JsonStores.class);
-
-    private static final String STORE_FILENAME_REGEX = "storage\\.(.+)\\.json";
-    private static final Pattern STORE_FILENAME_PATTERN = Pattern.compile(STORE_FILENAME_REGEX);
-
-    private static final String SINGLETON_STORE_FILENAME_REGEX = "storage\\.singleton\\.(.+)\\.json";
-    private static final Pattern SINGLETON_STORE_FILENAME_PATTERN = Pattern.compile(SINGLETON_STORE_FILENAME_REGEX);
 
     private final FlexjsonHelper flexjsonHelper;
     private final Map<Class<?>, JsonStore<?>> stores;
@@ -183,33 +176,12 @@ public class JsonStores {
                     LOG.error("Unable to initialize storage path: " + storage.getAbsolutePath() + "!!", e);
                 }
             }
-
-            // auto load
-            if (autoSave) {
-                load();
-            }
         }
     }
 
     /**
-     * Ensures existence of JSON store for given class.
-     *
-     * @param payloadClass
-     *            class for JSON store
-     * @return existing or created JSON store
-     * @param <T>
-     *            concrete type of data
-     * @deprecated When using JSON stores without payload class version it's impossible to use json store payload version update concept if given version number
-     *             of payload class changes. If you're sure your data structure will never change and lead to unloadable JSON files, you may use a constant
-     *             version.
-     */
-    @Deprecated
-    public <T> JsonStore<T> ensure(Class<T> payloadClass) {
-        return ensure(payloadClass, null);
-    }
-
-    /**
-     * Ensures existence of JSON store for given class.
+     * Ensures existence of JSON store for given class. If auto save mode is enabled store will automatically load possibly existing data from configured
+     * storage path.
      *
      * @param payloadClass
      *            class for JSON store
@@ -223,11 +195,24 @@ public class JsonStores {
      * @see VersionMigrationHandler
      */
     public <T> JsonStore<T> ensure(Class<T> payloadClass, Integer payloadClassVersion, VersionMigrationHandler... versionMigrationHandlers) {
+        
+        // ensure store
         if (!stores.containsKey(payloadClass)) {
             create(payloadClass, payloadClassVersion, versionMigrationHandlers);
         }
+        
+        // load data
+        JsonStore<T> store = resolve(payloadClass);
+        if (isPersistent() && autoSave) {
+            try {
+                store.load();
+            } catch (Exception e) {
+                LOG.error("Unable to load data class " + payloadClass + ", skipping file during restore: " + store.getFile().getAbsolutePath() + "!!", e);
+            }
+        }
 
-        return resolve(payloadClass);
+        // done
+        return store;
     }
 
     private void create(Class<?> payloadClass, Integer payloadClassVersion, VersionMigrationHandler... versionMigrationHandlers) {
@@ -249,26 +234,10 @@ public class JsonStores {
     }
 
     /**
-     * Ensures existence of JSON singleton store for given class.
+     * Ensures existence of JSON singleton store for given class. If auto save mode is enabled store will automatically load possibly existing data from
+     * configured storage path.
      *
-     * @param dataClass
-     *            class for JSON store
-     * @return existing or created JSON singleton store
-     * @param <T>
-     *            concrete type of data
-     * @deprecated When using JSON stores without payload class version it's impossible to use json store payload version update concept if given version number
-     *             of payload class changes. If you're sure your data structure will never change and lead to unloadable JSON files, you may use a constant
-     *             version.
-     */
-    @Deprecated
-    public <T> JsonSingletonStore<T> ensureSingleton(Class<T> dataClass) {
-        return ensureSingleton(dataClass, null);
-    }
-
-    /**
-     * Ensures existence of JSON singleton store for given class.
-     *
-     * @param dataClass
+     * @param payloadClass
      *            class for JSON store
      * @param payloadClassVersion
      *            version of payload class, next version is always supposed to be increased by one
@@ -279,12 +248,25 @@ public class JsonStores {
      *            concrete type of data
      * @see VersionMigrationHandler
      */
-    public <T> JsonSingletonStore<T> ensureSingleton(Class<T> dataClass, Integer payloadClassVersion, VersionMigrationHandler... versionMigrationHandlers) {
-        if (!singletonStores.containsKey(dataClass)) {
-            createSingleton(dataClass, payloadClassVersion, versionMigrationHandlers);
+    public <T> JsonSingletonStore<T> ensureSingleton(Class<T> payloadClass, Integer payloadClassVersion, VersionMigrationHandler... versionMigrationHandlers) {
+
+        // ensure store
+        if (!singletonStores.containsKey(payloadClass)) {
+            createSingleton(payloadClass, payloadClassVersion, versionMigrationHandlers);
         }
 
-        return resolveSingleton(dataClass);
+        // load data
+        JsonSingletonStore<T> store = resolveSingleton(payloadClass);
+        if (isPersistent() && autoSave) {
+            try {
+                store.load();
+            } catch (Exception e) {
+                LOG.error("Unable to load data class " + payloadClass + ", skipping file during restore: " + store.getFile().getAbsolutePath() + "!!", e);
+            }
+        }
+
+        // done
+        return store;
     }
 
     private void createSingleton(Class<?> payloadClass, Integer payloadClassVersion, VersionMigrationHandler... versionMigrationHandlers) {
@@ -367,64 +349,6 @@ public class JsonStores {
         // delegate to all stores
         stores.values().parallelStream().forEach(store -> store.save());
         singletonStores.values().parallelStream().forEach(store -> store.save());
-    }
-
-    /**
-     * Creates JSON stores from configured storage directory.
-     */
-    public void load() {
-
-        // abort on transient stores
-        if (!isPersistent()) {
-            return;
-        }
-
-        // walk all files in path
-        try {
-            Files.walk(storage.toPath(), 1)
-                    .filter(child -> Files.isReadable(child)
-                            && Files.isRegularFile(
-                                    child)
-                    && (child.getFileName().toFile().getName().matches(STORE_FILENAME_REGEX) || child.getFileName().toFile().getName().matches(SINGLETON_STORE_FILENAME_REGEX)))
-                    .forEach(storeFile -> loadStore(storeFile));
-        } catch (IOException e) {
-            LOG.error("Unable to scan storage path " + storage.getAbsolutePath() + ", skipping data restore!!", e);
-        }
-    }
-
-    private void loadStore(Path storeFile) {
-
-        // get file
-        File file = storeFile.toFile();
-        String filename = file.getName();
-
-        // detect type (singleton first due to regex matching)
-        Matcher singletonMatcher = SINGLETON_STORE_FILENAME_PATTERN.matcher(filename);
-        Matcher regularMatcher = STORE_FILENAME_PATTERN.matcher(filename);
-        Matcher matcher = null;
-        boolean isSingleton = false;
-        if (singletonMatcher.matches()) {
-            matcher = singletonMatcher;
-            isSingleton = true;
-        } else if (regularMatcher.matches()) {
-            matcher = regularMatcher;
-            isSingleton = false;
-        }
-
-        // load class
-        Class<?> dataClass = null;
-        try {
-            dataClass = Class.forName(matcher.group(1));
-
-            // ensure store and load data
-            if (!isSingleton) {
-                ensure(dataClass).load();
-            } else {
-                ensureSingleton(dataClass).load();
-            }
-        } catch (Exception e) {
-            LOG.error("Unable to load data class " + dataClass + ", skipping file during restore: " + file.getAbsolutePath() + "!!", e);
-        }
     }
 
     public boolean isPersistent() {

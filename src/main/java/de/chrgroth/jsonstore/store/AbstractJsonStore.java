@@ -153,6 +153,11 @@ public abstract class AbstractJsonStore<T, P> {
             return;
         }
 
+        // abort if not data file is present
+        if (file == null || !file.exists()) {
+            return;
+        }
+        
         // load JSON
         String json = null;
         try {
