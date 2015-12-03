@@ -7,7 +7,8 @@ Release Notes
 - payload without metadata is considered to have version number 0, allowing direct migration
 - removed deprecated ensure methods on JsonStores
 - removed JsonStores#load() due to mandatory version per store. Ensure methods will trigger load now if auto save is enabled.
-- toJson() without explicit pretty print mode takes pretty print value from store, was false before
+- toJson() without explicit pretty print mode takes pretty print value from store, was false before.
+- JsonStoreException will be thrown if data loading fails, because this may lead to overriding existing data with next (auto-)save operation. Errors during save and drop are still just logged and silently ignored otherwise. 
 - ... 
 
 0.5.0
