@@ -27,11 +27,10 @@ import de.chrgroth.jsonstore.store.VersionMigrationHandler;
  *
  * @author Christian Groth
  */
-// TODO check if pretty print is ignored
 public class JsonStores {
-
+    
     private static final Logger LOG = LoggerFactory.getLogger(JsonStores.class);
-
+    
     private final FlexjsonHelper flexjsonHelper;
     private final Map<Class<?>, JsonStore<?>> stores;
     private final Map<Class<?>, JsonSingletonStore<?>> singletonStores;
@@ -39,7 +38,7 @@ public class JsonStores {
     private final Charset charset;
     private final boolean prettyPrint;
     private final boolean autoSave;
-
+    
     /**
      * Builder class to control creation of {@link JsonStores}.
      *
@@ -47,18 +46,18 @@ public class JsonStores {
      */
     public static class JsonStoresBuilder {
         private static final Charset DEFAULT_CHARSET = StandardCharsets.UTF_8;
-
+        
         private File storage;
         private Charset charset;
         private boolean prettyPrint;
         private boolean autoSave;
-
+        
         private FlexjsonHelperBuilder flexjsonHelperBuilder;
-
+        
         public JsonStoresBuilder() {
             flexjsonHelperBuilder = FlexjsonHelper.builder();
         }
-
+        
         /**
          * {@link FlexjsonHelperBuilder#dateTimePattern(String)}
          *
@@ -70,7 +69,7 @@ public class JsonStores {
             flexjsonHelperBuilder.dateTimePattern(dateTimePattern);
             return this;
         }
-
+        
         /**
          * {@link FlexjsonHelperBuilder#handler(Class, AbstractFlexjsonTypeHandler)}
          *
@@ -84,7 +83,7 @@ public class JsonStores {
             flexjsonHelperBuilder.handler(type, handler);
             return this;
         }
-
+        
         /**
          * {@link FlexjsonHelperBuilder#handler(String, AbstractFlexjsonTypeHandler)}
          *
@@ -98,7 +97,7 @@ public class JsonStores {
             flexjsonHelperBuilder.handler(path, handler);
             return this;
         }
-
+        
         /**
          * Configures persistent JSON storage with given base directory, default UTF-8 charset, pretty-print mode disabled and auto-save mode enabled.
          *
@@ -113,7 +112,7 @@ public class JsonStores {
             autoSave = true;
             return this;
         }
-
+        
         /**
          * Configures persistent JSON storage with given base directory, charset, pretty-print mode and auto-save mode.
          *
@@ -134,7 +133,7 @@ public class JsonStores {
             this.autoSave = autoSave;
             return this;
         }
-
+        
         /**
          * Creates the {@link JsonStores} instance.
          *
@@ -144,7 +143,7 @@ public class JsonStores {
             return new JsonStores(flexjsonHelperBuilder.build(), storage, charset, prettyPrint, autoSave);
         }
     }
-
+    
     /**
      * Creates a new builder instance.
      *
@@ -153,9 +152,9 @@ public class JsonStores {
     public static JsonStoresBuilder builder() {
         return new JsonStoresBuilder();
     }
-
+    
     private JsonStores(FlexjsonHelper flexjsonHelper, File storage, Charset charset, boolean prettyPrint, boolean autoSave) {
-
+        
         // init state
         this.flexjsonHelper = flexjsonHelper;
         stores = new HashMap<>();
@@ -164,10 +163,10 @@ public class JsonStores {
         this.charset = charset;
         this.prettyPrint = prettyPrint;
         this.autoSave = autoSave;
-
+        
         // prepare storage
         if (isPersistent()) {
-
+            
             // check if exists
             if (!Files.exists(storage.toPath())) {
                 try {
@@ -179,7 +178,7 @@ public class JsonStores {
             }
         }
     }
-
+    
     /**
      * Ensures existence of JSON store for given class. If auto save mode is enabled store will automatically load possibly existing data from configured
      * storage path.
@@ -196,12 +195,12 @@ public class JsonStores {
      * @see VersionMigrationHandler
      */
     public <T> JsonStore<T> ensure(Class<T> payloadClass, Integer payloadClassVersion, VersionMigrationHandler... versionMigrationHandlers) {
-        
+
         // ensure store
         if (!stores.containsKey(payloadClass)) {
             create(payloadClass, payloadClassVersion, versionMigrationHandlers);
         }
-        
+
         // load data
         JsonStore<T> store = resolve(payloadClass);
         if (isPersistent() && autoSave) {
@@ -211,15 +210,15 @@ public class JsonStores {
                 LOG.error("Unable to load data class " + payloadClass + ", skipping file during restore: " + store.getFile().getAbsolutePath() + "!!", e);
             }
         }
-
+        
         // done
         return store;
     }
-
+    
     private void create(Class<?> payloadClass, Integer payloadClassVersion, VersionMigrationHandler... versionMigrationHandlers) {
         stores.put(payloadClass, new JsonStore<>(payloadClass, payloadClassVersion, flexjsonHelper, storage, charset, prettyPrint, autoSave, versionMigrationHandlers));
     }
-
+    
     /**
      * Resolves JSON store for given class.
      *
@@ -233,7 +232,7 @@ public class JsonStores {
     public <T> JsonStore<T> resolve(Class<T> dataClass) {
         return (JsonStore<T>) stores.get(dataClass);
     }
-
+    
     /**
      * Ensures existence of JSON singleton store for given class. If auto save mode is enabled store will automatically load possibly existing data from
      * configured storage path.
@@ -250,12 +249,12 @@ public class JsonStores {
      * @see VersionMigrationHandler
      */
     public <T> JsonSingletonStore<T> ensureSingleton(Class<T> payloadClass, Integer payloadClassVersion, VersionMigrationHandler... versionMigrationHandlers) {
-
+        
         // ensure store
         if (!singletonStores.containsKey(payloadClass)) {
             createSingleton(payloadClass, payloadClassVersion, versionMigrationHandlers);
         }
-
+        
         // load data
         JsonSingletonStore<T> store = resolveSingleton(payloadClass);
         if (isPersistent() && autoSave) {
@@ -265,16 +264,16 @@ public class JsonStores {
                 LOG.error("Unable to load data class " + payloadClass + ", skipping file during restore: " + store.getFile().getAbsolutePath() + "!!", e);
             }
         }
-
+        
         // done
         return store;
     }
-
+    
     private void createSingleton(Class<?> payloadClass, Integer payloadClassVersion, VersionMigrationHandler... versionMigrationHandlers) {
         singletonStores.put(payloadClass,
                 new JsonSingletonStore<>(payloadClass, payloadClassVersion, flexjsonHelper, storage, charset, prettyPrint, autoSave, versionMigrationHandlers));
     }
-
+    
     /**
      * Resolves JSON singleton store for given class.
      *
@@ -288,7 +287,7 @@ public class JsonStores {
     public <T> JsonSingletonStore<T> resolveSingleton(Class<T> dataClass) {
         return (JsonSingletonStore<T>) singletonStores.get(dataClass);
     }
-
+    
     /**
      * Drops JSON store for given class, is existent. Results in calling {@link JsonStore#drop()} if using auto-save mode and store exists.
      *
@@ -300,19 +299,19 @@ public class JsonStores {
      */
     @SuppressWarnings("unchecked")
     public <T> JsonStore<T> drop(Class<T> dataClass) {
-
+        
         // drop in memory
         JsonStore<T> store = (JsonStore<T>) stores.remove(dataClass);
         if (store != null && isPersistent()) {
-
+            
             // remove file
             store.drop();
         }
-
+        
         // done
         return store;
     }
-
+    
     /**
      * Drops JSON singleton store for given class, is existent. Results in calling {@link JsonSingletonStore#drop()} if using auto-save mode and store exists.
      *
@@ -324,34 +323,34 @@ public class JsonStores {
      */
     @SuppressWarnings("unchecked")
     public <T> JsonSingletonStore<T> dropSingleton(Class<T> dataClass) {
-
+        
         // drop in memory
         JsonSingletonStore<T> store = (JsonSingletonStore<T>) singletonStores.remove(dataClass);
         if (store != null && isPersistent()) {
-
+            
             // remove file
             store.drop();
         }
-
+        
         // done
         return store;
     }
-
+    
     /**
      * If stores are persistent {@link JsonStore#save()} will be invoked using parallel stream on all existing stores.
      */
     public void save() {
-
+        
         // abort on transient stores
         if (!isPersistent()) {
             return;
         }
-
+        
         // delegate to all stores
         stores.values().parallelStream().forEach(store -> store.save());
         singletonStores.values().parallelStream().forEach(store -> store.save());
     }
-
+    
     public boolean isPersistent() {
         return storage != null;
     }

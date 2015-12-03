@@ -35,16 +35,16 @@ import flexjson.ObjectBinder;
  */
 public abstract class AbstractJsonStore<T, P> {
     private static final Logger LOG = LoggerFactory.getLogger(AbstractJsonStore.class);
-
+    
     public static final String FILE_SEPARATOR = ".";
     public static final String FILE_PREFIX = "storage";
     public static final String FILE_SUFFIX = "json";
-
+    
     private static final String JSON_FIELD_CLASS = "class";
     private static final String JSON_FIELD_PAYLOAD = "payload";
     private static final String JSON_FIELD_SINGLETON = "singleton";
     private static final String JSON_FIELD_PAYLOAD_TYPE_VERSION = "payloadTypeVersion";
-
+    
     protected final FlexjsonHelper flexjsonHelper;
     protected JsonStoreMetadata<T, P> metadata;
     protected final File file;
@@ -52,12 +52,12 @@ public abstract class AbstractJsonStore<T, P> {
     protected final boolean prettyPrint;
     protected final boolean autoSave;
     protected final Map<Integer, VersionMigrationHandler> migrationHandlers;
-
+    
     protected AbstractJsonStore(Class<T> payloadClass, Integer payloadTypeVersion, boolean singleton, FlexjsonHelper flexjsonHelper, File storage, Charset charset,
             boolean prettyPrint, boolean autoSave, VersionMigrationHandler... migrationHandlers) {
         this(payloadClass, payloadTypeVersion, singleton, flexjsonHelper, storage, charset, "", prettyPrint, autoSave, migrationHandlers);
     }
-
+    
     protected AbstractJsonStore(Class<T> payloadClass, Integer payloadTypeVersion, boolean singleton, FlexjsonHelper flexjsonHelper, File storage, Charset charset,
             String fileNameExtraPrefix, boolean prettyPrint, boolean autoSave, VersionMigrationHandler... migrationHandlers) {
         this.flexjsonHelper = flexjsonHelper;
@@ -76,7 +76,7 @@ public abstract class AbstractJsonStore<T, P> {
             }
         }
     }
-
+    
     /**
      * Returns file used for storage.
      *
@@ -85,7 +85,7 @@ public abstract class AbstractJsonStore<T, P> {
     public final File getFile() {
         return file;
     }
-
+    
     /**
      * Checks if store is persistent.
      *
@@ -94,20 +94,20 @@ public abstract class AbstractJsonStore<T, P> {
     public final boolean isPersistent() {
         return file != null;
     }
-
+    
     /**
      * Saves all data contained in store to configured file. No action if store is not persistent.
      */
     public final void save() {
-
+        
         // abort on transient stores
         if (!isPersistent()) {
             return;
         }
-
+        
         // create JSON
         String json = toJson(prettyPrint);
-
+        
         // write to file
         try {
             synchronized (file) {
@@ -117,16 +117,16 @@ public abstract class AbstractJsonStore<T, P> {
             LOG.error("Unable to write file content, skipping file during store: " + file.getAbsolutePath() + "!!", e);
         }
     }
-
+    
     /**
      * Returns store elements in JSON format.
      *
      * @return JSON data
      */
     public final String toJson() {
-        return toJson(false);
+        return toJson(prettyPrint);
     }
-
+    
     /**
      * Creates a copy of stored data in JSON format with given pretty-print mode.
      *
@@ -135,29 +135,29 @@ public abstract class AbstractJsonStore<T, P> {
      * @return JSON data
      */
     public final String toJson(boolean prettyPrint) {
-
+        
         // update metadata
         metadata.setModified(new Date());
-
+        
         // create json data
         return flexjsonHelper.serializer(prettyPrint).serialize(metadata);
     }
-
+    
     /**
      * Loads store elements from configure file.
      */
     public final void load() {
-
+        
         // abort on transient stores
         if (!isPersistent()) {
             return;
         }
-
+        
         // abort if not data file is present
         if (file == null || !file.exists()) {
             return;
         }
-        
+
         // load JSON
         String json = null;
         try {
@@ -167,11 +167,11 @@ public abstract class AbstractJsonStore<T, P> {
         } catch (Exception e) {
             LOG.error("Unable to read file content, skipping file during restore: " + file.getAbsolutePath() + "!!", e);
         }
-
+        
         // recreate data
         fromJson(json, false);
     }
-
+    
     /**
      * Creates store elements from given JSON data and replaces all store contents.Will invoke {@link #save()} if using auto-save mode.
      *
@@ -181,67 +181,67 @@ public abstract class AbstractJsonStore<T, P> {
     public final void fromJson(String json) {
         fromJson(json, true);
     }
-
+    
     @SuppressWarnings("unchecked")
     private void fromJson(String json, boolean explicitSave) {
-        
+
         // null guard
         if (json == null || "".equals(json.trim())) {
             return;
         }
-        
+
         // deserialize to raw generic structure
         Object genericStructureRaw = new JSONTokener(json).nextValue();
         if (genericStructureRaw == null) {
             return;
         }
-        
+
         // determine current data situation
         boolean isMap = genericStructureRaw instanceof Map;
         boolean isMetadataAvailable = isMap && JsonStoreMetadata.class.getName().equals(((Map<String, Object>) genericStructureRaw).get(JSON_FIELD_CLASS));
         boolean isSingleton = isMetadataAvailable ? (boolean) ((Map<String, Object>) genericStructureRaw).get(JSON_FIELD_SINGLETON) : isMap;
-        
+
         // determine generic payload
         Object genericStructurePayload = isMetadataAvailable ? ((Map<String, Object>) genericStructureRaw).get(JSON_FIELD_PAYLOAD) : genericStructureRaw;
         if (genericStructurePayload == null) {
             return;
         }
-        
+
         // determine version information
         Object topLevelTypeVersionRaw = isMetadataAvailable ? ((Map<String, Object>) genericStructureRaw).get(JSON_FIELD_PAYLOAD_TYPE_VERSION) : null;
         Integer topLevelTypeVersion = topLevelTypeVersionRaw != null ? ((JsonNumber) topLevelTypeVersionRaw).toInteger() : 0;
         Integer payloadTypeVersion = metadata.getPayloadTypeVersion();
-
+        
         // migrate payload data
         migrateVersions(isSingleton, topLevelTypeVersion, payloadTypeVersion, genericStructurePayload);
-
+        
         // process deserialization to payload object instances
         jsonDeserialization(explicitSave, genericStructureRaw, isMetadataAvailable, genericStructurePayload);
     }
-    
+
     @SuppressWarnings("unchecked")
     private void migrateVersions(boolean isSingleton, Integer topLevelTypeVersion, Integer payloadTypeVersion, Object genericStructurePayload) {
-        
+
         // compare version information
         if (topLevelTypeVersion != null & payloadTypeVersion != null) {
-
+            
             // abort on newer version than available as code
             if (topLevelTypeVersion > payloadTypeVersion) {
                 throw new IllegalStateException("loaded version is newer than specified version in code: " + topLevelTypeVersion + " > " + payloadTypeVersion + "!!");
             }
-
+            
             // run all available version migrators
             if (topLevelTypeVersion < payloadTypeVersion) {
-
+                
                 // update per version
                 for (int i = topLevelTypeVersion; i <= payloadTypeVersion; i++) {
-
+                    
                     // check for migration handler
                     VersionMigrationHandler migrationHandler = migrationHandlers.get(i);
                     if (migrationHandler == null) {
                         continue;
                     }
-
+                    
                     // invoke handler per instance, so you don't have to deal with wrapping outer list by yourself
                     try {
                         if (isSingleton) {
@@ -256,7 +256,7 @@ public abstract class AbstractJsonStore<T, P> {
                                 e);
                     }
                 }
-
+                
                 // save migrated data, if auto save is enabled
                 if (autoSave) {
                     save();
@@ -264,37 +264,37 @@ public abstract class AbstractJsonStore<T, P> {
             }
         }
     }
-    
+
     @SuppressWarnings("unchecked")
     private void jsonDeserialization(boolean explicitSave, Object genericStructureRaw, boolean isMetadataAvailable, Object genericStructurePayload) {
-
+        
         // proceed with deserialization
         try {
-            
+
             // TODO for the moment this is a bad hack to get the binder instance!!
             JSONDeserializer<?> deserializer = flexjsonHelper.deserializer();
             Method method = deserializer.getClass().getDeclaredMethod("createObjectBinder");
             method.setAccessible(true);
             ObjectBinder binder = (ObjectBinder) method.invoke(deserializer);
-            
-            if (isMetadataAvailable) {
 
+            if (isMetadataAvailable) {
+                
                 // full metadata deserialization
                 metadata = (JsonStoreMetadata<T, P>) binder.bind(genericStructureRaw);
             } else {
-
+                
                 // proceed payload deserialization
                 metadata.setPayload((P) binder.bind(genericStructurePayload));
-
+                
                 // update metadata timestamps
                 Date now = new Date();
                 metadata.setCreated(now);
                 metadata.setModified(now);
             }
-            
+
             // metadata refresh callback
             metadataRefreshed();
-            
+
             // save
             if (explicitSave && autoSave) {
                 save();
@@ -303,12 +303,12 @@ public abstract class AbstractJsonStore<T, P> {
             LOG.error("Unable to restore from JSON content, skipping file during restore: " + file.getAbsolutePath() + "!!", e);
         }
     }
-    
+
     /**
      * Gets called after metadata was refreshed on loading new JSON data.
      */
     protected abstract void metadataRefreshed();
-
+    
     /**
      * Drops store file explicitly. Transient data in store remains unchanged.
      */

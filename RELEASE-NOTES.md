@@ -2,12 +2,13 @@ Release Notes
 =====================
 
 0.6.0 (in progress)
------
+-------------------
 - fixed payload migration without metadats
 - payload without metadata is considered to have version number 0, allowing direct migration
 - removed deprecated ensure methods on JsonStores
 - removed JsonStores#load() due to mandatory version per store. Ensure methods will trigger load now if auto save is enabled.
-- ...
+- toJson() without explicit pretty print mode takes pretty print value from store, was false before
+- ... 
 
 0.5.0
 -----

@@ -33,7 +33,6 @@ public class AbstractJsonStoreTest {
     private TestDataVersion1 testData1_2;
     private Set<TestDataVersion1> testData1;
     private String testData1_1_json;
-    private String testData1_2_json;
     private String testData1_json;
     private VersionMigrationHandler versionMigrationHandler;
 
@@ -48,7 +47,6 @@ public class AbstractJsonStoreTest {
 
         flexjsonHelper = FlexjsonHelper.builder().dateTimePattern(DATE_TIME_PATTERN).build();
         testData1_1_json = flexjsonHelper.serializer(false).serialize(testData1_1);
-        testData1_2_json = flexjsonHelper.serializer(false).serialize(testData1_2);
         testData1 = new HashSet<>();
         testData1.add(testData1_1);
         testData1.add(testData1_2);
@@ -196,6 +194,31 @@ public class AbstractJsonStoreTest {
         Assert.assertFalse(migrationHandlerCalled);
         persistentSingletonStore.load();
         Assert.assertFalse(migrationHandlerCalled);
+    }
+
+    @Test
+    public void prettyPrint() {
+        
+        // add data
+        persistentStore.add(testData1_1);
+
+        // assert line breaks with and without pretty print
+        assertPrettyPrint(persistentStore);
+    }
+
+    @Test
+    public void singletonPrettyPrint() {
+        
+        // add data
+        persistentSingletonStore.set(testData1_1);
+        
+        // assert line breaks with and without pretty print
+        assertPrettyPrint(persistentSingletonStore);
+    }
+    
+    private void assertPrettyPrint(AbstractJsonStore<?, ?> store) {
+        Assert.assertTrue(store.toJson(true).contains("\n"));
+        Assert.assertFalse(store.toJson(false).contains("\n"));
     }
 
     private void createStores(Integer version, VersionMigrationHandler... migrationHandlers) {
