@@ -1,6 +1,10 @@
 Release Notes
 =====================
 
+0.7.0 (in progress)
+-------------------
+- ...
+
 0.6.0
 -----
 - fixed payload migration without metadats
