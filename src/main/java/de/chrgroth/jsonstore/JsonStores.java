@@ -17,6 +17,7 @@ import de.chrgroth.jsonstore.json.FlexjsonHelper.FlexjsonHelperBuilder;
 import de.chrgroth.jsonstore.store.JsonSingletonStore;
 import de.chrgroth.jsonstore.store.JsonStore;
 import de.chrgroth.jsonstore.store.VersionMigrationHandler;
+import de.chrgroth.jsonstore.store.exception.JsonStoreException;
 
 /**
  * Central API class to create JSON stores. Stores are maintained per class using {@link #resolve(Class)},
@@ -181,7 +182,8 @@ public class JsonStores {
     
     /**
      * Ensures existence of JSON store for given class. If auto save mode is enabled store will automatically load possibly existing data from configured
-     * storage path.
+     * storage path. If any error occurs during load of eisting data a {@link JsonStoreException} will be thrown cause otherwise data loss may occur on next
+     * successful save.
      *
      * @param payloadClass
      *            class for JSON store
@@ -207,7 +209,7 @@ public class JsonStores {
             try {
                 store.load();
             } catch (Exception e) {
-                LOG.error("Unable to load data class " + payloadClass + ", skipping file during restore: " + store.getFile().getAbsolutePath() + "!!", e);
+                throw new JsonStoreException("Unable to delegate data load for " + payloadClass + ": " + store.getFile().getAbsolutePath() + "!!", e);
             }
         }
         
@@ -235,7 +237,8 @@ public class JsonStores {
     
     /**
      * Ensures existence of JSON singleton store for given class. If auto save mode is enabled store will automatically load possibly existing data from
-     * configured storage path.
+     * configured storage path. If any error occurs during load of eisting data a {@link JsonStoreException} will be thrown cause otherwise data loss may occur
+     * on next successful save.
      *
      * @param payloadClass
      *            class for JSON store
@@ -261,7 +264,7 @@ public class JsonStores {
             try {
                 store.load();
             } catch (Exception e) {
-                LOG.error("Unable to load data class " + payloadClass + ", skipping file during restore: " + store.getFile().getAbsolutePath() + "!!", e);
+                throw new JsonStoreException("Unable to delegate data load for " + payloadClass + ": " + store.getFile().getAbsolutePath() + "!!", e);
             }
         }
         
