@@ -38,13 +38,19 @@ Persistent mode may also be configured using some more details, like charset, pr
 
 A concrete JSON store instance is created for it's root type and might be a singleton store for exactly one instance only or a regular store containing multiple instances backed by a Set. Additionally you may specify the version of your data (see Migration of existing data on class changes).
 
-	// single instance store
-	JsonSingletonStore<MyEntity> singletonStore = stores.ensureSingleton(MyEntity.class, MyEntity.VERSION);	
-	singletonStore.set(new MyEntity(...));
-
-	// multiple instances store
-	JsonStore<MyEntity> store = stores.ensure(MyEntity.class, MyEntity.VERSION);
-	store.add(new MyEntity(...));
+	try {
+	
+		// single instance store
+		JsonSingletonStore<MyEntity> singletonStore = stores.ensureSingleton(MyEntity.class, MyEntity.VERSION);	
+		singletonStore.set(new MyEntity(...));
+	
+		// multiple instances store
+		JsonStore<MyEntity> store = stores.ensure(MyEntity.class, MyEntity.VERSION);
+		store.add(new MyEntity(...));
+	) catch(JsonStoreException e) {
+		
+		// TODO handle error during load of existing data
+	}
 
 **Please use a payload version value >= 1 to start with. The version with value 0 is expected for old legacy stores running on json-store version prior to 0.5.0. These stores do not contain any any metadata and get converted on first load to version 0. Afterwards all migration handlers are applied, see also Migration of existing data on class changes. **
 
@@ -115,8 +121,14 @@ Let's assume the following simplified code for first version when our project st
 		// provide getters and setters
 	}
 
-	// store creation	
-	JsonStore<MyEntity> store = stores.ensure(MyEntity.class, MyEntity.VERSION);
+	try {
+	
+		// store creation	
+		JsonStore<MyEntity> store = stores.ensure(MyEntity.class, MyEntity.VERSION);
+	) catch(JsonStoreException e) {
+		
+		// TODO handle error during load of existing data
+	}
 
 Let's say the following data is stored as serialized JSON
 	
@@ -149,9 +161,15 @@ For next version we might change the entity but still reuse and migrate our exis
 		}
 	}
 
-	// store creation: using migration handler 
-	JsonStore<MyEntity> store = stores.ensure(MyEntity.class, MyEntity.VERSION);
-
+	try {
+	
+		// store creation: using migration handler 
+		JsonStore<MyEntity> store = stores.ensure(MyEntity.class, MyEntity.VERSION);
+	) catch(JsonStoreException e) {
+		
+		// TODO handle error during load of existing data
+	}
+	
 During load of data JSON store will execute all registered migration handlers and data will be available in JSON store. If auto save mode is enabled, the fole contents will be updated right after data migration. The result is shown below.
 
 	MyEntity#1 -> id="1", name="first entity", description="Some auto-generated description for first entity"
