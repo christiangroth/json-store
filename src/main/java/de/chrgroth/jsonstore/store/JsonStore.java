@@ -20,7 +20,7 @@ import de.chrgroth.jsonstore.json.FlexjsonHelper;
  *            concrete type stored in this instance
  */
 public class JsonStore<T> extends AbstractJsonStore<T, Set<T>> {
-    
+
     /**
      * Creates a new JSON store.
      * 
@@ -48,16 +48,16 @@ public class JsonStore<T> extends AbstractJsonStore<T, Set<T>> {
         super(payloadClass, payloadTypeVersion, false, flexjsonHelper, storage, charset, prettyPrint, autoSave, migrationHandlers);
         metadata.setPayload(new HashSet<>());
     }
-    
+
     @Override
     protected void metadataRefreshed() {
-        
+
         // change payload to set, gets loaded as list by flexjson
         Set<T> payload = new HashSet<T>();
         payload.addAll(metadata.getPayload());
         metadata.setPayload(payload);
     }
-    
+
     /**
      * Returns copy of data
      * 
@@ -66,7 +66,7 @@ public class JsonStore<T> extends AbstractJsonStore<T, Set<T>> {
     public Set<T> copy() {
         return new HashSet<>(metadata.getPayload());
     }
-    
+
     /**
      * Returns store size.
      * 
@@ -75,7 +75,7 @@ public class JsonStore<T> extends AbstractJsonStore<T, Set<T>> {
     public int size() {
         return metadata.getPayload().size();
     }
-    
+
     /**
      * Checks if store is empty
      * 
@@ -84,7 +84,7 @@ public class JsonStore<T> extends AbstractJsonStore<T, Set<T>> {
     public boolean isEmpty() {
         return metadata.getPayload().isEmpty();
     }
-    
+
     /**
      * Checks if store contains given element.
      * 
@@ -95,7 +95,7 @@ public class JsonStore<T> extends AbstractJsonStore<T, Set<T>> {
     public boolean contains(Object o) {
         return metadata.getPayload().contains(o);
     }
-    
+
     /**
      * Checks if store contains all objects in given collection.
      * 
@@ -106,7 +106,7 @@ public class JsonStore<T> extends AbstractJsonStore<T, Set<T>> {
     public boolean containsAll(Collection<?> c) {
         return metadata.getPayload().containsAll(c);
     }
-    
+
     /**
      * Adds given object to store. Will invoke {@link #save()} if using auto-save mode and store was changed.
      * 
@@ -121,7 +121,7 @@ public class JsonStore<T> extends AbstractJsonStore<T, Set<T>> {
         }
         return add;
     }
-    
+
     /**
      * Adds all objects from given collection to store. Will invoke {@link #save()} if using auto-save mode and store was changed.
      * 
@@ -136,7 +136,7 @@ public class JsonStore<T> extends AbstractJsonStore<T, Set<T>> {
         }
         return addAll;
     }
-    
+
     /**
      * Retains elements in given collection.Will invoke {@link #save()} if using auto-save mode and store was changed.
      * 
@@ -151,7 +151,7 @@ public class JsonStore<T> extends AbstractJsonStore<T, Set<T>> {
         }
         return retainAll;
     }
-    
+
     /**
      * Removed the given element from store. Will invoke {@link #save()} if using auto-save mode and store was changed.
      * 
@@ -166,7 +166,7 @@ public class JsonStore<T> extends AbstractJsonStore<T, Set<T>> {
         }
         return remove;
     }
-    
+
     /**
      * Removed all elements in given collection from store. Will invoke {@link #save()} if using auto-save mode and store was changed.
      * 
@@ -181,7 +181,7 @@ public class JsonStore<T> extends AbstractJsonStore<T, Set<T>> {
         }
         return removeAll;
     }
-    
+
     /**
      * Removes all elements satisfying given predicate from store. Will invoke {@link #save()} if using auto-save mode and store was changed.
      * 
@@ -196,7 +196,7 @@ public class JsonStore<T> extends AbstractJsonStore<T, Set<T>> {
         }
         return removeIf;
     }
-    
+
     /**
      * Clears all elements in store. Will invoke {@link #save()} if using auto-save mode.
      */
@@ -206,7 +206,7 @@ public class JsonStore<T> extends AbstractJsonStore<T, Set<T>> {
             save();
         }
     }
-    
+
     /**
      * Creates a stream over a copy of all elements in this store.
      * 
@@ -215,7 +215,7 @@ public class JsonStore<T> extends AbstractJsonStore<T, Set<T>> {
     public Stream<T> stream() {
         return copy().stream();
     }
-    
+
     /**
      * Creates a parallel stream over a copy of all elements in this store.
      * 
@@ -224,7 +224,7 @@ public class JsonStore<T> extends AbstractJsonStore<T, Set<T>> {
     public Stream<T> parallelStream() {
         return copy().parallelStream();
     }
-    
+
     /**
      * Performs given action on a copy of all elements in store.<br>
      * <br>

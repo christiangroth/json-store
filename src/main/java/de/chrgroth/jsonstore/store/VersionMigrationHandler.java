@@ -11,14 +11,14 @@ import flexjson.JSONDeserializer;
  * @author Christian Groth
  */
 public interface VersionMigrationHandler {
-    
+
     /**
      * Source version this handler will be active on. Target version is always source version + 1.
      * 
      * @return source version
      */
     int sourceVersion();
-    
+
     /**
      * Callback to fix data for next version. In case of {@link JsonStore} this method will be called one per instance so you don't have to deal with wrapping
      * collection structures. Changes have to be done in given generic structure created by {@link JSONDeserializer}.

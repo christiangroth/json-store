@@ -91,7 +91,7 @@ public class JsonStoresTest {
     }
 
     private void assertStoreLifecycle(JsonStores stores, JsonStores storesCopy, boolean isSingleton, boolean isPersistent, boolean isAutoSave) {
-        
+
         // nothing there
         Class<String> dataClass = String.class;
         Object store = resolve(stores, isSingleton, dataClass);
@@ -100,14 +100,14 @@ public class JsonStoresTest {
         Assert.assertTrue(tempDir.isDirectory());
         Assert.assertTrue(tempDir.canRead());
         Assert.assertEquals(0, tempDir.listFiles().length);
-        
+
         // ensure
         store = ensure(stores, isSingleton, dataClass);
         Assert.assertNotNull(store);
         Assert.assertEquals(0, tempDir.listFiles().length);
         store = resolve(stores, isSingleton, dataClass);
         Assert.assertNotNull(store);
-        
+
         // explicit save
         stores.save();
         if (isPersistent) {
@@ -116,14 +116,14 @@ public class JsonStoresTest {
         } else {
             Assert.assertEquals(0, tempDir.listFiles().length);
         }
-        
+
         // drop
         Object droppedStore = drop(stores, isSingleton, dataClass);
         Assert.assertEquals(store, droppedStore);
         Assert.assertEquals(0, tempDir.listFiles().length);
         store = resolve(stores, isSingleton, dataClass);
         Assert.assertNull(store);
-        
+
         // create again with data
         store = ensure(stores, isSingleton, dataClass);
         setOrAddData(store, isSingleton);
@@ -140,11 +140,11 @@ public class JsonStoresTest {
             save(store, isSingleton);
             Assert.assertEquals(0, tempDir.listFiles().length);
         }
-        
+
         // copy still empty
         Object storeCopy = resolve(storesCopy, isSingleton, dataClass);
         Assert.assertNull(storeCopy);
-        
+
         // load into stores copy
         storeCopy = ensure(storesCopy, isSingleton, dataClass);
         if (isPersistent) {
@@ -192,7 +192,7 @@ public class JsonStoresTest {
         if (isSingleton) {
             return ((JsonSingletonStore<String>) store).get();
         }
-        
+
         return ((JsonStore<String>) store).isEmpty() ? null : ((JsonStore<String>) store).copy().iterator().next();
     }
 

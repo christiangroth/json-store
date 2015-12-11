@@ -13,15 +13,15 @@ import de.chrgroth.jsonstore.json.FlexjsonHelper;
 
 public class JsonSingletonStoreTest {
     public static final String DATE_TIME_PATTERN = "HH:mm:ss.SSS dd.MM.yyyy";
-    
+
     private File tempDir;
     private JsonSingletonStore<String> persistentStore;
     private JsonSingletonStore<String> persistentStoreCopy;
     private JsonSingletonStore<String> transientStore;
     private JsonSingletonStore<String> transientStoreCopy;
-    
+
     private String testDataOne;
-    
+
     @Before
     public void init() {
         tempDir = Files.createTempDir();
@@ -32,33 +32,33 @@ public class JsonSingletonStoreTest {
         transientStoreCopy = new JsonSingletonStore<>(String.class, null, flexjsonHelper, null, null, false, false);
         testDataOne = "test data";
     }
-    
+
     @Test
     public void dataLifecycle() {
         dataLifecycle(persistentStore);
     }
-    
+
     @Test
     public void transientDataLifecycle() {
         dataLifecycle(transientStore);
     }
-    
+
     public void dataLifecycle(JsonSingletonStore<String> store) {
-        
+
         // no data
         Assert.assertTrue(store.isEmpty());
         Assert.assertNull(store.get());
-        
+
         // set element
         store.set(testDataOne);
         Assert.assertFalse(store.isEmpty());
         Assert.assertEquals(testDataOne, store.get());
-        
+
         // clear data
         store.clear();
         Assert.assertTrue(store.isEmpty());
         Assert.assertNull(store.get());
-        
+
         // clear implicitly
         store.set(testDataOne);
         Assert.assertFalse(store.isEmpty());
@@ -67,27 +67,27 @@ public class JsonSingletonStoreTest {
         Assert.assertTrue(store.isEmpty());
         Assert.assertNull(store.get());
     }
-    
+
     @Test
     public void jsonLifecycle() {
         jsonLifecycle(persistentStore, persistentStoreCopy);
     }
-    
+
     @Test
     public void transientJsonLifecycle() {
         jsonLifecycle(transientStore, transientStoreCopy);
     }
-    
+
     private void jsonLifecycle(JsonSingletonStore<String> store, JsonSingletonStore<String> storeCopy) {
-        
+
         // export data
         store.set(testDataOne);
         String json = store.toJson();
         Assert.assertNotNull(json);
-        
+
         // copy still empty
         Assert.assertTrue(storeCopy.isEmpty());
-        
+
         // import into copy
         storeCopy.fromJson(json);
         Assert.assertFalse(storeCopy.isEmpty());

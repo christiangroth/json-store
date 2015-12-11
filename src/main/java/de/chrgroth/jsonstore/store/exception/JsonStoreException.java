@@ -13,7 +13,7 @@ public class JsonStoreException extends RuntimeException {
     public JsonStoreException(String msg) {
         super(msg);
     }
-    
+
     public JsonStoreException(String msg, Exception e) {
         super(msg, e);
     }

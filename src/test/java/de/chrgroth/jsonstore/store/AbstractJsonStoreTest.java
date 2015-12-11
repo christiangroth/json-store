@@ -87,7 +87,7 @@ public class AbstractJsonStoreTest {
         persistentStore.fromJson(testData1_json);
         Assert.assertEquals(testData1.size(), persistentStore.size());
         Assert.assertFalse(migrationHandlerCalled);
-        
+
         // save and check it's loaded again, still no migration due to 1 -> 1
         createStores(1);
         Assert.assertFalse(migrationHandlerCalled);
@@ -95,7 +95,7 @@ public class AbstractJsonStoreTest {
         Assert.assertFalse(migrationHandlerCalled);
         Assert.assertEquals(testData1.size(), persistentStore.size());
     }
-    
+
     @Test
     public void singletonPayloadWithoutMetadataNoMigration() {
 
@@ -112,7 +112,7 @@ public class AbstractJsonStoreTest {
         Assert.assertFalse(migrationHandlerCalled);
         Assert.assertEquals(testData1_1, persistentSingletonStore.get());
     }
-    
+
     @Test
     public void payloadWithoutMetadataDirectMigration() {
 
@@ -198,7 +198,7 @@ public class AbstractJsonStoreTest {
 
     @Test
     public void prettyPrint() {
-        
+
         // add data
         persistentStore.add(testData1_1);
 
@@ -208,14 +208,14 @@ public class AbstractJsonStoreTest {
 
     @Test
     public void singletonPrettyPrint() {
-        
+
         // add data
         persistentSingletonStore.set(testData1_1);
-        
+
         // assert line breaks with and without pretty print
         assertPrettyPrint(persistentSingletonStore);
     }
-    
+
     private void assertPrettyPrint(AbstractJsonStore<?, ?> store) {
         Assert.assertTrue(store.toJson(true).contains("\n"));
         Assert.assertFalse(store.toJson(false).contains("\n"));

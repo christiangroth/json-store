@@ -13,9 +13,9 @@ import flexjson.ObjectBinder;
  * @author Christian Groth
  */
 public class DateTypeHandler extends AbstractFlexjsonTypeHandler {
-    
+
     private flexjson.transformer.DateTransformer delegate;
-    
+
     /**
      * Creates a new instance using the given pattern. Take a look at {@link DateTimeFormatter} for concrete syntax.
      * 
@@ -25,12 +25,12 @@ public class DateTypeHandler extends AbstractFlexjsonTypeHandler {
     public DateTypeHandler(String dateTimePattern) {
         delegate = new flexjson.transformer.DateTransformer(dateTimePattern);
     }
-    
+
     @Override
     public void transform(Object object) {
         delegate.transform(object);
     }
-    
+
     @Override
     public Object instantiate(ObjectBinder context, Object value, Type targetType, @SuppressWarnings("rawtypes") Class targetClass) {
         return delegate.instantiate(context, value, targetType, targetClass);

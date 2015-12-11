@@ -12,10 +12,10 @@ import flexjson.transformer.AbstractTransformer;
  * @author Christian Groth
  */
 public abstract class AbstractFlexjsonTypeHandler extends AbstractTransformer implements ObjectFactory {
-    
+
     @Override
     public abstract void transform(Object object);
-    
+
     @Override
     public abstract Object instantiate(ObjectBinder context, Object value, Type targetType, @SuppressWarnings("rawtypes") Class targetClass);
 }

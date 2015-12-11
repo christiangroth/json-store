@@ -13,9 +13,9 @@ import de.chrgroth.jsonstore.json.FlexjsonHelper;
  *            concrete type stored in this instance
  */
 public class JsonSingletonStore<T> extends AbstractJsonStore<T, T> {
-    
+
     private static final String FILE_SINGLETON = "singleton";
-    
+
     /**
      * Creates a new JSON store.
      * 
@@ -40,12 +40,12 @@ public class JsonSingletonStore<T> extends AbstractJsonStore<T, T> {
             boolean autoSave, VersionMigrationHandler... migrationHandlers) {
         super(payloadClass, payloadTypeVersion, true, flexjsonHelper, storage, charset, FILE_SINGLETON + FILE_SEPARATOR, prettyPrint, autoSave, migrationHandlers);
     }
-    
+
     @Override
     protected void metadataRefreshed() {
         // nothing to do
     }
-    
+
     /**
      * Returns stored data.
      * 
@@ -54,7 +54,7 @@ public class JsonSingletonStore<T> extends AbstractJsonStore<T, T> {
     public T get() {
         return metadata.getPayload();
     }
-    
+
     /**
      * Checks if store is empty
      * 
@@ -63,7 +63,7 @@ public class JsonSingletonStore<T> extends AbstractJsonStore<T, T> {
     public boolean isEmpty() {
         return get() == null;
     }
-    
+
     /**
      * Stores the given object. Will invoke {@link #save()} if using auto-save mode and store was changed.
      * 
@@ -72,20 +72,20 @@ public class JsonSingletonStore<T> extends AbstractJsonStore<T, T> {
      * @return previous stored object or null
      */
     public T set(T payload) {
-        
+
         // switch data
         T old = payload;
         metadata.setPayload(payload);
-        
+
         // save
         if (autoSave) {
             save();
         }
-        
+
         // done
         return old;
     }
-    
+
     /**
      * Clears the store. Will invoke {@link #save()} if using auto-save mode.
      */

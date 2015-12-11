@@ -3,7 +3,7 @@ package de.chrgroth.jsonstore.store.model;
 public class TestDataVersion1 {
     public String id;
     public String name;
-    
+
     @Override
     public int hashCode() {
         final int prime = 31;
@@ -12,7 +12,7 @@ public class TestDataVersion1 {
         result = prime * result + (name == null ? 0 : name.hashCode());
         return result;
     }
-    
+
     @Override
     public boolean equals(Object obj) {
         if (this == obj) {
