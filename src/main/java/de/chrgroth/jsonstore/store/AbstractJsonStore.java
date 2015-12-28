@@ -66,6 +66,7 @@ public abstract class AbstractJsonStore<T, P> {
         metadata.setPayloadType(payloadClass.getName());
         metadata.setPayloadTypeVersion(payloadTypeVersion);
         metadata.setSingleton(singleton);
+        metadata.setCreated(new Date());
         this.file = storage != null ? new File(storage, FILE_PREFIX + FILE_SEPARATOR + fileNameExtraPrefix + payloadClass.getName() + FILE_SEPARATOR + FILE_SUFFIX) : null;
         this.charset = charset;
         this.prettyPrint = prettyPrint;
@@ -110,11 +111,7 @@ public abstract class AbstractJsonStore<T, P> {
         String json = toJson(prettyPrint);
 
         // update metadata
-        Date now = new Date();
-        if (metadata.getCreated() == null) {
-            metadata.setCreated(now);
-        }
-        metadata.setModified(now);
+        metadata.setModified(new Date());
 
         // write to file
         try {
