@@ -10,8 +10,10 @@ import org.junit.Test;
 
 import com.google.common.io.Files;
 
+import de.chrgroth.jsonstore.store.AbstractJsonStore;
 import de.chrgroth.jsonstore.store.JsonSingletonStore;
 import de.chrgroth.jsonstore.store.JsonStore;
+import de.chrgroth.jsonstore.store.JsonStoreMetrics;
 
 public class JsonStoresTest {
 
@@ -94,7 +96,7 @@ public class JsonStoresTest {
 
         // nothing there
         Class<String> dataClass = String.class;
-        Object store = resolve(stores, isSingleton, dataClass);
+        AbstractJsonStore<?, ?> store = resolve(stores, isSingleton, dataClass);
         Assert.assertNull(store);
         Assert.assertTrue(tempDir.exists());
         Assert.assertTrue(tempDir.isDirectory());
@@ -107,6 +109,12 @@ public class JsonStoresTest {
         Assert.assertEquals(0, tempDir.listFiles().length);
         store = resolve(stores, isSingleton, dataClass);
         Assert.assertNotNull(store);
+        JsonStoreMetrics storeMetrics = store.computeMetrics();
+        Assert.assertNotNull(storeMetrics);
+        Assert.assertEquals(dataClass.getName(), storeMetrics.getType());
+        Assert.assertEquals(0, storeMetrics.getItemCount());
+        Assert.assertEquals(null, storeMetrics.getLastModified());
+        Assert.assertEquals(0, storeMetrics.getFileSize());
 
         // explicit save
         stores.save();
@@ -116,13 +124,35 @@ public class JsonStoresTest {
         } else {
             Assert.assertEquals(0, tempDir.listFiles().length);
         }
+        storeMetrics = store.computeMetrics();
+        Assert.assertNotNull(storeMetrics);
+        Assert.assertEquals(dataClass.getName(), storeMetrics.getType());
+        Assert.assertEquals(0, storeMetrics.getItemCount());
+        long fileSize = storeMetrics.getFileSize();
+        if (isPersistent) {
+            Assert.assertNotNull(storeMetrics.getLastModified());
+            Assert.assertTrue(fileSize > 0);
+        } else {
+            Assert.assertNull(storeMetrics.getLastModified());
+            Assert.assertEquals(0, fileSize);
+        }
 
         // drop
-        Object droppedStore = drop(stores, isSingleton, dataClass);
+        AbstractJsonStore<?, ?> droppedStore = drop(stores, isSingleton, dataClass);
         Assert.assertEquals(store, droppedStore);
         Assert.assertEquals(0, tempDir.listFiles().length);
         store = resolve(stores, isSingleton, dataClass);
         Assert.assertNull(store);
+        storeMetrics = droppedStore.computeMetrics();
+        Assert.assertNotNull(storeMetrics);
+        Assert.assertEquals(dataClass.getName(), storeMetrics.getType());
+        Assert.assertEquals(0, storeMetrics.getItemCount());
+        if (isPersistent) {
+            Assert.assertNotNull(storeMetrics.getLastModified());
+        } else {
+            Assert.assertNull(storeMetrics.getLastModified());
+        }
+        Assert.assertEquals(0, storeMetrics.getFileSize());
 
         // create again with data
         store = ensure(stores, isSingleton, dataClass);
@@ -140,9 +170,20 @@ public class JsonStoresTest {
             save(store, isSingleton);
             Assert.assertEquals(0, tempDir.listFiles().length);
         }
+        storeMetrics = store.computeMetrics();
+        Assert.assertNotNull(storeMetrics);
+        Assert.assertEquals(dataClass.getName(), storeMetrics.getType());
+        Assert.assertEquals(1, storeMetrics.getItemCount());
+        if (isPersistent) {
+            Assert.assertNotNull(storeMetrics.getLastModified());
+            Assert.assertTrue(fileSize < storeMetrics.getFileSize());
+        } else {
+            Assert.assertNull(storeMetrics.getLastModified());
+            Assert.assertEquals(0, storeMetrics.getFileSize());
+        }
 
         // copy still empty
-        Object storeCopy = resolve(storesCopy, isSingleton, dataClass);
+        AbstractJsonStore<?, ?> storeCopy = resolve(storesCopy, isSingleton, dataClass);
         Assert.assertNull(storeCopy);
 
         // load into stores copy
@@ -162,19 +203,19 @@ public class JsonStoresTest {
         }
     }
 
-    private Object resolve(JsonStores stores, boolean isSingleton, Class<String> dataClass) {
+    private AbstractJsonStore<?, ?> resolve(JsonStores stores, boolean isSingleton, Class<String> dataClass) {
         return isSingleton ? stores.resolveSingleton(dataClass) : stores.resolve(dataClass);
     }
 
-    private Object ensure(JsonStores stores, boolean isSingleton, Class<String> dataClass) {
+    private AbstractJsonStore<?, ?> ensure(JsonStores stores, boolean isSingleton, Class<String> dataClass) {
         return isSingleton ? stores.ensureSingleton(dataClass, 1) : stores.ensure(dataClass, 1);
     }
 
-    private Object drop(JsonStores stores, boolean isSingleton, Class<String> dataClass) {
+    private AbstractJsonStore<?, ?> drop(JsonStores stores, boolean isSingleton, Class<String> dataClass) {
         return isSingleton ? stores.dropSingleton(dataClass) : stores.drop(dataClass);
     }
 
-    private File file(Object store, boolean isSingleton) {
+    private File file(AbstractJsonStore<?, ?> store, boolean isSingleton) {
         return isSingleton ? ((JsonSingletonStore<?>) store).getFile() : ((JsonStore<?>) store).getFile();
     }
 

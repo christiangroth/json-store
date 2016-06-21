@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,9 +55,8 @@ public abstract class AbstractJsonStore<T, P> {
     protected final boolean autoSave;
     protected final Map<Integer, VersionMigrationHandler> migrationHandlers;
 
-    /* CHECKSTYLE.OFF */protected AbstractJsonStore(Class<T> payloadClass, Integer payloadTypeVersion, boolean singleton, FlexjsonHelper flexjsonHelper, File storage,
-            Charset charset, boolean prettyPrint, boolean autoSave, VersionMigrationHandler... migrationHandlers) {
-        // CHECKSTYLE:ON
+    protected AbstractJsonStore(Class<T> payloadClass, Integer payloadTypeVersion, boolean singleton, FlexjsonHelper flexjsonHelper, File storage, Charset charset,
+            boolean prettyPrint, boolean autoSave, VersionMigrationHandler... migrationHandlers) {
         this(payloadClass, payloadTypeVersion, singleton, flexjsonHelper, storage, charset, "", prettyPrint, autoSave, migrationHandlers);
     }
 
@@ -78,6 +78,29 @@ public abstract class AbstractJsonStore<T, P> {
                 this.migrationHandlers.put(migrationHandler.sourceVersion(), migrationHandler);
             }
         }
+    }
+
+    /**
+     * Returns the number of contained items.
+     *
+     * @return number of items
+     */
+    public abstract long size();
+
+    /**
+     * Computes current metrics for this instance.
+     *
+     * @return metrics, never null
+     */
+    public JsonStoreMetrics computeMetrics() {
+
+        // compute file size
+        long fileSize = 0;
+        if (file != null && file.exists()) {
+            fileSize = FileUtils.sizeOf(file);
+        }
+
+        return new JsonStoreMetrics(metadata.getPayloadType(), size(), metadata.getModified(), fileSize);
     }
 
     /**

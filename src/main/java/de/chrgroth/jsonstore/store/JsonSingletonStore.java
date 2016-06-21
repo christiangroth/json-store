@@ -42,6 +42,11 @@ public class JsonSingletonStore<T> extends AbstractJsonStore<T, T> {
     }
 
     @Override
+    public long size() {
+        return isEmpty() ? 0 : 1;
+    }
+
+    @Override
     protected void metadataRefreshed() {
         // nothing to do
     }

@@ -7,6 +7,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,6 +29,7 @@ import de.chrgroth.jsonstore.store.exception.JsonStoreException;
  *
  * @author Christian Groth
  */
+// TODO saving a lot of objects at once takes a lot of time (bulibot initial problem)
 public final class JsonStores {
 
     private static final Logger LOG = LoggerFactory.getLogger(JsonStores.class);
@@ -174,6 +176,15 @@ public final class JsonStores {
                 LOG.error("Unable to initialize storage path: " + storage.getAbsolutePath() + "!!", e);
             }
         }
+    }
+
+    /**
+     * Computes current metrics for all contained store instance.
+     *
+     * @return metrics, never null
+     */
+    public JsonStoresMetrics computeMetrics() {
+        return new JsonStoresMetrics(stores.values().stream().map(s -> s.computeMetrics()).collect(Collectors.toList()));
     }
 
     /**

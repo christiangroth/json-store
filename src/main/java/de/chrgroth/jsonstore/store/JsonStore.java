@@ -72,7 +72,8 @@ public class JsonStore<T> extends AbstractJsonStore<T, Set<T>> {
      *
      * @return size
      */
-    public int size() {
+    @Override
+    public long size() {
         return metadata.getPayload().size();
     }
 

@@ -3,6 +3,7 @@ Release Notes
 
 0.7.0 (in progress)
 -------------------
+- added simple on demand statistics computation to store instances
 - ...
 
 0.6.0
