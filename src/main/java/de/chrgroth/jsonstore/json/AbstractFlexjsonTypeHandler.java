@@ -8,7 +8,7 @@ import flexjson.transformer.AbstractTransformer;
 
 /**
  * Abstract base class for all custom type handler controlling serialization and deserialization of ustom types.
- * 
+ *
  * @author Christian Groth
  */
 public abstract class AbstractFlexjsonTypeHandler extends AbstractTransformer implements ObjectFactory {

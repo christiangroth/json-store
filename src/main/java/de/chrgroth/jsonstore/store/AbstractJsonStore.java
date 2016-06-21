@@ -54,8 +54,9 @@ public abstract class AbstractJsonStore<T, P> {
     protected final boolean autoSave;
     protected final Map<Integer, VersionMigrationHandler> migrationHandlers;
 
-    protected AbstractJsonStore(Class<T> payloadClass, Integer payloadTypeVersion, boolean singleton, FlexjsonHelper flexjsonHelper, File storage, Charset charset,
-            boolean prettyPrint, boolean autoSave, VersionMigrationHandler... migrationHandlers) {
+    /* CHECKSTYLE.OFF */protected AbstractJsonStore(Class<T> payloadClass, Integer payloadTypeVersion, boolean singleton, FlexjsonHelper flexjsonHelper, File storage,
+            Charset charset, boolean prettyPrint, boolean autoSave, VersionMigrationHandler... migrationHandlers) {
+        // CHECKSTYLE:ON
         this(payloadClass, payloadTypeVersion, singleton, flexjsonHelper, storage, charset, "", prettyPrint, autoSave, migrationHandlers);
     }
 

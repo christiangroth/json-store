@@ -21,7 +21,7 @@ public final class FlexjsonHelper {
 
     /**
      * Builder class to control creation of {@link JsonStores}.
-     * 
+     *
      * @author Christian Groth
      */
     public static class FlexjsonHelperBuilder {
@@ -42,7 +42,7 @@ public final class FlexjsonHelper {
 
         /**
          * Configures given date time pattern for JSON transformation. Take a look at {@link DateTimeFormatter} for concrete syntax.
-         * 
+         *
          * @param dateTimePattern
          *            date time pattern to be used
          * @return builder
@@ -54,7 +54,7 @@ public final class FlexjsonHelper {
 
         /**
          * Registers a custom flexjson type handler.
-         * 
+         *
          * @param type
          *            type the handler applies on
          * @param handler
@@ -69,7 +69,7 @@ public final class FlexjsonHelper {
 
         /**
          * Registers a path based flexjson type handler.
-         * 
+         *
          * @param path
          *            path the factory applies on
          * @param handler
@@ -84,7 +84,7 @@ public final class FlexjsonHelper {
 
         /**
          * Creates the {@link FlexjsonHelper} instance.
-         * 
+         *
          * @return flexjson helper
          */
         public FlexjsonHelper build() {
@@ -102,7 +102,7 @@ public final class FlexjsonHelper {
 
     /**
      * Creates a new builder instance.
-     * 
+     *
      * @return flexjson helper builder
      */
     public static FlexjsonHelperBuilder builder() {
@@ -140,7 +140,7 @@ public final class FlexjsonHelper {
 
     /**
      * Returns a preconfigured serializer.
-     * 
+     *
      * @param prettyPrint
      *            pretty print mode
      * @return serializer
@@ -151,7 +151,7 @@ public final class FlexjsonHelper {
 
     /**
      * Returns a preconfigured deserializer.
-     * 
+     *
      * @return deserializer
      */
     public JSONDeserializer<?> deserializer() {

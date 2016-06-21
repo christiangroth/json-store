@@ -7,7 +7,7 @@ import de.chrgroth.jsonstore.json.FlexjsonHelper;
 
 /**
  * Represents a JSON store for a concrete class holding none or one instance. You may use flexjson annotations to control conversion from/to JSON.
- * 
+ *
  * @author Christian Groth
  * @param <T>
  *            concrete type stored in this instance
@@ -18,7 +18,7 @@ public class JsonSingletonStore<T> extends AbstractJsonStore<T, T> {
 
     /**
      * Creates a new JSON store.
-     * 
+     *
      * @param payloadClass
      *            type of objects to be stored
      * @param payloadTypeVersion
@@ -48,7 +48,7 @@ public class JsonSingletonStore<T> extends AbstractJsonStore<T, T> {
 
     /**
      * Returns stored data.
-     * 
+     *
      * @return data, may be null
      */
     public T get() {
@@ -57,7 +57,7 @@ public class JsonSingletonStore<T> extends AbstractJsonStore<T, T> {
 
     /**
      * Checks if store is empty
-     * 
+     *
      * @return true if empty, false otherwise
      */
     public boolean isEmpty() {
@@ -66,7 +66,7 @@ public class JsonSingletonStore<T> extends AbstractJsonStore<T, T> {
 
     /**
      * Stores the given object. Will invoke {@link #save()} if using auto-save mode and store was changed.
-     * 
+     *
      * @param payload
      *            object to store
      * @return previous stored object or null

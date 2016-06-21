@@ -12,7 +12,7 @@ import flexjson.ObjectBinder;
 
 /**
  * Custom transformer and object factory to handle instances {@link LocalDateTime} during JSON serialization and deserialization.
- * 
+ *
  * @author Christian Groth
  */
 public class DateTimeTypeHandler extends AbstractFlexjsonTypeHandler {
@@ -22,7 +22,7 @@ public class DateTimeTypeHandler extends AbstractFlexjsonTypeHandler {
 
     /**
      * Creates a new instance using the given pattern. Take a look at {@link DateTimeFormatter} for concrete syntax.
-     * 
+     *
      * @param dateTimePattern
      *            date time pattern
      */

@@ -28,7 +28,7 @@ import de.chrgroth.jsonstore.store.exception.JsonStoreException;
  *
  * @author Christian Groth
  */
-public class JsonStores {
+public final class JsonStores {
 
     private static final Logger LOG = LoggerFactory.getLogger(JsonStores.class);
 

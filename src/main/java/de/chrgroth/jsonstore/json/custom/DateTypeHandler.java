@@ -9,7 +9,7 @@ import flexjson.ObjectBinder;
 
 /**
  * Custom type handler processing {@link Date} instances with configured pattern.
- * 
+ *
  * @author Christian Groth
  */
 public class DateTypeHandler extends AbstractFlexjsonTypeHandler {
@@ -18,7 +18,7 @@ public class DateTypeHandler extends AbstractFlexjsonTypeHandler {
 
     /**
      * Creates a new instance using the given pattern. Take a look at {@link DateTimeFormatter} for concrete syntax.
-     * 
+     *
      * @param dateTimePattern
      *            date time pattern
      */

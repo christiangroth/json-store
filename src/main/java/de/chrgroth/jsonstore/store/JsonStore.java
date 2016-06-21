@@ -14,7 +14,7 @@ import de.chrgroth.jsonstore.json.FlexjsonHelper;
 /**
  * Represents a JSON store for a concrete class holding zero to many instances. Access is provided using delegate methods to Java built in stream API. You may
  * use flexjson annotations to control conversion from/to JSON.
- * 
+ *
  * @author Christian Groth
  * @param <T>
  *            concrete type stored in this instance
@@ -23,7 +23,7 @@ public class JsonStore<T> extends AbstractJsonStore<T, Set<T>> {
 
     /**
      * Creates a new JSON store.
-     * 
+     *
      * @param payloadClass
      *            type of objects to be stored
      * @param payloadTypeVersion
@@ -60,7 +60,7 @@ public class JsonStore<T> extends AbstractJsonStore<T, Set<T>> {
 
     /**
      * Returns copy of data
-     * 
+     *
      * @return copy of data
      */
     public Set<T> copy() {
@@ -69,7 +69,7 @@ public class JsonStore<T> extends AbstractJsonStore<T, Set<T>> {
 
     /**
      * Returns store size.
-     * 
+     *
      * @return size
      */
     public int size() {
@@ -78,7 +78,7 @@ public class JsonStore<T> extends AbstractJsonStore<T, Set<T>> {
 
     /**
      * Checks if store is empty
-     * 
+     *
      * @return true if empty, false otherwise
      */
     public boolean isEmpty() {
@@ -87,7 +87,7 @@ public class JsonStore<T> extends AbstractJsonStore<T, Set<T>> {
 
     /**
      * Checks if store contains given element.
-     * 
+     *
      * @param o
      *            object to be checked
      * @return true if object is contained, false otherwise
@@ -98,7 +98,7 @@ public class JsonStore<T> extends AbstractJsonStore<T, Set<T>> {
 
     /**
      * Checks if store contains all objects in given collection.
-     * 
+     *
      * @param c
      *            collection to be checked
      * @return true if all objects are contained, false otherwise
@@ -109,7 +109,7 @@ public class JsonStore<T> extends AbstractJsonStore<T, Set<T>> {
 
     /**
      * Adds given object to store. Will invoke {@link #save()} if using auto-save mode and store was changed.
-     * 
+     *
      * @param e
      *            object to add
      * @return true if store was changed, false otherwise
@@ -124,7 +124,7 @@ public class JsonStore<T> extends AbstractJsonStore<T, Set<T>> {
 
     /**
      * Adds all objects from given collection to store. Will invoke {@link #save()} if using auto-save mode and store was changed.
-     * 
+     *
      * @param c
      *            objects to add
      * @return true if store was changed, false otherwise
@@ -139,7 +139,7 @@ public class JsonStore<T> extends AbstractJsonStore<T, Set<T>> {
 
     /**
      * Retains elements in given collection.Will invoke {@link #save()} if using auto-save mode and store was changed.
-     * 
+     *
      * @param c
      *            collection of elements to be retained
      * @return true if store was changed, false otherwise
@@ -154,7 +154,7 @@ public class JsonStore<T> extends AbstractJsonStore<T, Set<T>> {
 
     /**
      * Removed the given element from store. Will invoke {@link #save()} if using auto-save mode and store was changed.
-     * 
+     *
      * @param t
      *            element to be removed
      * @return true if store was changed, false otherwise
@@ -169,7 +169,7 @@ public class JsonStore<T> extends AbstractJsonStore<T, Set<T>> {
 
     /**
      * Removed all elements in given collection from store. Will invoke {@link #save()} if using auto-save mode and store was changed.
-     * 
+     *
      * @param c
      *            collection with elements to be removed
      * @return true if store was changed, false otherwise
@@ -184,7 +184,7 @@ public class JsonStore<T> extends AbstractJsonStore<T, Set<T>> {
 
     /**
      * Removes all elements satisfying given predicate from store. Will invoke {@link #save()} if using auto-save mode and store was changed.
-     * 
+     *
      * @param filter
      *            predicate to be used
      * @return true if store was changed, false otherwise
@@ -209,7 +209,7 @@ public class JsonStore<T> extends AbstractJsonStore<T, Set<T>> {
 
     /**
      * Creates a stream over a copy of all elements in this store.
-     * 
+     *
      * @return stream over elements in store
      */
     public Stream<T> stream() {
@@ -218,7 +218,7 @@ public class JsonStore<T> extends AbstractJsonStore<T, Set<T>> {
 
     /**
      * Creates a parallel stream over a copy of all elements in this store.
-     * 
+     *
      * @return parallel stream over elements in store
      */
     public Stream<T> parallelStream() {
@@ -229,7 +229,7 @@ public class JsonStore<T> extends AbstractJsonStore<T, Set<T>> {
      * Performs given action on a copy of all elements in store.<br>
      * <br>
      * <b>Attention: Even if using auto-save mode you have to call {@link #save()} yourself!!</b>
-     * 
+     *
      * @param action
      *            action to be performed on store elements
      */
