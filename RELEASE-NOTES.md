@@ -3,6 +3,7 @@ Release Notes
 
 0.7.0 (in progress)
 -------------------
+- fixed handling of stores created date
 - added simple on demand statistics computation to store instances
 - ...
 

@@ -29,7 +29,6 @@ import de.chrgroth.jsonstore.store.exception.JsonStoreException;
  *
  * @author Christian Groth
  */
-// TODO saving a lot of objects at once takes a lot of time (bulibot initial problem)
 public final class JsonStores {
 
     private static final Logger LOG = LoggerFactory.getLogger(JsonStores.class);
