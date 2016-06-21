@@ -165,17 +165,13 @@ public final class JsonStores {
         this.prettyPrint = prettyPrint;
         this.autoSave = autoSave;
 
-        // prepare storage
-        if (isPersistent()) {
-
-            // check if exists
-            if (!Files.exists(storage.toPath())) {
-                try {
-                    LOG.info("creating storage path " + storage.getAbsolutePath());
-                    Files.createDirectories(storage.toPath());
-                } catch (IOException e) {
-                    LOG.error("Unable to initialize storage path: " + storage.getAbsolutePath() + "!!", e);
-                }
+        // prepare storage if not exists
+        if (isPersistent() && !Files.exists(storage.toPath())) {
+            try {
+                LOG.info("creating storage path " + storage.getAbsolutePath());
+                Files.createDirectories(storage.toPath());
+            } catch (IOException e) {
+                LOG.error("Unable to initialize storage path: " + storage.getAbsolutePath() + "!!", e);
             }
         }
     }
