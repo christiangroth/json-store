@@ -6,7 +6,7 @@ import flexjson.JSON;
 
 /**
  * Represents metadata information about any JSON store instance.
- * 
+ *
  * @author Christian Groth
  * @param <T>
  *            type of objects being stored
@@ -57,18 +57,18 @@ public class JsonStoreMetadata<T, P> {
     }
 
     public Date getCreated() {
-        return created;
+        return created != null ? new Date(created.getTime()) : null;
     }
 
     public void setCreated(Date created) {
-        this.created = created;
+        this.created = created != null ? new Date(created.getTime()) : null;
     }
 
     public Date getModified() {
-        return modified;
+        return modified != null ? new Date(modified.getTime()) : null;
     }
 
     public void setModified(Date modified) {
-        this.modified = modified;
+        this.modified = modified != null ? new Date(modified.getTime()) : null;
     }
 }
