@@ -205,13 +205,15 @@ public final class JsonStores {
     public <T> JsonStore<T> ensure(Class<T> payloadClass, Integer payloadClassVersion, VersionMigrationHandler... versionMigrationHandlers) {
 
         // ensure store
+        boolean initialDataLod = false;
         if (!stores.containsKey(payloadClass)) {
+            initialDataLod = true;
             create(payloadClass, payloadClassVersion, versionMigrationHandlers);
         }
 
         // load data
         JsonStore<T> store = resolve(payloadClass);
-        if (isPersistent() && autoSave) {
+        if (isPersistent() && initialDataLod && autoSave) {
             try {
                 store.load();
             } catch (Exception e) {

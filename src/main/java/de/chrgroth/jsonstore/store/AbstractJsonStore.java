@@ -196,7 +196,7 @@ public abstract class AbstractJsonStore<T, P> {
         }
 
         // recreate data
-        fromJson(json, false);
+        fromJson(json);
     }
 
     /**
@@ -206,12 +206,8 @@ public abstract class AbstractJsonStore<T, P> {
      * @param json
      *            JSON data
      */
-    public final void fromJson(String json) {
-        fromJson(json, true);
-    }
-
     @SuppressWarnings("unchecked")
-    private void fromJson(String json, boolean explicitSave) {
+    public final void fromJson(String json) {
 
         // null guard
         if (json == null || "".equals(json.trim())) {
@@ -244,7 +240,7 @@ public abstract class AbstractJsonStore<T, P> {
         migrateVersions(isSingleton, topLevelTypeVersion, payloadTypeVersion, genericStructurePayload);
 
         // process deserialization to payload object instances
-        jsonDeserialization(explicitSave, genericStructureRaw, isMetadataAvailable, genericStructurePayload);
+        jsonDeserialization(genericStructureRaw, isMetadataAvailable, genericStructurePayload);
     }
 
     @SuppressWarnings("unchecked")
@@ -280,20 +276,15 @@ public abstract class AbstractJsonStore<T, P> {
                             }
                         }
                     } catch (Exception e) {
-                        throw new JsonStoreException("failed to migrate " + metadata.getPayloadType() + "from version " + i + " to " + (i + 1) + ": " + e.getMessage() + "!!", e);
+                        throw new JsonStoreException("failed to migrate " + metadata.getPayloadType() + " from version " + i + " to " + (i + 1) + ": " + e.getMessage() + "!!", e);
                     }
-                }
-
-                // save migrated data, if auto save is enabled
-                if (autoSave) {
-                    save();
                 }
             }
         }
     }
 
     @SuppressWarnings("unchecked")
-    private void jsonDeserialization(boolean explicitSave, Object genericStructureRaw, boolean isMetadataAvailable, Object genericStructurePayload) {
+    private void jsonDeserialization(Object genericStructureRaw, boolean isMetadataAvailable, Object genericStructurePayload) {
 
         // proceed with deserialization
         try {
@@ -307,7 +298,8 @@ public abstract class AbstractJsonStore<T, P> {
             if (isMetadataAvailable) {
 
                 // full metadata deserialization
-                metadata = (JsonStoreMetadata<T, P>) binder.bind(genericStructureRaw);
+                JsonStoreMetadata<T, P> oldMetadata = (JsonStoreMetadata<T, P>) binder.bind(genericStructureRaw);
+                metadata.setPayload(oldMetadata.getPayload());
             } else {
 
                 // proceed payload deserialization
@@ -323,7 +315,7 @@ public abstract class AbstractJsonStore<T, P> {
             metadataRefreshed();
 
             // save
-            if (explicitSave && autoSave) {
+            if (autoSave) {
                 save();
             }
         } catch (Exception e) {

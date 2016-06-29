@@ -10,10 +10,11 @@ import flexjson.JSONDeserializer;
  *
  * @author Christian Groth
  */
+// TODO exception during migration will lead to updated payload info in store but no data!!!
 public interface VersionMigrationHandler {
 
     /**
-     * Source version this handler will be active on. Target version is always source version + 1.
+     * The source version this handler will be called for. If migrating from x -&gt; y, set y.
      *
      * @return source version
      */

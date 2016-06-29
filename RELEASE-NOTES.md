@@ -7,6 +7,11 @@ Release Notes
 - added simple on demand statistics computation to store instances
 - ...
 
+0.6.1
+-----
+- version migration did not save new version number in metadata correctly
+- avoid duplicate loading of json data from file during ensure json store
+ 
 0.6.0
 -----
 - fixed payload migration without metadats
