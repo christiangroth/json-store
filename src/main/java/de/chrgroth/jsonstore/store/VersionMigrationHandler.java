@@ -14,7 +14,7 @@ import flexjson.JSONDeserializer;
 public interface VersionMigrationHandler {
 
     /**
-     * The source version this handler will be called for. If migrating from x -> y, set y.
+     * The source version this handler will be called for. If migrating from x -&gt; y, set y.
      *
      * @return source version
      */
