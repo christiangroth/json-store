@@ -159,7 +159,7 @@ public abstract class AbstractJsonStore<T, P> {
         if (file == null || !file.exists()) {
             return;
         }
-        
+
         // load JSON
         String json = null;
         try {
@@ -171,7 +171,7 @@ public abstract class AbstractJsonStore<T, P> {
         }
 
         // recreate data
-        fromJson(json, false);
+        fromJson(json);
     }
 
     /**
@@ -181,35 +181,31 @@ public abstract class AbstractJsonStore<T, P> {
      * @param json
      *            JSON data
      */
-    public final void fromJson(String json) {
-        fromJson(json, true);
-    }
-
     @SuppressWarnings("unchecked")
-    private void fromJson(String json, boolean explicitSave) {
-        
+    public final void fromJson(String json) {
+
         // null guard
         if (json == null || "".equals(json.trim())) {
             return;
         }
-        
+
         // deserialize to raw generic structure
         Object genericStructureRaw = new JSONTokener(json).nextValue();
         if (genericStructureRaw == null) {
             return;
         }
-        
+
         // determine current data situation
         boolean isMap = genericStructureRaw instanceof Map;
         boolean isMetadataAvailable = isMap && JsonStoreMetadata.class.getName().equals(((Map<String, Object>) genericStructureRaw).get(JSON_FIELD_CLASS));
         boolean isSingleton = isMetadataAvailable ? (boolean) ((Map<String, Object>) genericStructureRaw).get(JSON_FIELD_SINGLETON) : isMap;
-        
+
         // determine generic payload
         Object genericStructurePayload = isMetadataAvailable ? ((Map<String, Object>) genericStructureRaw).get(JSON_FIELD_PAYLOAD) : genericStructureRaw;
         if (genericStructurePayload == null) {
             return;
         }
-        
+
         // determine version information
         Object topLevelTypeVersionRaw = isMetadataAvailable ? ((Map<String, Object>) genericStructureRaw).get(JSON_FIELD_PAYLOAD_TYPE_VERSION) : null;
         Integer topLevelTypeVersion = topLevelTypeVersionRaw != null ? ((JsonNumber) topLevelTypeVersionRaw).toInteger() : 0;
@@ -219,12 +215,12 @@ public abstract class AbstractJsonStore<T, P> {
         migrateVersions(isSingleton, topLevelTypeVersion, payloadTypeVersion, genericStructurePayload);
 
         // process deserialization to payload object instances
-        jsonDeserialization(explicitSave, genericStructureRaw, isMetadataAvailable, genericStructurePayload);
+        jsonDeserialization(genericStructureRaw, isMetadataAvailable, genericStructurePayload);
     }
-    
+
     @SuppressWarnings("unchecked")
     private void migrateVersions(boolean isSingleton, Integer topLevelTypeVersion, Integer payloadTypeVersion, Object genericStructurePayload) {
-        
+
         // compare version information
         if (topLevelTypeVersion != null & payloadTypeVersion != null) {
 
@@ -255,34 +251,30 @@ public abstract class AbstractJsonStore<T, P> {
                             }
                         }
                     } catch (Exception e) {
-                        throw new JsonStoreException("failed to migrate " + metadata.getPayloadType() + "from version " + i + " to " + (i + 1) + ": " + e.getMessage() + "!!", e);
+                        throw new JsonStoreException("failed to migrate " + metadata.getPayloadType() + " from version " + i + " to " + (i + 1) + ": " + e.getMessage() + "!!", e);
                     }
-                }
-
-                // save migrated data, if auto save is enabled
-                if (autoSave) {
-                    save();
                 }
             }
         }
     }
-    
+
     @SuppressWarnings("unchecked")
-    private void jsonDeserialization(boolean explicitSave, Object genericStructureRaw, boolean isMetadataAvailable, Object genericStructurePayload) {
+    private void jsonDeserialization(Object genericStructureRaw, boolean isMetadataAvailable, Object genericStructurePayload) {
 
         // proceed with deserialization
         try {
-            
+
             // TODO for the moment this is a bad hack to get the binder instance!!
             JSONDeserializer<?> deserializer = flexjsonHelper.deserializer();
             Method method = deserializer.getClass().getDeclaredMethod("createObjectBinder");
             method.setAccessible(true);
             ObjectBinder binder = (ObjectBinder) method.invoke(deserializer);
-            
+
             if (isMetadataAvailable) {
 
                 // full metadata deserialization
-                metadata = (JsonStoreMetadata<T, P>) binder.bind(genericStructureRaw);
+                JsonStoreMetadata<T, P> oldMetadata = (JsonStoreMetadata<T, P>) binder.bind(genericStructureRaw);
+                metadata.setPayload(oldMetadata.getPayload());
             } else {
 
                 // proceed payload deserialization
@@ -293,19 +285,19 @@ public abstract class AbstractJsonStore<T, P> {
                 metadata.setCreated(now);
                 metadata.setModified(now);
             }
-            
+
             // metadata refresh callback
             metadataRefreshed();
-            
+
             // save
-            if (explicitSave && autoSave) {
+            if (autoSave) {
                 save();
             }
         } catch (Exception e) {
             throw new JsonStoreException("Unable to restore from JSON content: " + file.getAbsolutePath() + "!!", e);
         }
     }
-    
+
     /**
      * Gets called after metadata was refreshed on loading new JSON data.
      */

@@ -148,7 +148,7 @@ For next version we might change the entity but still reuse and migrate our exis
 	}
 
 	public class MyEntityVersionOneMigration implements VersionMigrationHandler {
-		public int sourceVersion() { return 1; }
+		public int sourceVersion() { return 2; }
 		
 		public void migrate(Map<String, Object> genericPlayload) {
 			

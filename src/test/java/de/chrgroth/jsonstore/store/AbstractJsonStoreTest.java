@@ -57,7 +57,7 @@ public class AbstractJsonStoreTest {
 
             @Override
             public int sourceVersion() {
-                return 1;
+                return 2;
             }
 
             @Override
@@ -147,9 +147,12 @@ public class AbstractJsonStoreTest {
         // create new store for version two and load data
         migrationHandlerCalled = false;
         createStores(2, versionMigrationHandler);
+        Assert.assertEquals(2, persistentStore.metadata.getPayloadTypeVersion().intValue());
         Assert.assertFalse(migrationHandlerCalled);
         persistentStore.load();
         Assert.assertTrue(migrationHandlerCalled);
+        Assert.assertNotNull(persistentStore.metadata.getPayloadTypeVersion());
+        Assert.assertEquals(2, persistentStore.metadata.getPayloadTypeVersion().intValue());
 
         // assert new instances
         TestDataVersion2 first = (TestDataVersion2) persistentStore.stream().filter(i -> i instanceof TestDataVersion2 && ((TestDataVersion2) i).id == 1).findFirst().get();
