@@ -31,8 +31,7 @@ import flexjson.ObjectBinder;
  * @author Christian Groth
  * @param <T>
  *            concrete type stored in this instance
- * @param
- *            <P>
+ * @param <P>
  *            concrete type structure used for storage of instances of type T
  */
 public abstract class AbstractJsonStore<T, P> {

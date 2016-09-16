@@ -10,8 +10,7 @@ import flexjson.JSON;
  * @author Christian Groth
  * @param <T>
  *            type of objects being stored
- * @param
- *            <P>
+ * @param <P>
  *            type of object being serialized and deserialized in order to store and load objects of type T
  */
 public class JsonStoreMetadata<T, P> {
