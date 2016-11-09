@@ -52,7 +52,7 @@ A concrete JSON store instance is created for it's root type and might be a sing
 		// TODO handle error during load of existing data
 	}
 
-**Please use a payload version value >= 1 to start with. The version with value 0 is expected for old legacy stores running on json-store version prior to 0.5.0. These stores do not contain any any metadata and get converted on first load to version 0. Afterwards all migration handlers are applied, see also Migration of existing data on class changes. **
+*Please use a payload version value >= 1 to start with. The version with value 0 is expected for old legacy stores running on json-store version prior to 0.5.0. These stores do not contain any any metadata and get converted on first load to version 0. Afterwards all migration handlers are applied, see also Migration of existing data on class changes.*
 
 back to [top](#table-of-contents).
 
