@@ -9,6 +9,7 @@ import java.util.Map;
 import de.chrgroth.jsonstore.JsonStores;
 import de.chrgroth.jsonstore.json.custom.DateTimeTypeHandler;
 import de.chrgroth.jsonstore.json.custom.DateTypeHandler;
+import de.chrgroth.jsonstore.json.custom.StringInterningHandler;
 import flexjson.JSONDeserializer;
 import flexjson.JSONSerializer;
 
@@ -49,6 +50,16 @@ public final class FlexjsonHelper {
          */
         public FlexjsonHelperBuilder dateTimePattern(String dateTimePattern) {
             this.dateTimePattern = dateTimePattern;
+            return this;
+        }
+
+        /**
+         * Adds the {@link StringInterningHandler} for {@link String} class.
+         * 
+         * @return builder
+         */
+        public FlexjsonHelperBuilder useStringInterning() {
+            handlers.put(String.class, new StringInterningHandler());
             return this;
         }
 

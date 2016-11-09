@@ -193,6 +193,11 @@ You don't need to implement this classes to be able to handle your POJOs in a ge
 
 Please refer to [flexjson][2] documentation for more details about custom type object factories and transformers.
 
+String interning
+----------------
+
+Depending on the data used a lot of instances of java.util.String will be created during deserialization. For better and more efficient memory usage java.util.String#intern() may be used. A custom handler de.chrgroth.jsonstore.json.custom.StringInterningHandler is contained since version 0.7.0 and can be activated using de.chrgroth.jsonstore.json.FlexjsonHelper.FlexjsonHelperBuilder.useStringInterning(). The effect heavily depends on the data being deserialized.
+
 [1]: http://www.oracle.com/technetwork/java/javase/downloads/index.html
 [2]: http://flexjson.sourceforge.net/
 [3]: http://www.slf4j.org/

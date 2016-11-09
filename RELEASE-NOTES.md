@@ -5,6 +5,7 @@ Release Notes
 -------------------
 - fixed handling of stores created date
 - added simple on demand statistics computation to store instances
+- added option to intern all Strings on deserialization to FlexjsonHelperBuilder
 - ...
 
 0.6.1

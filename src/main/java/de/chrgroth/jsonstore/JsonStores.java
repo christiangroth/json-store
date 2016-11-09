@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import de.chrgroth.jsonstore.json.AbstractFlexjsonTypeHandler;
 import de.chrgroth.jsonstore.json.FlexjsonHelper;
 import de.chrgroth.jsonstore.json.FlexjsonHelper.FlexjsonHelperBuilder;
+import de.chrgroth.jsonstore.json.custom.StringInterningHandler;
 import de.chrgroth.jsonstore.store.JsonSingletonStore;
 import de.chrgroth.jsonstore.store.JsonStore;
 import de.chrgroth.jsonstore.store.VersionMigrationHandler;
@@ -69,6 +70,16 @@ public final class JsonStores {
          */
         public JsonStoresBuilder dateTimePattern(String dateTimePattern) {
             flexjsonHelperBuilder.dateTimePattern(dateTimePattern);
+            return this;
+        }
+
+        /**
+         * Adds {@link StringInterningHandler} as custom handler for {@link String} class.
+         *
+         * @return builder
+         */
+        public JsonStoresBuilder useStringInterning() {
+            flexjsonHelperBuilder.useStringInterning();
             return this;
         }
 
