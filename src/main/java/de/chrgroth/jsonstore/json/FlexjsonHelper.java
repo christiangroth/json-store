@@ -55,7 +55,7 @@ public final class FlexjsonHelper {
 
         /**
          * Adds the {@link StringInterningHandler} for {@link String} class.
-         * 
+         *
          * @return builder
          */
         public FlexjsonHelperBuilder useStringInterning() {
