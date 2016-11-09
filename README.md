@@ -17,8 +17,6 @@ Easy and simple POJO persistence using JSON (de)serialization, filesystem storag
 - [String interning](#string-interning)
 - [Requirements](#requirements)
 
-back to [top](#table-of-contents).
-
 ## Creating stores
 
 JSON Store instances are created using static builder invoked via de.chrgroth.jsonstore.JsonStores. This central object is responsible for managing all your concrete store instances. You may create transient in-memory only instances or persistent instances saving contents to one file per store in given directory.
