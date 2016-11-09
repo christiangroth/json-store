@@ -1,6 +1,10 @@
 Release Notes
 =====================
 
+0.8.0 (in progress)
+-------------------
+- ...
+
 0.7.0
 -----
 - fixed handling of stores created date
