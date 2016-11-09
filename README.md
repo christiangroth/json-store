@@ -4,20 +4,22 @@ Development: [![Build Status](https://secure.travis-ci.org/christiangroth/json-s
 
 Stable: [![Maven Central](https://maven-badges.herokuapp.com/maven-central/de.chrgroth.json-store/json-store/badge.svg)](https://maven-badges.herokuapp.com/maven-central/de.chrgroth.json-store/json-store)
 
-JSON Store
-=====================
+# JSON Store
 Easy and simple POJO persistence using JSON (de)serialization, filesystem storage and Java stream API.
 
-Requirements
-------------
+## Table of Contents
+- [Creating stores](#creating-stores)
+- [Define payload classes](#define-payload-classes)
+- [Add and remove data](#add-and-remove-data)
+- [Query data](#query-data)
+- [Migration of existing data on class changes](#migration-of-existing-data-on-class-changes)
+- [Flexjson configuration](#flexjson-configuration)
+- [String interning](#string-interning)
+- [Requirements](#requirements)
 
-- [Java SDK 1.8+][1]
-- [flexjson][2]
-- [slf4j][3]
+back to [top](#table-of-contents).
 
-
-Creating stores
----------------
+## Creating stores
 
 JSON Store instances are created using static builder invoked via de.chrgroth.jsonstore.JsonStores. This central object is responsible for managing all your concrete store instances. You may create transient in-memory only instances or persistent instances saving contents to one file per store in given directory.
 	
@@ -54,8 +56,9 @@ A concrete JSON store instance is created for it's root type and might be a sing
 
 **Please use a payload version value >= 1 to start with. The version with value 0 is expected for old legacy stores running on json-store version prior to 0.5.0. These stores do not contain any any metadata and get converted on first load to version 0. Afterwards all migration handlers are applied, see also Migration of existing data on class changes. **
 
-Define payload classes
-----------------------
+back to [top](#table-of-contents).
+
+## Define payload classes
 
 Defining payload classes and class hierarchies does not require to implement special interfaces or extend base classes. Just restrict to simple java POJO classes and everything is fine. However to control flexjsons shallow serialization be sure to annotate all non-primite members with @flexjson.JSON to include this data otherwise it won't be recognized.
 
@@ -74,8 +77,9 @@ Defining payload classes and class hierarchies does not require to implement spe
 
 Also be sure to have an default no-arg contructor in order flexjson may create new instances for deserialization.
 
-Add and remove data
--------------------
+back to [top](#table-of-contents).
+
+## Add and remove data
 
 In case auto save mode is enabled (see Creating Stores) you don't have to call save() method explicitly if the datacontainer in store is changed directly using set, add, addAll, retianAll, remove, removeAll, removeIf or clear. However json store does not reflect changes to any of added objects so it's not able to detect changes on already added instances and you have to call save by yourself.
 	
@@ -88,8 +92,9 @@ In case auto save mode is enabled (see Creating Stores) you don't have to call s
 	store.remove(myEntity); // auto-saved
 	store.clear(); // auto-saved
 	
-Query data
-----------
+back to [top](#table-of-contents).
+
+## Query data
 
 Querying data is all about java collection and streams, if your're not familiar with this concepts you may take a look at the [official documentation][4] or any tutorial. In case of singleton store there is of course no need to search for any data if you store exactly one instance only. In case of regular store you'll be able to create stream or parallel stream on a copy of backed data. A copy is created to prevent concurrent modifications and breaking your stream.
 	
@@ -105,8 +110,9 @@ Querying data is all about java collection and streams, if your're not familiar 
 
 Note that all operations are done using out of the box java API and nothing is reinvented for JSON store.
 
-Migration of existing data on class changes
--------------------------------------------
+back to [top](#table-of-contents).
+
+## Migration of existing data on class changes
 
 Image you already have a running project and some persistent JSON store data. You might need to change your datamodel due to new feature implementations or whatever. If you have to remove attributes or change types, JSON deserialization will fail and you won't be able to load the data. Of course you may open the json store file and fix this manually during deployment. JSON store provides the option of data version migrations. At first you have to define the current version during store creation. It#s a good idea to keep version maintained using a static value in your datamodel class and adapt the value for each new version if class is changed. Even if changes would not break JSON deserialization you will be able to use migration handler and perhaps initialize a value for a newly created attribute.
 
@@ -175,8 +181,9 @@ During load of data JSON store will execute all registered migration handlers an
 	MyEntity#1 -> id="1", name="first entity", description="Some auto-generated description for first entity"
 	MyEntity#2 -> id="2", name="a second one", description="Some auto-generated description for a second one"
 
-Flexjson configuration
-----------------------
+back to [top](#table-of-contents).
+
+## Flexjson configuration
 
 FlexjsonHelper is used to configure JSON serialization and deserialization of payload in JSON stores. To influence configuration of flexjson the JsonStoresBuilder provides some configuration methods. If you want to create and maintain instances of JsonStore and JsonSingletonStore by yourself, you may use FlexjsonHelperBuilder.
 
@@ -193,10 +200,18 @@ You don't need to implement this classes to be able to handle your POJOs in a ge
 
 Please refer to [flexjson][2] documentation for more details about custom type object factories and transformers.
 
-String interning
-----------------
+back to [top](#table-of-contents).
+
+## String interning
 
 Depending on the data used a lot of instances of java.util.String will be created during deserialization. For better and more efficient memory usage java.util.String#intern() may be used. A custom handler de.chrgroth.jsonstore.json.custom.StringInterningHandler is contained since version 0.7.0 and can be activated using de.chrgroth.jsonstore.json.FlexjsonHelper.FlexjsonHelperBuilder.useStringInterning(). The effect heavily depends on the data being deserialized.
+
+back to [top](#table-of-contents).
+
+## Requirements
+- [Java SDK 1.8+][1]
+- [flexjson][2]
+- [slf4j][3]
 
 [1]: http://www.oracle.com/technetwork/java/javase/downloads/index.html
 [2]: http://flexjson.sourceforge.net/
