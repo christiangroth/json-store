@@ -5,6 +5,10 @@ Release Notes
 -------------------
 - ...
 
+0.7.1
+-----
+- avoid StringInterningHandler to be set on flexjson serializer, this will kill all stings in resulting json and produce invalid json syntax
+
 0.7.0
 -----
 - fixed handling of stores created date

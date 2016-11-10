@@ -137,7 +137,7 @@ public final class FlexjsonHelper {
     private JSONSerializer createSerializer(Map<Class<?>, AbstractFlexjsonTypeHandler> handlers, Map<String, AbstractFlexjsonTypeHandler> pathHandlers, boolean prettyPrint) {
         JSONSerializer serializer = new JSONSerializer();
         serializer.prettyPrint(prettyPrint);
-        handlers.forEach((k, v) -> serializer.transform(v, k));
+        handlers.entrySet().stream().filter(e -> !(e.getValue() instanceof StringInterningHandler)).forEach(e -> serializer.transform(e.getValue(), e.getKey()));
         pathHandlers.forEach((k, v) -> serializer.transform(v, k));
         return serializer;
     }
