@@ -27,7 +27,7 @@ public final class FlexjsonHelper {
      */
     public static class FlexjsonHelperBuilder {
 
-        private static final String DEFAULT_DATE_TIME_PATTERN = "HH:mm:ss.SSS dd.MM.yyyy";
+        public static final String DEFAULT_DATE_TIME_PATTERN = "HH:mm:ss.SSS dd.MM.yyyy";
 
         private String dateTimePattern;
 
@@ -100,11 +100,15 @@ public final class FlexjsonHelper {
          */
         public FlexjsonHelper build() {
 
-            // create type handlers for date and local date time
-            DateTypeHandler dateTransformer = new DateTypeHandler(dateTimePattern);
-            handlers.put(Date.class, dateTransformer);
-            DateTimeTypeHandler dateTimeTransformer = new DateTimeTypeHandler(dateTimePattern);
-            handlers.put(LocalDateTime.class, dateTimeTransformer);
+            // create type handlers for date and local date time, if not any other set
+            if (!handlers.containsKey(Date.class)) {
+                DateTypeHandler dateTransformer = new DateTypeHandler(dateTimePattern);
+                handlers.put(Date.class, dateTransformer);
+            }
+            if (!handlers.containsKey(LocalDateTime.class)) {
+                DateTimeTypeHandler dateTimeTransformer = new DateTimeTypeHandler(dateTimePattern);
+                handlers.put(LocalDateTime.class, dateTimeTransformer);
+            }
 
             // create flexjson helper
             return new FlexjsonHelper(handlers, pathHandlers);

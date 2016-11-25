@@ -7,6 +7,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -35,6 +36,7 @@ public final class JsonStores {
     private static final Logger LOG = LoggerFactory.getLogger(JsonStores.class);
 
     private final FlexjsonHelper flexjsonHelper;
+    private final Map<Class<?>, FlexjsonHelper> flexjsonHelperPerStore;
     private final Map<Class<?>, JsonStore<?>> stores;
     private final Map<Class<?>, JsonSingletonStore<?>> singletonStores;
     private final File storage;
@@ -55,10 +57,12 @@ public final class JsonStores {
         private boolean prettyPrint;
         private boolean autoSave;
 
-        private FlexjsonHelperBuilder flexjsonHelperBuilder;
+        private final FlexjsonHelperBuilder flexjsonHelperBuilder;
+        private final Map<Class<?>, FlexjsonHelperBuilder> flexjsonHelperBuilderPerStore;
 
         public JsonStoresBuilder() {
             flexjsonHelperBuilder = FlexjsonHelper.builder();
+            flexjsonHelperBuilderPerStore = new HashMap<>();
         }
 
         /**
@@ -74,12 +78,38 @@ public final class JsonStores {
         }
 
         /**
+         * {@link FlexjsonHelperBuilder#dateTimePattern(String)}
+         *
+         * @param payloadClass
+         *            use for store matching given payload class only
+         * @param dateTimePattern
+         *            date time pattern to be used.
+         * @return builder
+         */
+        public JsonStoresBuilder dateTimePattern(Class<?> payloadClass, String dateTimePattern) {
+            ensureFlexjsonHelperBuilderPerStore(payloadClass).dateTimePattern(dateTimePattern);
+            return this;
+        }
+
+        /**
          * Adds {@link StringInterningHandler} as custom handler for {@link String} class.
          *
          * @return builder
          */
         public JsonStoresBuilder useStringInterning() {
             flexjsonHelperBuilder.useStringInterning();
+            return this;
+        }
+
+        /**
+         * Adds {@link StringInterningHandler} as custom handler for {@link String} class.
+         *
+         * @param payloadClass
+         *            use for store matching given payload class only
+         * @return builder
+         */
+        public JsonStoresBuilder useStringInterning(Class<?> payloadClass) {
+            ensureFlexjsonHelperBuilderPerStore(payloadClass).useStringInterning();
             return this;
         }
 
@@ -98,6 +128,22 @@ public final class JsonStores {
         }
 
         /**
+         * {@link FlexjsonHelperBuilder#handler(Class, AbstractFlexjsonTypeHandler)}
+         *
+         * @param payloadClass
+         *            use for store matching given payload class only
+         * @param type
+         *            type the handler applies on
+         * @param handler
+         *            handler to be applied
+         * @return builder
+         */
+        public JsonStoresBuilder factory(Class<?> payloadClass, Class<?> type, AbstractFlexjsonTypeHandler handler) {
+            ensureFlexjsonHelperBuilderPerStore(payloadClass).handler(type, handler);
+            return this;
+        }
+
+        /**
          * {@link FlexjsonHelperBuilder#handler(String, AbstractFlexjsonTypeHandler)}
          *
          * @param path
@@ -109,6 +155,33 @@ public final class JsonStores {
         public JsonStoresBuilder factory(String path, AbstractFlexjsonTypeHandler handler) {
             flexjsonHelperBuilder.handler(path, handler);
             return this;
+        }
+
+        /**
+         * {@link FlexjsonHelperBuilder#handler(String, AbstractFlexjsonTypeHandler)}
+         *
+         * @param payloadClass
+         *            use for store matching given payload class only
+         * @param path
+         *            path the handler applies on
+         * @param handler
+         *            handler to be applied
+         * @return builder
+         */
+        public JsonStoresBuilder factory(Class<?> payloadClass, String path, AbstractFlexjsonTypeHandler handler) {
+            ensureFlexjsonHelperBuilderPerStore(payloadClass).handler(path, handler);
+            return this;
+        }
+
+        private FlexjsonHelperBuilder ensureFlexjsonHelperBuilderPerStore(Class<?> payloadClass) {
+
+            // create
+            if (!flexjsonHelperBuilderPerStore.containsKey(payloadClass)) {
+                flexjsonHelperBuilderPerStore.put(payloadClass, FlexjsonHelper.builder());
+            }
+
+            // done
+            return flexjsonHelperBuilderPerStore.get(payloadClass);
         }
 
         /**
@@ -153,7 +226,15 @@ public final class JsonStores {
          * @return stores instance
          */
         public JsonStores build() {
-            return new JsonStores(flexjsonHelperBuilder.build(), storage, charset, prettyPrint, autoSave);
+
+            // create builders per store
+            Map<Class<?>, FlexjsonHelper> flexjsonHelperPerStore = new HashMap<>();
+            for (Entry<Class<?>, FlexjsonHelperBuilder> entry : flexjsonHelperBuilderPerStore.entrySet()) {
+                flexjsonHelperPerStore.put(entry.getKey(), entry.getValue().build());
+            }
+
+            // create json stores
+            return new JsonStores(flexjsonHelperBuilder.build(), flexjsonHelperPerStore, storage, charset, prettyPrint, autoSave);
         }
     }
 
@@ -166,10 +247,14 @@ public final class JsonStores {
         return new JsonStoresBuilder();
     }
 
-    private JsonStores(FlexjsonHelper flexjsonHelper, File storage, Charset charset, boolean prettyPrint, boolean autoSave) {
+    private JsonStores(FlexjsonHelper flexjsonHelper, Map<Class<?>, FlexjsonHelper> flexjsonHelperPerStore, File storage, Charset charset, boolean prettyPrint, boolean autoSave) {
 
         // init state
         this.flexjsonHelper = flexjsonHelper;
+        this.flexjsonHelperPerStore = new HashMap<>();
+        if (flexjsonHelperPerStore != null) {
+            this.flexjsonHelperPerStore.putAll(flexjsonHelperPerStore);
+        }
         stores = new HashMap<>();
         singletonStores = new HashMap<>();
         this.storage = storage == null ? null : storage.getAbsoluteFile();
@@ -237,7 +322,8 @@ public final class JsonStores {
     }
 
     private void create(Class<?> payloadClass, Integer payloadClassVersion, VersionMigrationHandler... versionMigrationHandlers) {
-        stores.put(payloadClass, new JsonStore<>(payloadClass, payloadClassVersion, flexjsonHelper, storage, charset, prettyPrint, autoSave, versionMigrationHandlers));
+        stores.put(payloadClass,
+                new JsonStore<>(payloadClass, payloadClassVersion, resolveFlexjsonHelper(payloadClass), storage, charset, prettyPrint, autoSave, versionMigrationHandlers));
     }
 
     /**
@@ -292,8 +378,12 @@ public final class JsonStores {
     }
 
     private void createSingleton(Class<?> payloadClass, Integer payloadClassVersion, VersionMigrationHandler... versionMigrationHandlers) {
-        singletonStores.put(payloadClass,
-                new JsonSingletonStore<>(payloadClass, payloadClassVersion, flexjsonHelper, storage, charset, prettyPrint, autoSave, versionMigrationHandlers));
+        singletonStores.put(payloadClass, new JsonSingletonStore<>(payloadClass, payloadClassVersion, resolveFlexjsonHelper(payloadClass), storage, charset, prettyPrint, autoSave,
+                versionMigrationHandlers));
+    }
+
+    public FlexjsonHelper resolveFlexjsonHelper(Class<?> payloadClass) {
+        return flexjsonHelperPerStore.containsKey(payloadClass) ? flexjsonHelperPerStore.get(payloadClass) : flexjsonHelper;
     }
 
     /**
