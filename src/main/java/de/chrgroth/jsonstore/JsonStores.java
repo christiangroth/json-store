@@ -43,6 +43,7 @@ public final class JsonStores {
     private final Charset charset;
     private final boolean prettyPrint;
     private final boolean autoSave;
+    private final boolean deepSerialize;
 
     /**
      * Builder class to control creation of {@link JsonStores}.
@@ -56,6 +57,7 @@ public final class JsonStores {
         private Charset charset;
         private boolean prettyPrint;
         private boolean autoSave;
+        private boolean deepSerialize;
 
         private final FlexjsonHelperBuilder flexjsonHelperBuilder;
         private final Map<Class<?>, FlexjsonHelperBuilder> flexjsonHelperBuilderPerStore;
@@ -185,7 +187,8 @@ public final class JsonStores {
         }
 
         /**
-         * Configures persistent JSON storage with given base directory, default UTF-8 charset, pretty-print mode disabled and auto-save mode enabled.
+         * Configures persistent JSON storage with given base directory, default UTF-8 charset, pretty-print mode and deep serialization disabled and auto-save
+         * mode enabled.
          *
          * @param storage
          *            base storage directory
@@ -196,6 +199,7 @@ public final class JsonStores {
             charset = DEFAULT_CHARSET;
             prettyPrint = false;
             autoSave = true;
+            deepSerialize = false;
             return this;
         }
 
@@ -210,13 +214,16 @@ public final class JsonStores {
          *            pretty-print mode
          * @param autoSave
          *            auto-save mode
+         * @param deepSerialize
+         *            deep serialization mode
          * @return builder
          */
-        public JsonStoresBuilder storage(File storage, Charset charset, boolean prettyPrint, boolean autoSave) {
+        public JsonStoresBuilder storage(File storage, Charset charset, boolean prettyPrint, boolean autoSave, boolean deepSerialize) {
             this.storage = storage;
             this.charset = charset;
             this.prettyPrint = prettyPrint;
             this.autoSave = autoSave;
+            this.deepSerialize = deepSerialize;
             return this;
         }
 
@@ -234,7 +241,7 @@ public final class JsonStores {
             }
 
             // create json stores
-            return new JsonStores(flexjsonHelperBuilder.build(), flexjsonHelperPerStore, storage, charset, prettyPrint, autoSave);
+            return new JsonStores(flexjsonHelperBuilder.build(), flexjsonHelperPerStore, storage, charset, prettyPrint, autoSave, deepSerialize);
         }
     }
 
@@ -247,7 +254,8 @@ public final class JsonStores {
         return new JsonStoresBuilder();
     }
 
-    private JsonStores(FlexjsonHelper flexjsonHelper, Map<Class<?>, FlexjsonHelper> flexjsonHelperPerStore, File storage, Charset charset, boolean prettyPrint, boolean autoSave) {
+    private JsonStores(FlexjsonHelper flexjsonHelper, Map<Class<?>, FlexjsonHelper> flexjsonHelperPerStore, File storage, Charset charset, boolean prettyPrint, boolean autoSave,
+            boolean deepSerialize) {
 
         // init state
         this.flexjsonHelper = flexjsonHelper;
@@ -261,6 +269,7 @@ public final class JsonStores {
         this.charset = charset;
         this.prettyPrint = prettyPrint;
         this.autoSave = autoSave;
+        this.deepSerialize = deepSerialize;
 
         // prepare storage if not exists
         if (isPersistent() && !Files.exists(storage.toPath())) {
@@ -322,8 +331,8 @@ public final class JsonStores {
     }
 
     private void create(Class<?> payloadClass, Integer payloadClassVersion, VersionMigrationHandler... versionMigrationHandlers) {
-        stores.put(payloadClass,
-                new JsonStore<>(payloadClass, payloadClassVersion, resolveFlexjsonHelper(payloadClass), storage, charset, prettyPrint, autoSave, versionMigrationHandlers));
+        stores.put(payloadClass, new JsonStore<>(payloadClass, payloadClassVersion, resolveFlexjsonHelper(payloadClass), storage, charset, prettyPrint, autoSave, deepSerialize,
+                versionMigrationHandlers));
     }
 
     /**
@@ -379,7 +388,7 @@ public final class JsonStores {
 
     private void createSingleton(Class<?> payloadClass, Integer payloadClassVersion, VersionMigrationHandler... versionMigrationHandlers) {
         singletonStores.put(payloadClass, new JsonSingletonStore<>(payloadClass, payloadClassVersion, resolveFlexjsonHelper(payloadClass), storage, charset, prettyPrint, autoSave,
-                versionMigrationHandlers));
+                deepSerialize, versionMigrationHandlers));
     }
 
     public FlexjsonHelper resolveFlexjsonHelper(Class<?> payloadClass) {

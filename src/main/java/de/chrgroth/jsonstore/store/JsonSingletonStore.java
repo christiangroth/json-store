@@ -33,12 +33,14 @@ public class JsonSingletonStore<T> extends AbstractJsonStore<T, T> {
      *            pretty-print mode
      * @param autoSave
      *            auto-save mode
+     * @param deepSerialize
+     *            deep serialization mode
      * @param migrationHandlers
      *            all migration handlers to be applied
      */
     public JsonSingletonStore(Class<T> payloadClass, Integer payloadTypeVersion, FlexjsonHelper flexjsonHelper, File storage, Charset charset, boolean prettyPrint,
-            boolean autoSave, VersionMigrationHandler... migrationHandlers) {
-        super(payloadClass, payloadTypeVersion, true, flexjsonHelper, storage, charset, FILE_SINGLETON + FILE_SEPARATOR, prettyPrint, autoSave, migrationHandlers);
+            boolean autoSave, boolean deepSerialize, VersionMigrationHandler... migrationHandlers) {
+        super(payloadClass, payloadTypeVersion, true, flexjsonHelper, storage, charset, FILE_SINGLETON + FILE_SEPARATOR, prettyPrint, autoSave, deepSerialize, migrationHandlers);
     }
 
     @Override

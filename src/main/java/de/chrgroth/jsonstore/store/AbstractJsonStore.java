@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 import de.chrgroth.jsonstore.json.FlexjsonHelper;
 import de.chrgroth.jsonstore.store.exception.JsonStoreException;
 import flexjson.JSONDeserializer;
+import flexjson.JSONSerializer;
 import flexjson.JSONTokener;
 import flexjson.JsonNumber;
 import flexjson.ObjectBinder;
@@ -52,15 +53,16 @@ public abstract class AbstractJsonStore<T, P> {
     protected final Charset charset;
     protected final boolean prettyPrint;
     protected final boolean autoSave;
+    protected final boolean deepSerialize;
     protected final Map<Integer, VersionMigrationHandler> migrationHandlers;
 
     protected AbstractJsonStore(Class<T> payloadClass, Integer payloadTypeVersion, boolean singleton, FlexjsonHelper flexjsonHelper, File storage, Charset charset,
-            boolean prettyPrint, boolean autoSave, VersionMigrationHandler... migrationHandlers) {
-        this(payloadClass, payloadTypeVersion, singleton, flexjsonHelper, storage, charset, "", prettyPrint, autoSave, migrationHandlers);
+            boolean prettyPrint, boolean autoSave, boolean deepSerialize, VersionMigrationHandler... migrationHandlers) {
+        this(payloadClass, payloadTypeVersion, singleton, flexjsonHelper, storage, charset, "", prettyPrint, autoSave, deepSerialize, migrationHandlers);
     }
 
     protected AbstractJsonStore(Class<T> payloadClass, Integer payloadTypeVersion, boolean singleton, FlexjsonHelper flexjsonHelper, File storage, Charset charset,
-            String fileNameExtraPrefix, boolean prettyPrint, boolean autoSave, VersionMigrationHandler... migrationHandlers) {
+            String fileNameExtraPrefix, boolean prettyPrint, boolean autoSave, boolean deepSerialize, VersionMigrationHandler... migrationHandlers) {
         this.flexjsonHelper = flexjsonHelper;
         metadata = new JsonStoreMetadata<>();
         metadata.setPayloadType(payloadClass.getName());
@@ -71,6 +73,7 @@ public abstract class AbstractJsonStore<T, P> {
         this.charset = charset;
         this.prettyPrint = prettyPrint;
         this.autoSave = autoSave;
+        this.deepSerialize = deepSerialize;
         this.migrationHandlers = new HashMap<>();
         if (migrationHandlers != null) {
             for (VersionMigrationHandler migrationHandler : migrationHandlers) {
@@ -164,8 +167,11 @@ public abstract class AbstractJsonStore<T, P> {
      */
     public final String toJson(boolean prettyPrint) {
 
+        // get serializer
+        final JSONSerializer serializer = flexjsonHelper.serializer(prettyPrint);
+
         // create json data
-        return flexjsonHelper.serializer(prettyPrint).serialize(metadata);
+        return deepSerialize ? serializer.deepSerialize(metadata) : serializer.serialize(metadata);
     }
 
     /**

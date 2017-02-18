@@ -37,14 +37,14 @@ public class JsonStoresTest {
     public void init() {
         tempDir = Files.createTempDir();
 
-        persistentStores = JsonStores.builder().storage(tempDir, StandardCharsets.UTF_8, true, true).build();
-        persistentStoresCopy = JsonStores.builder().storage(tempDir, StandardCharsets.UTF_8, false, true).build();
+        persistentStores = JsonStores.builder().storage(tempDir, StandardCharsets.UTF_8, true, true, false).build();
+        persistentStoresCopy = JsonStores.builder().storage(tempDir, StandardCharsets.UTF_8, false, true, false).build();
 
-        persistentStoresNoAutoSave = JsonStores.builder().storage(tempDir, StandardCharsets.UTF_8, true, false).build();
-        persistentStoresNoAutoSaveCopy = JsonStores.builder().storage(tempDir, StandardCharsets.UTF_8, false, false).build();
+        persistentStoresNoAutoSave = JsonStores.builder().storage(tempDir, StandardCharsets.UTF_8, true, false, false).build();
+        persistentStoresNoAutoSaveCopy = JsonStores.builder().storage(tempDir, StandardCharsets.UTF_8, false, false, false).build();
 
-        persistentStoresIsoCharset = JsonStores.builder().storage(tempDir, StandardCharsets.ISO_8859_1, true, true).build();
-        persistentStoresIsoCharsetCopy = JsonStores.builder().storage(tempDir, StandardCharsets.ISO_8859_1, false, true).build();
+        persistentStoresIsoCharset = JsonStores.builder().storage(tempDir, StandardCharsets.ISO_8859_1, true, true, false).build();
+        persistentStoresIsoCharsetCopy = JsonStores.builder().storage(tempDir, StandardCharsets.ISO_8859_1, false, true, false).build();
 
         transientStores = JsonStores.builder().build();
         transientStoresCopy = JsonStores.builder().build();

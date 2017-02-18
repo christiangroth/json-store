@@ -225,7 +225,7 @@ public class AbstractJsonStoreTest {
     }
 
     private void createStores(Integer version, VersionMigrationHandler... migrationHandlers) {
-        persistentStore = new JsonStore<>(Object.class, version, flexjsonHelper, tempDir, StandardCharsets.UTF_8, true, true, migrationHandlers);
-        persistentSingletonStore = new JsonSingletonStore<>(Object.class, version, flexjsonHelper, tempDir, StandardCharsets.UTF_8, true, true, migrationHandlers);
+        persistentStore = new JsonStore<>(Object.class, version, flexjsonHelper, tempDir, StandardCharsets.UTF_8, true, true, false, migrationHandlers);
+        persistentSingletonStore = new JsonSingletonStore<>(Object.class, version, flexjsonHelper, tempDir, StandardCharsets.UTF_8, true, true, false, migrationHandlers);
     }
 }

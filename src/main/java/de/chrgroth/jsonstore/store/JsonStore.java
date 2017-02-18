@@ -40,12 +40,14 @@ public class JsonStore<T> extends AbstractJsonStore<T, Set<T>> {
      *            helper for JSON serialization and deserialization
      * @param autoSave
      *            auto-save mode
+     * @param deepSerialize
+     *            deep serialization mode
      * @param migrationHandlers
      *            all migration handlers to be applied
      */
     public JsonStore(Class<T> payloadClass, Integer payloadTypeVersion, FlexjsonHelper flexjsonHelper, File storage, Charset charset, boolean prettyPrint, boolean autoSave,
-            VersionMigrationHandler... migrationHandlers) {
-        super(payloadClass, payloadTypeVersion, false, flexjsonHelper, storage, charset, prettyPrint, autoSave, migrationHandlers);
+            boolean deepSerialize, VersionMigrationHandler... migrationHandlers) {
+        super(payloadClass, payloadTypeVersion, false, flexjsonHelper, storage, charset, prettyPrint, autoSave, deepSerialize, migrationHandlers);
         metadata.setPayload(new HashSet<>());
     }
 

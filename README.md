@@ -28,13 +28,14 @@ JSON Store instances are created using static builder invoked via de.chrgroth.js
 	File storageDir = new File("path/to/some/directory/that/must/not/exist");
 	JsonStores stores = JsonStores.builder().storage(storageDir).build();
 
-Persistent mode may also be configured using some more details, like charset, pretty print mode and auto save mode (see Add and remove data).
+Persistent mode may also be configured using some more details, like charset, pretty print mode, auto save mode and deep serialization mode (see Add and remove data).
 
 	// persistent mode (full control)
 	Charset charset = StandardCharsets.UTF_8;
 	boolean prettyPrint = true;
 	boolean autoSave = true;
-	JsonStores stores = JsonStores.builder().storage(storageDir, charset, prettyPrint, autoSave).build();
+	boolean deepSerialization = true;
+	JsonStores stores = JsonStores.builder().storage(storageDir, charset, prettyPrint, autoSave, deepSerialization).build();
 
 A concrete JSON store instance is created for it's root type and might be a singleton store for exactly one instance only or a regular store containing multiple instances backed by a Set. Additionally you may specify the version of your data (see Migration of existing data on class changes).
 
@@ -73,7 +74,7 @@ Defining payload classes and class hierarchies does not require to implement spe
 		// provide getters and setters
 	}
 
-Also be sure to have an default no-arg contructor in order flexjson may create new instances for deserialization.
+Also be sure to have an default no-arg contructor in order flexjson may create new instances for deserialization. Be aware that @JSON annotations are needed only when not using deep serialization mode.
 
 back to [top](#table-of-contents).
 
