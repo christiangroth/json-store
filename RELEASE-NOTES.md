@@ -1,13 +1,12 @@
 Release Notes
 =====================
 
-0.8.0 (in progress)
--------------------
+0.8.0
+-----
 - fixed bug if a custom handler for java.util.Date or java.time.LocalDateTime is registered
 - added methods to add handlers for specific store only
 - added deep serialization mode to json stores, see flexjson documentation for detailed information
 - fixed NPE during deserialization for transient stores
-- ...
 
 0.7.1
 -----
