@@ -324,7 +324,7 @@ public abstract class AbstractJsonStore<T, P> {
                 save();
             }
         } catch (Exception e) {
-            throw new JsonStoreException("Unable to restore from JSON content: " + file.getAbsolutePath() + "!!", e);
+            throw new JsonStoreException("Unable to restore from JSON content: " + (file != null ? file.getAbsolutePath() : "") + "!!", e);
         }
     }
 
