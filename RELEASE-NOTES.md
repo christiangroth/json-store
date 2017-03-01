@@ -1,6 +1,10 @@
 Release Notes
 =====================
 
+0.9.0 (in progress)
+-------------------
+- ...
+
 0.8.0
 -----
 - fixed bug if a custom handler for java.util.Date or java.time.LocalDateTime is registered
