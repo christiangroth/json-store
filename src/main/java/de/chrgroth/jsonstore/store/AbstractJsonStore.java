@@ -11,11 +11,14 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.common.base.Stopwatch;
 
 import de.chrgroth.jsonstore.json.FlexjsonHelper;
 import de.chrgroth.jsonstore.store.exception.JsonStoreException;
@@ -141,9 +144,12 @@ public abstract class AbstractJsonStore<T, P> {
 
         // write to file
         try {
+            Stopwatch stopwatch = Stopwatch.createStarted();
             synchronized (file) {
                 Files.write(file.toPath(), Arrays.asList(json), charset, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE);
             }
+            stopwatch.stop();
+            LOG.info(metadata.getPayloadType() + ": saving json to file took " + stopwatch.elapsed(TimeUnit.MILLISECONDS) + "ms");
         } catch (IOException e) {
             LOG.error("Unable to write file content, skipping file during store: " + file.getAbsolutePath() + "!!", e);
         }
@@ -166,12 +172,18 @@ public abstract class AbstractJsonStore<T, P> {
      * @return JSON data
      */
     public final String toJson(boolean prettyPrint) {
+        Stopwatch stopwatch = Stopwatch.createStarted();
+        try {
 
-        // get serializer
-        final JSONSerializer serializer = flexjsonHelper.serializer(prettyPrint);
+            // get serializer
+            final JSONSerializer serializer = flexjsonHelper.serializer(prettyPrint);
 
-        // create json data
-        return deepSerialize ? serializer.deepSerialize(metadata) : serializer.serialize(metadata);
+            // create json data
+            return deepSerialize ? serializer.deepSerialize(metadata) : serializer.serialize(metadata);
+        } finally {
+            stopwatch.stop();
+            LOG.info(metadata.getPayloadType() + ": converting to json took " + stopwatch.elapsed(TimeUnit.MILLISECONDS) + "ms");
+        }
     }
 
     /**
@@ -193,15 +205,18 @@ public abstract class AbstractJsonStore<T, P> {
         // load JSON
         String json = null;
         try {
+            Stopwatch stopwatch = Stopwatch.createStarted();
             synchronized (file) {
                 json = Files.lines(file.toPath(), charset).parallel().filter(line -> line != null && !"".equals(line.trim())).map(String::trim).collect(Collectors.joining());
             }
+            stopwatch.stop();
+            LOG.info(metadata.getPayloadType() + ": loading json from file took " + stopwatch.elapsed(TimeUnit.MILLISECONDS) + "ms");
         } catch (Exception e) {
             throw new JsonStoreException("Unable to read file content: " + file.getAbsolutePath() + "!!", e);
         }
 
         // recreate data
-        fromJson(json);
+        fromJsonInternal(json, false);
     }
 
     /**
@@ -211,8 +226,12 @@ public abstract class AbstractJsonStore<T, P> {
      * @param json
      *            JSON data
      */
-    @SuppressWarnings("unchecked")
     public final void fromJson(String json) {
+        fromJsonInternal(json, true);
+    }
+
+    @SuppressWarnings("unchecked")
+    private void fromJsonInternal(String json, boolean forceStore) {
 
         // null guard
         if (json == null || "".equals(json.trim())) {
@@ -220,7 +239,10 @@ public abstract class AbstractJsonStore<T, P> {
         }
 
         // deserialize to raw generic structure
+        Stopwatch stopwatch = Stopwatch.createStarted();
         Object genericStructureRaw = new JSONTokener(json).nextValue();
+        stopwatch.stop();
+        LOG.info(metadata.getPayloadType() + ": raw parsing from json took " + stopwatch.elapsed(TimeUnit.MILLISECONDS) + "ms");
         if (genericStructureRaw == null) {
             return;
         }
@@ -242,50 +264,65 @@ public abstract class AbstractJsonStore<T, P> {
         Integer payloadTypeVersion = metadata.getPayloadTypeVersion();
 
         // migrate payload data
-        migrateVersions(isSingleton, topLevelTypeVersion, payloadTypeVersion, genericStructurePayload);
+        boolean migrated = migrateVersions(isSingleton, topLevelTypeVersion, payloadTypeVersion, genericStructurePayload);
 
         // process deserialization to payload object instances
         jsonDeserialization(genericStructureRaw, isMetadataAvailable, genericStructurePayload);
+
+        // save
+        if (autoSave && (forceStore || migrated)) {
+            save();
+        }
     }
 
     @SuppressWarnings("unchecked")
-    private void migrateVersions(boolean isSingleton, Integer topLevelTypeVersion, Integer payloadTypeVersion, Object genericStructurePayload) {
+    private boolean migrateVersions(boolean isSingleton, Integer topLevelTypeVersion, Integer payloadTypeVersion, Object genericStructurePayload) {
 
         // compare version information
-        if (topLevelTypeVersion != null & payloadTypeVersion != null) {
+        if (topLevelTypeVersion == null || payloadTypeVersion == null) {
+            return false;
+        }
 
-            // abort on newer version than available as code
-            if (topLevelTypeVersion > payloadTypeVersion) {
-                throw new JsonStoreException("loaded version is newer than specified version in code: " + topLevelTypeVersion + " > " + payloadTypeVersion + "!!");
-            }
+        // abort on newer version than available as code
+        if (topLevelTypeVersion > payloadTypeVersion) {
+            throw new JsonStoreException("loaded version is newer than specified version in code: " + topLevelTypeVersion + " > " + payloadTypeVersion + "!!");
+        }
 
-            // run all available version migrators
-            if (topLevelTypeVersion < payloadTypeVersion) {
+        // run all available version migrators
+        boolean migrated = false;
+        if (topLevelTypeVersion < payloadTypeVersion) {
 
-                // update per version
-                for (int i = topLevelTypeVersion; i <= payloadTypeVersion; i++) {
+            // update per version
+            for (int i = topLevelTypeVersion; i <= payloadTypeVersion; i++) {
 
-                    // check for migration handler
-                    VersionMigrationHandler migrationHandler = migrationHandlers.get(i);
-                    if (migrationHandler == null) {
-                        continue;
-                    }
+                // check for migration handler
+                VersionMigrationHandler migrationHandler = migrationHandlers.get(i);
+                if (migrationHandler == null) {
+                    continue;
+                }
 
-                    // invoke handler per instance, so you don't have to deal with wrapping outer list by yourself
-                    try {
-                        if (isSingleton) {
-                            migrationHandler.migrate((Map<String, Object>) genericStructurePayload);
-                        } else {
-                            for (Object genericStructurePayloadItem : (List<Object>) genericStructurePayload) {
-                                migrationHandler.migrate((Map<String, Object>) genericStructurePayloadItem);
-                            }
+                // invoke handler per instance, so you don't have to deal with wrapping outer list by yourself
+                LOG.info(metadata.getPayloadType() + ": migrating to version " + i + " using " + migrationHandler);
+                try {
+                    Stopwatch stopwatch = Stopwatch.createStarted();
+                    if (isSingleton) {
+                        migrationHandler.migrate((Map<String, Object>) genericStructurePayload);
+                    } else {
+                        for (Object genericStructurePayloadItem : (List<Object>) genericStructurePayload) {
+                            migrationHandler.migrate((Map<String, Object>) genericStructurePayloadItem);
                         }
-                    } catch (Exception e) {
-                        throw new JsonStoreException("failed to migrate " + metadata.getPayloadType() + " from version " + i + " to " + (i + 1) + ": " + e.getMessage() + "!!", e);
                     }
+                    stopwatch.stop();
+                    migrated = true;
+                    LOG.info(metadata.getPayloadType() + ": migrating to version " + i + " took " + stopwatch.elapsed(TimeUnit.MILLISECONDS) + "ms");
+                } catch (Exception e) {
+                    throw new JsonStoreException("failed to migrate " + metadata.getPayloadType() + " from version " + i + " to " + (i + 1) + ": " + e.getMessage() + "!!", e);
                 }
             }
         }
+
+        // done
+        return migrated;
     }
 
     @SuppressWarnings("unchecked")
@@ -295,6 +332,7 @@ public abstract class AbstractJsonStore<T, P> {
         try {
 
             // TODO for the moment this is a bad hack to get the binder instance!!
+            Stopwatch stopwatch = Stopwatch.createStarted();
             JSONDeserializer<?> deserializer = flexjsonHelper.deserializer();
             Method method = deserializer.getClass().getDeclaredMethod("createObjectBinder");
             method.setAccessible(true);
@@ -315,14 +353,11 @@ public abstract class AbstractJsonStore<T, P> {
                 metadata.setCreated(now);
                 metadata.setModified(now);
             }
+            stopwatch.stop();
+            LOG.info(metadata.getPayloadType() + ": deserializing from json took " + stopwatch.elapsed(TimeUnit.MILLISECONDS) + "ms");
 
             // metadata refresh callback
             metadataRefreshed();
-
-            // save
-            if (autoSave) {
-                save();
-            }
         } catch (Exception e) {
             throw new JsonStoreException("Unable to restore from JSON content: " + (file != null ? file.getAbsolutePath() : "") + "!!", e);
         }
@@ -339,6 +374,7 @@ public abstract class AbstractJsonStore<T, P> {
     public final void drop() {
         if (isPersistent()) {
             try {
+                LOG.info(metadata.getPayloadType() + ": dropping strage file");
                 synchronized (file) {
                     Files.deleteIfExists(file.toPath());
                 }
