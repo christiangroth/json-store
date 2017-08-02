@@ -1,6 +1,10 @@
 Release Notes
 =====================
 
+0.9.0 (in progress)
+-------------------
+- ...
+
 0.8.1
 -----
 - avoid direct save after load without changes
