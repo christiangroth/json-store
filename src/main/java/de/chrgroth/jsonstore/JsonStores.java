@@ -475,6 +475,13 @@ public final class JsonStores {
                 throw new JsonStoreException("Unable to delegate data load for " + entry.getKey() + ": " + entry.getValue().getFile().getAbsolutePath() + "!!", e);
             }
         });
+        singletonStores.entrySet().parallelStream().forEach(entry -> {
+            try {
+                entry.getValue().load();
+            } catch (Exception e) {
+                throw new JsonStoreException("Unable to delegate data load for " + entry.getKey() + ": " + entry.getValue().getFile().getAbsolutePath() + "!!", e);
+            }
+        });
     }
 
     /**

@@ -3,6 +3,7 @@ Release Notes
 
 0.9.0 (in progress)
 -------------------
+- convenience method to load all stores in case auto save mode is disabled
 - ...
 
 0.8.1
