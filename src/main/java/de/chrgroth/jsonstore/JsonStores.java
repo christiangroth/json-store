@@ -458,6 +458,26 @@ public final class JsonStores {
     }
 
     /**
+     * If stores are persistent and auto save mode is disabled, this method invoked {@link JsonStore#load()} on all existing stores. In case auto save is
+     * enabled stores are loaded automatically.
+     */
+    public void load() {
+
+        // abort on transient stores or auto save mode
+        if (!isPersistent() || autoSave) {
+            return;
+        }
+
+        stores.entrySet().parallelStream().forEach(entry -> {
+            try {
+                entry.getValue().load();
+            } catch (Exception e) {
+                throw new JsonStoreException("Unable to delegate data load for " + entry.getKey() + ": " + entry.getValue().getFile().getAbsolutePath() + "!!", e);
+            }
+        });
+    }
+
+    /**
      * If stores are persistent {@link JsonStore#save()} will be invoked using parallel stream on all existing stores.
      */
     public void save() {
