@@ -9,25 +9,29 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.common.base.Strings;
 
 import de.chrgroth.jsonstore.json.AbstractFlexjsonTypeHandler;
 import de.chrgroth.jsonstore.json.FlexjsonHelper;
 import de.chrgroth.jsonstore.json.FlexjsonHelper.FlexjsonHelperBuilder;
 import de.chrgroth.jsonstore.json.custom.StringInterningHandler;
+import de.chrgroth.jsonstore.store.AbstractJsonStore;
 import de.chrgroth.jsonstore.store.JsonSingletonStore;
 import de.chrgroth.jsonstore.store.JsonStore;
 import de.chrgroth.jsonstore.store.VersionMigrationHandler;
 import de.chrgroth.jsonstore.store.exception.JsonStoreException;
 
 /**
- * Central API class to create JSON stores. Stores are maintained per class using {@link #resolve(Class)},
- * {@link #ensure(Class, Integer, VersionMigrationHandler...)} and {@link #drop(Class)} and similar methods for singleton stores. Each JSON store will create a
- * separate file. The {@link #save()} method acts as shortcut to save all stores. If an instance is created with auto save mode enabled (see {@link #builder()})
- * then {@link #ensure(Class, Integer, VersionMigrationHandler...)} and {@link #ensureSingleton(Class, Integer, VersionMigrationHandler...)} will automatically
- * load possibly existing data from configured storage path.
+ * Central API class to create JSON stores. Stores are maintained per class using {@link #resolve(Class, String)},
+ * {@link #ensure(Class, String, Integer, VersionMigrationHandler...)} and {@link #drop(Class, String)} and similar methods for singleton stores. Each JSON
+ * store will create a separate file. The {@link #save()} method acts as shortcut to save all stores. If an instance is created with auto save mode enabled (see
+ * {@link #builder()}) then {@link #ensure(Class, String, Integer, VersionMigrationHandler...)} and
+ * {@link #ensureSingleton(Class, String, Integer, VersionMigrationHandler...)} will automatically load possibly existing data from configured storage path.
  *
  * @author Christian Groth
  */
@@ -36,14 +40,18 @@ public final class JsonStores {
     private static final Logger LOG = LoggerFactory.getLogger(JsonStores.class);
 
     private final FlexjsonHelper flexjsonHelper;
-    private final Map<Class<?>, FlexjsonHelper> flexjsonHelperPerStore;
-    private final Map<Class<?>, JsonStore<?>> stores;
-    private final Map<Class<?>, JsonSingletonStore<?>> singletonStores;
+    private final Map<String, FlexjsonHelper> flexjsonHelperPerStore;
+    private final Map<String, JsonStore<?>> stores;
+    private final Map<String, JsonSingletonStore<?>> singletonStores;
     private final File storage;
     private final Charset charset;
     private final boolean prettyPrint;
     private final boolean autoSave;
     private final boolean deepSerialize;
+
+    private static String buildStoreUid(Class<?> payloadClass, String optionalQualifier) {
+        return payloadClass.getName() + (Strings.isNullOrEmpty(optionalQualifier) ? "" : "." + optionalQualifier);
+    }
 
     /**
      * Builder class to control creation of {@link JsonStores}.
@@ -60,7 +68,7 @@ public final class JsonStores {
         private boolean deepSerialize;
 
         private final FlexjsonHelperBuilder flexjsonHelperBuilder;
-        private final Map<Class<?>, FlexjsonHelperBuilder> flexjsonHelperBuilderPerStore;
+        private final Map<String, FlexjsonHelperBuilder> flexjsonHelperBuilderPerStore;
 
         public JsonStoresBuilder() {
             flexjsonHelperBuilder = FlexjsonHelper.builder();
@@ -83,13 +91,15 @@ public final class JsonStores {
          * {@link FlexjsonHelperBuilder#dateTimePattern(String)}
          *
          * @param payloadClass
-         *            use for store matching given payload class only
+         *            use for store matching
+         * @param optionalQualifier
+         *            use for store matching
          * @param dateTimePattern
          *            date time pattern to be used.
          * @return builder
          */
-        public JsonStoresBuilder dateTimePattern(Class<?> payloadClass, String dateTimePattern) {
-            ensureFlexjsonHelperBuilderPerStore(payloadClass).dateTimePattern(dateTimePattern);
+        public JsonStoresBuilder dateTimePattern(Class<?> payloadClass, String optionalQualifier, String dateTimePattern) {
+            ensureFlexjsonHelperBuilderPerStore(payloadClass, optionalQualifier).dateTimePattern(dateTimePattern);
             return this;
         }
 
@@ -107,11 +117,13 @@ public final class JsonStores {
          * Adds {@link StringInterningHandler} as custom handler for {@link String} class.
          *
          * @param payloadClass
-         *            use for store matching given payload class only
+         *            use for store matching
+         * @param optionalQualifier
+         *            use for store matching
          * @return builder
          */
-        public JsonStoresBuilder useStringInterning(Class<?> payloadClass) {
-            ensureFlexjsonHelperBuilderPerStore(payloadClass).useStringInterning();
+        public JsonStoresBuilder useStringInterning(Class<?> payloadClass, String optionalQualifier) {
+            ensureFlexjsonHelperBuilderPerStore(payloadClass, optionalQualifier).useStringInterning();
             return this;
         }
 
@@ -133,15 +145,17 @@ public final class JsonStores {
          * {@link FlexjsonHelperBuilder#handler(Class, AbstractFlexjsonTypeHandler)}
          *
          * @param payloadClass
-         *            use for store matching given payload class only
+         *            use for store matching
+         * @param optionalQualifier
+         *            use for store matching
          * @param type
          *            type the handler applies on
          * @param handler
          *            handler to be applied
          * @return builder
          */
-        public JsonStoresBuilder factory(Class<?> payloadClass, Class<?> type, AbstractFlexjsonTypeHandler handler) {
-            ensureFlexjsonHelperBuilderPerStore(payloadClass).handler(type, handler);
+        public JsonStoresBuilder factory(Class<?> payloadClass, String optionalQualifier, Class<?> type, AbstractFlexjsonTypeHandler handler) {
+            ensureFlexjsonHelperBuilderPerStore(payloadClass, optionalQualifier).handler(type, handler);
             return this;
         }
 
@@ -163,27 +177,30 @@ public final class JsonStores {
          * {@link FlexjsonHelperBuilder#handler(String, AbstractFlexjsonTypeHandler)}
          *
          * @param payloadClass
-         *            use for store matching given payload class only
+         *            use for store matching
+         * @param optionalQualifier
+         *            use for store matching
          * @param path
          *            path the handler applies on
          * @param handler
          *            handler to be applied
          * @return builder
          */
-        public JsonStoresBuilder factory(Class<?> payloadClass, String path, AbstractFlexjsonTypeHandler handler) {
-            ensureFlexjsonHelperBuilderPerStore(payloadClass).handler(path, handler);
+        public JsonStoresBuilder factory(Class<?> payloadClass, String optionalQualifier, String path, AbstractFlexjsonTypeHandler handler) {
+            ensureFlexjsonHelperBuilderPerStore(payloadClass, optionalQualifier).handler(path, handler);
             return this;
         }
 
-        private FlexjsonHelperBuilder ensureFlexjsonHelperBuilderPerStore(Class<?> payloadClass) {
+        private FlexjsonHelperBuilder ensureFlexjsonHelperBuilderPerStore(Class<?> payloadClass, String optionalQualifier) {
 
             // create
-            if (!flexjsonHelperBuilderPerStore.containsKey(payloadClass)) {
-                flexjsonHelperBuilderPerStore.put(payloadClass, FlexjsonHelper.builder());
+            final String uid = buildStoreUid(payloadClass, optionalQualifier);
+            if (!flexjsonHelperBuilderPerStore.containsKey(uid)) {
+                flexjsonHelperBuilderPerStore.put(uid, FlexjsonHelper.builder());
             }
 
             // done
-            return flexjsonHelperBuilderPerStore.get(payloadClass);
+            return flexjsonHelperBuilderPerStore.get(uid);
         }
 
         /**
@@ -235,8 +252,8 @@ public final class JsonStores {
         public JsonStores build() {
 
             // create builders per store
-            Map<Class<?>, FlexjsonHelper> flexjsonHelperPerStore = new HashMap<>();
-            for (Entry<Class<?>, FlexjsonHelperBuilder> entry : flexjsonHelperBuilderPerStore.entrySet()) {
+            Map<String, FlexjsonHelper> flexjsonHelperPerStore = new HashMap<>();
+            for (Entry<String, FlexjsonHelperBuilder> entry : flexjsonHelperBuilderPerStore.entrySet()) {
                 flexjsonHelperPerStore.put(entry.getKey(), entry.getValue().build());
             }
 
@@ -254,7 +271,7 @@ public final class JsonStores {
         return new JsonStoresBuilder();
     }
 
-    private JsonStores(FlexjsonHelper flexjsonHelper, Map<Class<?>, FlexjsonHelper> flexjsonHelperPerStore, File storage, Charset charset, boolean prettyPrint, boolean autoSave,
+    private JsonStores(FlexjsonHelper flexjsonHelper, Map<String, FlexjsonHelper> flexjsonHelperPerStore, File storage, Charset charset, boolean prettyPrint, boolean autoSave,
             boolean deepSerialize) {
 
         // init state
@@ -288,7 +305,8 @@ public final class JsonStores {
      * @return metrics, never null
      */
     public JsonStoresMetrics computeMetrics() {
-        return new JsonStoresMetrics(stores.values().stream().map(s -> s.computeMetrics()).collect(Collectors.toList()));
+        Stream<AbstractJsonStore<?, ? extends Object>> allStores = Stream.concat(stores.values().stream(), singletonStores.values().stream());
+        return new JsonStoresMetrics(allStores.map(s -> s.computeMetrics()).collect(Collectors.toList()));
     }
 
     /**
@@ -298,6 +316,8 @@ public final class JsonStores {
      *
      * @param payloadClass
      *            class for JSON store
+     * @param optionalQualifier
+     *            optional payload class qualifier
      * @param payloadClassVersion
      *            version of payload class, next version is always supposed to be increased by one
      * @param versionMigrationHandlers
@@ -307,17 +327,20 @@ public final class JsonStores {
      *            concrete type of data
      * @see VersionMigrationHandler
      */
-    public <T> JsonStore<T> ensure(Class<T> payloadClass, Integer payloadClassVersion, VersionMigrationHandler... versionMigrationHandlers) {
+    public <T> JsonStore<T> ensure(Class<T> payloadClass, String optionalQualifier, Integer payloadClassVersion, VersionMigrationHandler... versionMigrationHandlers) {
+
+        // build uid
+        String uid = buildStoreUid(payloadClass, optionalQualifier);
 
         // ensure store
         boolean initialDataLod = false;
-        if (!stores.containsKey(payloadClass)) {
+        if (!stores.containsKey(uid)) {
             initialDataLod = true;
-            create(payloadClass, payloadClassVersion, versionMigrationHandlers);
+            create(uid, payloadClass, payloadClassVersion, versionMigrationHandlers);
         }
 
         // load data
-        JsonStore<T> store = resolve(payloadClass);
+        JsonStore<T> store = resolve(uid);
         if (isPersistent() && initialDataLod && autoSave) {
             try {
                 store.load();
@@ -330,23 +353,38 @@ public final class JsonStores {
         return store;
     }
 
-    private void create(Class<?> payloadClass, Integer payloadClassVersion, VersionMigrationHandler... versionMigrationHandlers) {
-        stores.put(payloadClass, new JsonStore<>(payloadClass, payloadClassVersion, resolveFlexjsonHelper(payloadClass), storage, charset, prettyPrint, autoSave, deepSerialize,
+    private void create(String uid, Class<?> payloadClass, Integer payloadClassVersion, VersionMigrationHandler... versionMigrationHandlers) {
+        stores.put(uid, new JsonStore<>(uid, payloadClass, payloadClassVersion, resolveFlexjsonHelper(uid), storage, charset, prettyPrint, autoSave, deepSerialize,
                 versionMigrationHandlers));
     }
 
     /**
-     * Resolves JSON store for given class.
+     * Resolves JSON store for given payload class and qualifier.
      *
-     * @param dataClass
+     * @param payloadClass
      *            class for JSON store
+     * @param optionalQualifier
+     *            optional payload class qualifier
+     * @return existing JSON store, may be null
+     * @param <T>
+     *            concrete type of data
+     */
+    public <T> JsonStore<T> resolve(Class<?> payloadClass, String optionalQualifier) {
+        return resolve(buildStoreUid(payloadClass, optionalQualifier));
+    }
+
+    /**
+     * Resolves JSON store for given uid.
+     *
+     * @param uid
+     *            store uid
      * @return existing JSON store, may be null
      * @param <T>
      *            concrete type of data
      */
     @SuppressWarnings("unchecked")
-    public <T> JsonStore<T> resolve(Class<T> dataClass) {
-        return (JsonStore<T>) stores.get(dataClass);
+    public <T> JsonStore<T> resolve(String uid) {
+        return (JsonStore<T>) stores.get(uid);
     }
 
     /**
@@ -356,6 +394,8 @@ public final class JsonStores {
      *
      * @param payloadClass
      *            class for JSON store
+     * @param optionalQualifier
+     *            optional payload class qualifier
      * @param payloadClassVersion
      *            version of payload class, next version is always supposed to be increased by one
      * @param versionMigrationHandlers
@@ -365,15 +405,19 @@ public final class JsonStores {
      *            concrete type of data
      * @see VersionMigrationHandler
      */
-    public <T> JsonSingletonStore<T> ensureSingleton(Class<T> payloadClass, Integer payloadClassVersion, VersionMigrationHandler... versionMigrationHandlers) {
+    public <T> JsonSingletonStore<T> ensureSingleton(Class<T> payloadClass, String optionalQualifier, Integer payloadClassVersion,
+            VersionMigrationHandler... versionMigrationHandlers) {
+
+        // build uid
+        String uid = buildStoreUid(payloadClass, optionalQualifier);
 
         // ensure store
-        if (!singletonStores.containsKey(payloadClass)) {
-            createSingleton(payloadClass, payloadClassVersion, versionMigrationHandlers);
+        if (!singletonStores.containsKey(uid)) {
+            createSingleton(uid, payloadClass, payloadClassVersion, versionMigrationHandlers);
         }
 
         // load data
-        JsonSingletonStore<T> store = resolveSingleton(payloadClass);
+        JsonSingletonStore<T> store = resolveSingleton(uid);
         if (isPersistent() && autoSave) {
             try {
                 store.load();
@@ -386,43 +430,73 @@ public final class JsonStores {
         return store;
     }
 
-    private void createSingleton(Class<?> payloadClass, Integer payloadClassVersion, VersionMigrationHandler... versionMigrationHandlers) {
-        singletonStores.put(payloadClass, new JsonSingletonStore<>(payloadClass, payloadClassVersion, resolveFlexjsonHelper(payloadClass), storage, charset, prettyPrint, autoSave,
+    private void createSingleton(String uid, Class<?> payloadClass, Integer payloadClassVersion, VersionMigrationHandler... versionMigrationHandlers) {
+        singletonStores.put(uid, new JsonSingletonStore<>(uid, payloadClass, payloadClassVersion, resolveFlexjsonHelper(uid), storage, charset, prettyPrint, autoSave,
                 deepSerialize, versionMigrationHandlers));
     }
 
-    public FlexjsonHelper resolveFlexjsonHelper(Class<?> payloadClass) {
-        return flexjsonHelperPerStore.containsKey(payloadClass) ? flexjsonHelperPerStore.get(payloadClass) : flexjsonHelper;
+    public FlexjsonHelper resolveFlexjsonHelper(String uid) {
+        return flexjsonHelperPerStore.getOrDefault(uid, flexjsonHelper);
     }
 
     /**
-     * Resolves JSON singleton store for given class.
+     * Resolves JSON singleton store for given class and qualifier.
      *
-     * @param dataClass
+     * @param payloadClass
      *            class for JSON store
+     * @param optionalQualifier
+     *            optional payload class qualifier
+     * @return existing JSON singleton store, may be null
+     * @param <T>
+     *            concrete type of data
+     */
+    public <T> JsonSingletonStore<T> resolveSingleton(Class<T> payloadClass, String optionalQualifier) {
+        return resolveSingleton(buildStoreUid(payloadClass, optionalQualifier));
+    }
+
+    /**
+     * Resolves JSON singleton store for given uid.
+     *
+     * @param uid
+     *            store uid
      * @return existing JSON singleton store, may be null
      * @param <T>
      *            concrete type of data
      */
     @SuppressWarnings("unchecked")
-    public <T> JsonSingletonStore<T> resolveSingleton(Class<T> dataClass) {
-        return (JsonSingletonStore<T>) singletonStores.get(dataClass);
+    public <T> JsonSingletonStore<T> resolveSingleton(String uid) {
+        return (JsonSingletonStore<T>) singletonStores.get(uid);
     }
 
     /**
-     * Drops JSON store for given class, is existent. Results in calling {@link JsonStore#drop()} if using auto-save mode and store exists.
+     * Drops JSON store for given class and qualifier, is existent. Results in calling {@link JsonStore#drop()} if using auto-save mode and store exists.
      *
-     * @param dataClass
+     * @param payloadClass
      *            class for JSON store
+     * @param optionalQualifier
+     *            optional payload class qualifier
+     * @return dropped JSON store
+     * @param <T>
+     *            concrete type of data
+     */
+    public <T> JsonStore<T> drop(Class<T> payloadClass, String optionalQualifier) {
+        return drop(buildStoreUid(payloadClass, optionalQualifier));
+    }
+
+    /**
+     * Drops JSON store for given uid, is existent. Results in calling {@link JsonStore#drop()} if using auto-save mode and store exists.
+     *
+     * @param uid
+     *            store uid
      * @return dropped JSON store
      * @param <T>
      *            concrete type of data
      */
     @SuppressWarnings("unchecked")
-    public <T> JsonStore<T> drop(Class<T> dataClass) {
+    public <T> JsonStore<T> drop(String uid) {
 
         // drop in memory
-        JsonStore<T> store = (JsonStore<T>) stores.remove(dataClass);
+        JsonStore<T> store = (JsonStore<T>) stores.remove(uid);
         if (store != null && isPersistent()) {
 
             // remove file
@@ -434,19 +508,35 @@ public final class JsonStores {
     }
 
     /**
-     * Drops JSON singleton store for given class, is existent. Results in calling {@link JsonSingletonStore#drop()} if using auto-save mode and store exists.
+     * Drops JSON singleton store for given class and qualifier, is existent. Results in calling {@link JsonSingletonStore#drop()} if using auto-save mode and
+     * store exists.
      *
-     * @param dataClass
+     * @param payloadClass
      *            class for JSON store
+     * @param optionalQualifier
+     *            optional payload class qualifier
+     * @return dropped JSON singleton store
+     * @param <T>
+     *            concrete type of data
+     */
+    public <T> JsonSingletonStore<T> dropSingleton(Class<T> payloadClass, String optionalQualifier) {
+        return dropSingleton(buildStoreUid(payloadClass, optionalQualifier));
+    }
+
+    /**
+     * Drops JSON singleton store for given uid, is existent. Results in calling {@link JsonSingletonStore#drop()} if using auto-save mode and store exists.
+     *
+     * @param uid
+     *            store uid
      * @return dropped JSON singleton store
      * @param <T>
      *            concrete type of data
      */
     @SuppressWarnings("unchecked")
-    public <T> JsonSingletonStore<T> dropSingleton(Class<T> dataClass) {
+    public <T> JsonSingletonStore<T> dropSingleton(String uid) {
 
         // drop in memory
-        JsonSingletonStore<T> store = (JsonSingletonStore<T>) singletonStores.remove(dataClass);
+        JsonSingletonStore<T> store = (JsonSingletonStore<T>) singletonStores.remove(uid);
         if (store != null && isPersistent()) {
 
             // remove file

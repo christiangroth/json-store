@@ -24,6 +24,8 @@ public class JsonStore<T> extends AbstractJsonStore<T, Set<T>> {
     /**
      * Creates a new JSON store.
      *
+     * @param uid
+     *            store uid
      * @param payloadClass
      *            type of objects to be stored
      * @param payloadTypeVersion
@@ -45,9 +47,9 @@ public class JsonStore<T> extends AbstractJsonStore<T, Set<T>> {
      * @param migrationHandlers
      *            all migration handlers to be applied
      */
-    public JsonStore(Class<T> payloadClass, Integer payloadTypeVersion, FlexjsonHelper flexjsonHelper, File storage, Charset charset, boolean prettyPrint, boolean autoSave,
-            boolean deepSerialize, VersionMigrationHandler... migrationHandlers) {
-        super(payloadClass, payloadTypeVersion, false, flexjsonHelper, storage, charset, prettyPrint, autoSave, deepSerialize, migrationHandlers);
+    public JsonStore(String uid, Class<T> payloadClass, Integer payloadTypeVersion, FlexjsonHelper flexjsonHelper, File storage, Charset charset, boolean prettyPrint,
+            boolean autoSave, boolean deepSerialize, VersionMigrationHandler... migrationHandlers) {
+        super(uid, payloadClass, payloadTypeVersion, false, flexjsonHelper, storage, charset, prettyPrint, autoSave, deepSerialize, migrationHandlers);
         metadata.setPayload(new HashSet<>());
     }
 

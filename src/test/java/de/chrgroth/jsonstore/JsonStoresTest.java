@@ -204,15 +204,15 @@ public class JsonStoresTest {
     }
 
     private AbstractJsonStore<?, ?> resolve(JsonStores stores, boolean isSingleton, Class<String> dataClass) {
-        return isSingleton ? stores.resolveSingleton(dataClass) : stores.resolve(dataClass);
+        return isSingleton ? stores.resolveSingleton(dataClass, null) : stores.resolve(dataClass, null);
     }
 
     private AbstractJsonStore<?, ?> ensure(JsonStores stores, boolean isSingleton, Class<String> dataClass) {
-        return isSingleton ? stores.ensureSingleton(dataClass, 1) : stores.ensure(dataClass, 1);
+        return isSingleton ? stores.ensureSingleton(dataClass, null, 1) : stores.ensure(dataClass, null, 1);
     }
 
     private AbstractJsonStore<?, ?> drop(JsonStores stores, boolean isSingleton, Class<String> dataClass) {
-        return isSingleton ? stores.dropSingleton(dataClass) : stores.drop(dataClass);
+        return isSingleton ? stores.dropSingleton(dataClass, null) : stores.drop(dataClass, null);
     }
 
     private File file(AbstractJsonStore<?, ?> store, boolean isSingleton) {

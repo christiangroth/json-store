@@ -19,6 +19,8 @@ public class JsonSingletonStore<T> extends AbstractJsonStore<T, T> {
     /**
      * Creates a new JSON store.
      *
+     * @param uid
+     *            store uid
      * @param payloadClass
      *            type of objects to be stored
      * @param payloadTypeVersion
@@ -38,9 +40,10 @@ public class JsonSingletonStore<T> extends AbstractJsonStore<T, T> {
      * @param migrationHandlers
      *            all migration handlers to be applied
      */
-    public JsonSingletonStore(Class<T> payloadClass, Integer payloadTypeVersion, FlexjsonHelper flexjsonHelper, File storage, Charset charset, boolean prettyPrint,
+    public JsonSingletonStore(String uid, Class<T> payloadClass, Integer payloadTypeVersion, FlexjsonHelper flexjsonHelper, File storage, Charset charset, boolean prettyPrint,
             boolean autoSave, boolean deepSerialize, VersionMigrationHandler... migrationHandlers) {
-        super(payloadClass, payloadTypeVersion, true, flexjsonHelper, storage, charset, FILE_SINGLETON + FILE_SEPARATOR, prettyPrint, autoSave, deepSerialize, migrationHandlers);
+        super(uid, payloadClass, payloadTypeVersion, true, flexjsonHelper, storage, charset, FILE_SINGLETON + FILE_SEPARATOR, prettyPrint, autoSave, deepSerialize,
+                migrationHandlers);
     }
 
     @Override

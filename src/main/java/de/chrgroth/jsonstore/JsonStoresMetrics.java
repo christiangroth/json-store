@@ -16,7 +16,7 @@ public class JsonStoresMetrics {
         long size = 0;
         if (metrics != null) {
             for (JsonStoreMetrics metric : metrics) {
-                this.metrics.put(metric.getType(), metric);
+                this.metrics.put(metric.getUid(), metric);
                 items += metric.getItemCount();
                 size += metric.getFileSize();
             }

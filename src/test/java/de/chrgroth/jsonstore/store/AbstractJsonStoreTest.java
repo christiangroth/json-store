@@ -218,14 +218,14 @@ public class AbstractJsonStoreTest {
         // assert line breaks with and without pretty print
         assertPrettyPrint(persistentSingletonStore);
     }
-
+    
     private void assertPrettyPrint(AbstractJsonStore<?, ?> store) {
         Assert.assertTrue(store.toJson(true).contains("\n"));
         Assert.assertFalse(store.toJson(false).contains("\n"));
     }
 
     private void createStores(Integer version, VersionMigrationHandler... migrationHandlers) {
-        persistentStore = new JsonStore<>(Object.class, version, flexjsonHelper, tempDir, StandardCharsets.UTF_8, true, true, false, migrationHandlers);
-        persistentSingletonStore = new JsonSingletonStore<>(Object.class, version, flexjsonHelper, tempDir, StandardCharsets.UTF_8, true, true, false, migrationHandlers);
+        persistentStore = new JsonStore<>("uid1", Object.class, version, flexjsonHelper, tempDir, StandardCharsets.UTF_8, true, true, false, migrationHandlers);
+        persistentSingletonStore = new JsonSingletonStore<>("uid2", Object.class, version, flexjsonHelper, tempDir, StandardCharsets.UTF_8, true, true, false, migrationHandlers);
     }
 }

@@ -17,6 +17,7 @@ public class JsonStoreMetadata<T, P> {
 
     @JSON
     private P payload;
+    private String uid;
     private String payloadType;
     private Integer payloadTypeVersion;
     private boolean singleton;
@@ -29,6 +30,14 @@ public class JsonStoreMetadata<T, P> {
 
     public void setPayload(P payload) {
         this.payload = payload;
+    }
+
+    public String getUid() {
+        return uid;
+    }
+
+    public void setUid(String uid) {
+        this.uid = uid;
     }
 
     public String getPayloadType() {

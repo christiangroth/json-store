@@ -26,10 +26,10 @@ public class JsonSingletonStoreTest {
     public void init() {
         tempDir = Files.createTempDir();
         FlexjsonHelper flexjsonHelper = FlexjsonHelper.builder().dateTimePattern(DATE_TIME_PATTERN).build();
-        persistentStore = new JsonSingletonStore<>(String.class, null, flexjsonHelper, tempDir, StandardCharsets.UTF_8, true, true, false);
-        persistentStoreCopy = new JsonSingletonStore<>(String.class, null, flexjsonHelper, tempDir, StandardCharsets.UTF_8, true, true, false);
-        transientStore = new JsonSingletonStore<>(String.class, null, flexjsonHelper, null, null, false, false, false);
-        transientStoreCopy = new JsonSingletonStore<>(String.class, null, flexjsonHelper, null, null, false, false, false);
+        persistentStore = new JsonSingletonStore<>("uid1", String.class, null, flexjsonHelper, tempDir, StandardCharsets.UTF_8, true, true, false);
+        persistentStoreCopy = new JsonSingletonStore<>("uid2", String.class, null, flexjsonHelper, tempDir, StandardCharsets.UTF_8, true, true, false);
+        transientStore = new JsonSingletonStore<>("uid3", String.class, null, flexjsonHelper, null, null, false, false, false);
+        transientStoreCopy = new JsonSingletonStore<>("uid4", String.class, null, flexjsonHelper, null, null, false, false, false);
         testDataOne = "test data";
     }
 

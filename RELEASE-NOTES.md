@@ -4,6 +4,7 @@ Release Notes
 0.9.0 (in progress)
 -------------------
 - convenience method to load all stores in case auto save mode is disabled
+- added optional payload class qualifier to be able to handle multiple stores using the same payload class
 - ...
 
 0.8.1
