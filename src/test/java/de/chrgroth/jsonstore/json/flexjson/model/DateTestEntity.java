@@ -1,4 +1,4 @@
-package de.chrgroth.jsonstore.json.model;
+package de.chrgroth.jsonstore.json.flexjson.model;
 
 import java.time.LocalDateTime;
 import java.util.Date;

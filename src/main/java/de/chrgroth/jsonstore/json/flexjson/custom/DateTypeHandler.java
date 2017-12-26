@@ -1,10 +1,10 @@
-package de.chrgroth.jsonstore.json.custom;
+package de.chrgroth.jsonstore.json.flexjson.custom;
 
 import java.lang.reflect.Type;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
 
-import de.chrgroth.jsonstore.json.AbstractFlexjsonTypeHandler;
+import de.chrgroth.jsonstore.json.flexjson.AbstractFlexjsonTypeHandler;
 import flexjson.ObjectBinder;
 
 /**

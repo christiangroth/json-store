@@ -1,8 +1,8 @@
-package de.chrgroth.jsonstore.json.custom;
+package de.chrgroth.jsonstore.json.flexjson.custom;
 
 import java.lang.reflect.Type;
 
-import de.chrgroth.jsonstore.json.AbstractFlexjsonTypeHandler;
+import de.chrgroth.jsonstore.json.flexjson.AbstractFlexjsonTypeHandler;
 import flexjson.ObjectBinder;
 
 /**

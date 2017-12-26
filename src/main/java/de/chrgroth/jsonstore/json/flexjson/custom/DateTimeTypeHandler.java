@@ -1,4 +1,4 @@
-package de.chrgroth.jsonstore.json.custom;
+package de.chrgroth.jsonstore.json.flexjson.custom;
 
 import java.lang.reflect.Type;
 import java.time.LocalDateTime;
@@ -6,7 +6,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.TemporalAccessor;
 
-import de.chrgroth.jsonstore.json.AbstractFlexjsonTypeHandler;
+import de.chrgroth.jsonstore.json.flexjson.AbstractFlexjsonTypeHandler;
 import flexjson.JSONException;
 import flexjson.ObjectBinder;
 

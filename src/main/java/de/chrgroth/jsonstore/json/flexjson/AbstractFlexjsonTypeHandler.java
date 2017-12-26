@@ -1,4 +1,4 @@
-package de.chrgroth.jsonstore.json;
+package de.chrgroth.jsonstore.json.flexjson;
 
 import java.lang.reflect.Type;
 

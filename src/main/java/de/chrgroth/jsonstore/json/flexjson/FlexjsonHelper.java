@@ -1,4 +1,4 @@
-package de.chrgroth.jsonstore.json;
+package de.chrgroth.jsonstore.json.flexjson;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -7,9 +7,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 import de.chrgroth.jsonstore.JsonStores;
-import de.chrgroth.jsonstore.json.custom.DateTimeTypeHandler;
-import de.chrgroth.jsonstore.json.custom.DateTypeHandler;
-import de.chrgroth.jsonstore.json.custom.StringInterningHandler;
+import de.chrgroth.jsonstore.json.flexjson.custom.DateTimeTypeHandler;
+import de.chrgroth.jsonstore.json.flexjson.custom.DateTypeHandler;
+import de.chrgroth.jsonstore.json.flexjson.custom.StringInterningHandler;
 import flexjson.JSONDeserializer;
 import flexjson.JSONSerializer;
 

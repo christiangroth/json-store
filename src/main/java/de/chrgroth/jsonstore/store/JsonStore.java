@@ -1,7 +1,5 @@
 package de.chrgroth.jsonstore.store;
 
-import java.io.File;
-import java.nio.charset.Charset;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -9,7 +7,8 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
-import de.chrgroth.jsonstore.json.FlexjsonHelper;
+import de.chrgroth.jsonstore.json.JsonService;
+import de.chrgroth.jsonstore.storage.StorageService;
 
 /**
  * Represents a JSON store for a concrete class holding zero to many instances. Access is provided using delegate methods to Java built in stream API. You may
@@ -24,32 +23,24 @@ public class JsonStore<T> extends AbstractJsonStore<T, Set<T>> {
     /**
      * Creates a new JSON store.
      *
+     * @param jsonService
+     *            JSON service implementation
+     * @param storageService
+     *            storage service implementation
      * @param uid
      *            store uid
      * @param payloadClass
      *            type of objects to be stored
      * @param payloadTypeVersion
      *            version of payload type class
-     * @param flexjsonHelper
-     *            helper for JSON serialization and deserialization
-     * @param storage
-     *            global storage path
-     * @param prettyPrint
-     *            pretty print mode
-     * @param charset
-     *            storage charset
-     * @param flexjsonHelper
-     *            helper for JSON serialization and deserialization
      * @param autoSave
      *            auto-save mode
-     * @param deepSerialize
-     *            deep serialization mode
      * @param migrationHandlers
      *            all migration handlers to be applied
      */
-    public JsonStore(String uid, Class<T> payloadClass, Integer payloadTypeVersion, FlexjsonHelper flexjsonHelper, File storage, Charset charset, boolean prettyPrint,
-            boolean autoSave, boolean deepSerialize, VersionMigrationHandler... migrationHandlers) {
-        super(uid, payloadClass, payloadTypeVersion, false, flexjsonHelper, storage, charset, prettyPrint, autoSave, deepSerialize, migrationHandlers);
+    public JsonStore(JsonService jsonService, StorageService storageService, String uid, Class<T> payloadClass, Integer payloadTypeVersion, boolean autoSave,
+            VersionMigrationHandler... migrationHandlers) {
+        super(jsonService, storageService, uid, payloadClass, payloadTypeVersion, false, autoSave, migrationHandlers);
         metadata.setPayload(new HashSet<>());
     }
 

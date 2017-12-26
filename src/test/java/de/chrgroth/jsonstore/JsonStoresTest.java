@@ -10,6 +10,9 @@ import org.junit.Test;
 
 import com.google.common.io.Files;
 
+import de.chrgroth.jsonstore.json.flexjson.FlexjsonService;
+import de.chrgroth.jsonstore.storage.FileStorageService;
+import de.chrgroth.jsonstore.storage.StorageService;
 import de.chrgroth.jsonstore.store.AbstractJsonStore;
 import de.chrgroth.jsonstore.store.JsonSingletonStore;
 import de.chrgroth.jsonstore.store.JsonStore;
@@ -37,17 +40,21 @@ public class JsonStoresTest {
     public void init() {
         tempDir = Files.createTempDir();
 
-        persistentStores = JsonStores.builder().storage(tempDir, StandardCharsets.UTF_8, true, true, false).build();
-        persistentStoresCopy = JsonStores.builder().storage(tempDir, StandardCharsets.UTF_8, false, true, false).build();
+        FlexjsonService jsonService = FlexjsonService.builder().build();
+        StorageService storageService = FileStorageService.builder().storage(tempDir).build();
+        StorageService isoStorageService = FileStorageService.builder().storage(tempDir).charset(StandardCharsets.ISO_8859_1).build();
 
-        persistentStoresNoAutoSave = JsonStores.builder().storage(tempDir, StandardCharsets.UTF_8, true, false, false).build();
-        persistentStoresNoAutoSaveCopy = JsonStores.builder().storage(tempDir, StandardCharsets.UTF_8, false, false, false).build();
+        persistentStores = JsonStores.builder(jsonService, storageService).autoSave(true).build();
+        persistentStoresCopy = JsonStores.builder(jsonService, storageService).autoSave(true).build();
 
-        persistentStoresIsoCharset = JsonStores.builder().storage(tempDir, StandardCharsets.ISO_8859_1, true, true, false).build();
-        persistentStoresIsoCharsetCopy = JsonStores.builder().storage(tempDir, StandardCharsets.ISO_8859_1, false, true, false).build();
+        persistentStoresNoAutoSave = JsonStores.builder(jsonService, storageService).autoSave(false).build();
+        persistentStoresNoAutoSaveCopy = JsonStores.builder(jsonService, storageService).autoSave(false).build();
 
-        transientStores = JsonStores.builder().build();
-        transientStoresCopy = JsonStores.builder().build();
+        persistentStoresIsoCharset = JsonStores.builder(jsonService, isoStorageService).autoSave(true).build();
+        persistentStoresIsoCharsetCopy = JsonStores.builder(jsonService, isoStorageService).autoSave(true).build();
+
+        transientStores = JsonStores.builder(jsonService, null).build();
+        transientStoresCopy = JsonStores.builder(jsonService, null).build();
 
         testData = "test data";
     }
@@ -120,7 +127,6 @@ public class JsonStoresTest {
         stores.save();
         if (isPersistent) {
             Assert.assertEquals(1, tempDir.listFiles().length);
-            Assert.assertEquals(file(store, isSingleton), tempDir.listFiles()[0]);
         } else {
             Assert.assertEquals(0, tempDir.listFiles().length);
         }
@@ -190,7 +196,6 @@ public class JsonStoresTest {
         storeCopy = ensure(storesCopy, isSingleton, dataClass);
         if (isPersistent) {
             Assert.assertNotNull(storeCopy);
-            Assert.assertEquals(file(storeCopy, isSingleton), tempDir.listFiles()[0]);
             if (isAutoSave) {
                 Assert.assertEquals(testData, getData(storeCopy, isSingleton));
             } else {
@@ -213,10 +218,6 @@ public class JsonStoresTest {
 
     private AbstractJsonStore<?, ?> drop(JsonStores stores, boolean isSingleton, Class<String> dataClass) {
         return isSingleton ? stores.dropSingleton(dataClass, null) : stores.drop(dataClass, null);
-    }
-
-    private File file(AbstractJsonStore<?, ?> store, boolean isSingleton) {
-        return isSingleton ? ((JsonSingletonStore<?>) store).getFile() : ((JsonStore<?>) store).getFile();
     }
 
     @SuppressWarnings("unchecked")
@@ -255,7 +256,9 @@ public class JsonStoresTest {
         Assert.assertFalse(storage.exists());
 
         // check empty storage created on startup
-        JsonStores.builder().storage(storage).build();
+        FlexjsonService jsonService = FlexjsonService.builder().build();
+        StorageService storageService = FileStorageService.builder().storage(tempDir).build();
+        JsonStores.builder(jsonService, storageService).build();
         Assert.assertTrue(storage.exists());
         Assert.assertTrue(storage.isDirectory());
         Assert.assertTrue(storage.canRead());

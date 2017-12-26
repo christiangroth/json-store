@@ -1,7 +1,6 @@
 package de.chrgroth.jsonstore.store;
 
 import java.io.File;
-import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -12,7 +11,10 @@ import org.junit.Test;
 
 import com.google.common.io.Files;
 
-import de.chrgroth.jsonstore.json.FlexjsonHelper;
+import de.chrgroth.jsonstore.json.flexjson.FlexjsonHelper;
+import de.chrgroth.jsonstore.json.flexjson.FlexjsonService;
+import de.chrgroth.jsonstore.storage.FileStorageService;
+import de.chrgroth.jsonstore.storage.StorageService;
 import de.chrgroth.jsonstore.store.model.TestDataVersion1;
 import de.chrgroth.jsonstore.store.model.TestDataVersion2;
 import flexjson.JsonNumber;
@@ -26,6 +28,8 @@ public class AbstractJsonStoreTest {
 
     // untyped stores because different classes are used to simulate class changes
     private FlexjsonHelper flexjsonHelper;
+    private FlexjsonService flexjsonService;
+    private StorageService storageService;
     private JsonStore<Object> persistentStore;
     private JsonSingletonStore<Object> persistentSingletonStore;
 
@@ -45,6 +49,7 @@ public class AbstractJsonStoreTest {
         testData1_2.id = "#2";
         testData1_2.name = "second";
 
+        flexjsonService = FlexjsonService.builder().dateTimePattern(DATE_TIME_PATTERN).build();
         flexjsonHelper = FlexjsonHelper.builder().dateTimePattern(DATE_TIME_PATTERN).build();
         testData1_1_json = flexjsonHelper.serializer(false).serialize(testData1_1);
         testData1 = new HashSet<>();
@@ -76,6 +81,7 @@ public class AbstractJsonStoreTest {
         };
 
         tempDir = Files.createTempDir();
+        storageService = FileStorageService.builder().storage(tempDir).build();
         createStores(1);
     }
 
@@ -199,33 +205,8 @@ public class AbstractJsonStoreTest {
         Assert.assertFalse(migrationHandlerCalled);
     }
 
-    @Test
-    public void prettyPrint() {
-
-        // add data
-        persistentStore.add(testData1_1);
-
-        // assert line breaks with and without pretty print
-        assertPrettyPrint(persistentStore);
-    }
-
-    @Test
-    public void singletonPrettyPrint() {
-
-        // add data
-        persistentSingletonStore.set(testData1_1);
-
-        // assert line breaks with and without pretty print
-        assertPrettyPrint(persistentSingletonStore);
-    }
-    
-    private void assertPrettyPrint(AbstractJsonStore<?, ?> store) {
-        Assert.assertTrue(store.toJson(true).contains("\n"));
-        Assert.assertFalse(store.toJson(false).contains("\n"));
-    }
-
     private void createStores(Integer version, VersionMigrationHandler... migrationHandlers) {
-        persistentStore = new JsonStore<>("uid1", Object.class, version, flexjsonHelper, tempDir, StandardCharsets.UTF_8, true, true, false, migrationHandlers);
-        persistentSingletonStore = new JsonSingletonStore<>("uid2", Object.class, version, flexjsonHelper, tempDir, StandardCharsets.UTF_8, true, true, false, migrationHandlers);
+        persistentStore = new JsonStore<>(flexjsonService, storageService, "uid1", Object.class, version, true, migrationHandlers);
+        persistentSingletonStore = new JsonSingletonStore<>(flexjsonService, storageService, "uid2", Object.class, version, true, migrationHandlers);
     }
 }

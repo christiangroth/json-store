@@ -1,4 +1,4 @@
-package de.chrgroth.jsonstore.json;
+package de.chrgroth.jsonstore.json.flexjson;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
@@ -13,7 +13,8 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import de.chrgroth.jsonstore.json.model.DateTestEntity;
+import de.chrgroth.jsonstore.json.flexjson.FlexjsonHelper;
+import de.chrgroth.jsonstore.json.flexjson.model.DateTestEntity;
 
 public class FlexjsonHelperTest {
     public static final String DATE_TIME_PATTERN = "HH:mm:ss.SSS dd.MM.yyyy";

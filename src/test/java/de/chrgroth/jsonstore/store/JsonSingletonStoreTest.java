@@ -1,7 +1,6 @@
 package de.chrgroth.jsonstore.store;
 
 import java.io.File;
-import java.nio.charset.StandardCharsets;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -9,7 +8,8 @@ import org.junit.Test;
 
 import com.google.common.io.Files;
 
-import de.chrgroth.jsonstore.json.FlexjsonHelper;
+import de.chrgroth.jsonstore.json.flexjson.FlexjsonService;
+import de.chrgroth.jsonstore.storage.FileStorageService;
 
 public class JsonSingletonStoreTest {
     public static final String DATE_TIME_PATTERN = "HH:mm:ss.SSS dd.MM.yyyy";
@@ -25,11 +25,12 @@ public class JsonSingletonStoreTest {
     @Before
     public void init() {
         tempDir = Files.createTempDir();
-        FlexjsonHelper flexjsonHelper = FlexjsonHelper.builder().dateTimePattern(DATE_TIME_PATTERN).build();
-        persistentStore = new JsonSingletonStore<>("uid1", String.class, null, flexjsonHelper, tempDir, StandardCharsets.UTF_8, true, true, false);
-        persistentStoreCopy = new JsonSingletonStore<>("uid2", String.class, null, flexjsonHelper, tempDir, StandardCharsets.UTF_8, true, true, false);
-        transientStore = new JsonSingletonStore<>("uid3", String.class, null, flexjsonHelper, null, null, false, false, false);
-        transientStoreCopy = new JsonSingletonStore<>("uid4", String.class, null, flexjsonHelper, null, null, false, false, false);
+        FlexjsonService flexjsonService = FlexjsonService.builder().dateTimePattern(DATE_TIME_PATTERN).build();
+        FileStorageService storageService = FileStorageService.builder().storage(tempDir).build();
+        persistentStore = new JsonSingletonStore<>(flexjsonService, storageService, "uid1", String.class, null, true);
+        persistentStoreCopy = new JsonSingletonStore<>(flexjsonService, storageService, "uid2", String.class, null, true);
+        transientStore = new JsonSingletonStore<>(flexjsonService, storageService, "uid3", String.class, null, false);
+        transientStoreCopy = new JsonSingletonStore<>(flexjsonService, storageService, "uid4", String.class, null, false);
         testDataOne = "test data";
     }
 

@@ -1,7 +1,6 @@
 package de.chrgroth.jsonstore.store;
 
 import java.io.File;
-import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Stream;
@@ -12,7 +11,8 @@ import org.junit.Test;
 
 import com.google.common.io.Files;
 
-import de.chrgroth.jsonstore.json.FlexjsonHelper;
+import de.chrgroth.jsonstore.json.flexjson.FlexjsonService;
+import de.chrgroth.jsonstore.storage.FileStorageService;
 
 public class JsonStoreTest {
     public static final String DATE_TIME_PATTERN = "HH:mm:ss.SSS dd.MM.yyyy";
@@ -30,11 +30,12 @@ public class JsonStoreTest {
     @Before
     public void init() {
         tempDir = Files.createTempDir();
-        FlexjsonHelper flexjsonHelper = FlexjsonHelper.builder().dateTimePattern(DATE_TIME_PATTERN).build();
-        persistentStore = new JsonStore<>("uid1", String.class, null, flexjsonHelper, tempDir, StandardCharsets.UTF_8, true, true, false);
-        persistentStoreCopy = new JsonStore<>("uid2", String.class, null, flexjsonHelper, tempDir, StandardCharsets.UTF_8, true, true, false);
-        transientStore = new JsonStore<>("uid3", String.class, null, flexjsonHelper, null, null, false, false, false);
-        transientStoreCopy = new JsonStore<>("uid4", String.class, null, flexjsonHelper, null, null, false, false, false);
+        FlexjsonService flexjsonService = FlexjsonService.builder().dateTimePattern(DATE_TIME_PATTERN).build();
+        FileStorageService storageService = FileStorageService.builder().storage(tempDir).build();
+        persistentStore = new JsonStore<>(flexjsonService, storageService, "uid1", String.class, null, true);
+        persistentStoreCopy = new JsonStore<>(flexjsonService, storageService, "uid2", String.class, null, true);
+        transientStore = new JsonStore<>(flexjsonService, storageService, "uid3", String.class, null, false);
+        transientStoreCopy = new JsonStore<>(flexjsonService, storageService, "uid4", String.class, null, false);
         testDataOne = "test data foo";
         testDataTwo = "test data bar";
         testData = Arrays.asList(testDataOne, testDataTwo);
@@ -116,7 +117,7 @@ public class JsonStoreTest {
 
         // export data
         store.add(testDataOne);
-        String json = store.toJson(true);
+        String json = store.toJson();
         Assert.assertNotNull(json);
 
         // copy still empty

@@ -5,6 +5,8 @@ Release Notes
 -------------------
 - convenience method to load all stores in case auto save mode is disabled
 - added optional payload class qualifier to be able to handle multiple stores using the same payload class
+- created interface de.chrgroth.jsonstore.json.JsonService regarding all JSON operations and a default implementation for currently used flexjson library
+- created interface de.chrgroth.jsonstore.storage.StorageService regarding all storage operations and a default implementation for currently used file based storage
 - ...
 
 0.8.1
