@@ -5,27 +5,18 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import de.chrgroth.jsonstore.json.JsonService;
-import de.chrgroth.jsonstore.storage.StorageService;
-import de.chrgroth.jsonstore.store.AbstractJsonStore;
-import de.chrgroth.jsonstore.store.JsonSingletonStore;
-import de.chrgroth.jsonstore.store.JsonStore;
-import de.chrgroth.jsonstore.store.JsonStoreUtils;
-import de.chrgroth.jsonstore.store.VersionMigrationHandler;
-import de.chrgroth.jsonstore.store.exception.JsonStoreException;
+import de.chrgroth.jsonstore.metrics.JsonStoresMetrics;
 
 /**
- * Central API class to create JSON stores. Stores are maintained per class using {@link #resolve(Class, String)},
- * {@link #ensure(Class, String, Integer, VersionMigrationHandler...)} and {@link #drop(Class, String)} and similar methods for singleton stores. Each JSON
- * store will create a separate file. The {@link #save()} method acts as shortcut to save all stores. If an instance is created with auto save mode enabled (see
- * {@link #builder(JsonService)}) then {@link #ensure(Class, String, Integer, VersionMigrationHandler...)} and
- * {@link #ensureSingleton(Class, String, Integer, VersionMigrationHandler...)} will automatically load possibly existing data from configured storage path.
+ * Central API class to create JSON stores. Stores are maintained using {@link #resolve(Class, String)},
+ * {@link #ensure(Class, String, Integer, VersionMigrationHandler...)} and {@link #drop(Class, String)} and similar methods for singleton stores. The
+ * {@link #save()} method acts as shortcut to save all stores. If an instance is created with auto save mode enabled (see
+ * {@link JsonStoresBuilder#autoSave(boolean)}) then {@link #ensure(Class, String, Integer, VersionMigrationHandler...)} and
+ * {@link #ensureSingleton(Class, String, Integer, VersionMigrationHandler...)} will automatically load possibly existing data using configured storage service.
  *
  * @author Christian Groth
  */
-public final class JsonStores {
-
-    // TODO ensure services not null or handle null safely
+public class JsonStores {
 
     private final JsonService jsonService;
     private final StorageService storageService;
@@ -39,7 +30,7 @@ public final class JsonStores {
      *
      * @author Christian Groth
      */
-    public static final class JsonStoresBuilder {
+    public static class JsonStoresBuilder {
 
         private final JsonService jsonService;
         private final StorageService storageService;
@@ -51,6 +42,13 @@ public final class JsonStores {
             this.storageService = storageService;
         }
 
+        /**
+         * Configures auto save mode.
+         *
+         * @param autoSave
+         *            true for auto save, false otherwise
+         * @return builder
+         */
         public JsonStoresBuilder autoSave(boolean autoSave) {
             this.autoSave = autoSave;
             return this;
@@ -79,7 +77,7 @@ public final class JsonStores {
         return new JsonStoresBuilder(jsonService, storageService);
     }
 
-    private JsonStores(JsonService jsonService, StorageService storageService, boolean autoSave) {
+    protected JsonStores(JsonService jsonService, StorageService storageService, boolean autoSave) {
 
         // init state
         this.jsonService = jsonService;
@@ -87,11 +85,7 @@ public final class JsonStores {
         stores = new HashMap<>();
         singletonStores = new HashMap<>();
         this.autoSave = autoSave;
-
-        // prepare storage if not exists
-        if (isPersistent()) {
-            storageService.prepare();
-        }
+        storageService.prepare();
     }
 
     /**
@@ -136,7 +130,7 @@ public final class JsonStores {
 
         // load data
         JsonStore<T> store = resolve(uid);
-        if (isPersistent() && initialDataLod && autoSave) {
+        if (initialDataLod && autoSave) {
             try {
                 store.load();
             } catch (Exception e) {
@@ -148,7 +142,7 @@ public final class JsonStores {
         return store;
     }
 
-    private void create(String uid, Class<?> payloadClass, Integer payloadClassVersion, VersionMigrationHandler... versionMigrationHandlers) {
+    protected void create(String uid, Class<?> payloadClass, Integer payloadClassVersion, VersionMigrationHandler... versionMigrationHandlers) {
         stores.put(uid, new JsonStore<>(jsonService, storageService, uid, payloadClass, payloadClassVersion, autoSave, versionMigrationHandlers));
     }
 
@@ -206,13 +200,15 @@ public final class JsonStores {
         String uid = JsonStoreUtils.buildStoreUid(payloadClass, optionalQualifier);
 
         // ensure store
+        boolean initialDataLod = false;
         if (!singletonStores.containsKey(uid)) {
+            initialDataLod = true;
             createSingleton(uid, payloadClass, payloadClassVersion, versionMigrationHandlers);
         }
 
         // load data
         JsonSingletonStore<T> store = resolveSingleton(uid);
-        if (isPersistent() && autoSave) {
+        if (initialDataLod && autoSave) {
             try {
                 store.load();
             } catch (Exception e) {
@@ -224,7 +220,7 @@ public final class JsonStores {
         return store;
     }
 
-    private void createSingleton(String uid, Class<?> payloadClass, Integer payloadClassVersion, VersionMigrationHandler... versionMigrationHandlers) {
+    protected void createSingleton(String uid, Class<?> payloadClass, Integer payloadClassVersion, VersionMigrationHandler... versionMigrationHandlers) {
         singletonStores.put(uid, new JsonSingletonStore<>(jsonService, storageService, uid, payloadClass, payloadClassVersion, autoSave, versionMigrationHandlers));
     }
 
@@ -286,7 +282,7 @@ public final class JsonStores {
 
         // drop in memory
         JsonStore<T> store = (JsonStore<T>) stores.remove(uid);
-        if (store != null && isPersistent()) {
+        if (store != null) {
 
             // remove file
             store.drop();
@@ -326,7 +322,7 @@ public final class JsonStores {
 
         // drop in memory
         JsonSingletonStore<T> store = (JsonSingletonStore<T>) singletonStores.remove(uid);
-        if (store != null && isPersistent()) {
+        if (store != null) {
 
             // remove file
             store.drop();
@@ -337,13 +333,13 @@ public final class JsonStores {
     }
 
     /**
-     * If stores are persistent and auto save mode is disabled, this method invoked {@link JsonStore#load()} on all existing stores. In case auto save is
-     * enabled stores are loaded automatically.
+     * If stores auto save mode is disabled, this method invokes {@link JsonStore#load()} on all existing stores. In case auto save is enabled stores are loaded
+     * automatically and this call won't do anything.
      */
     public void load() {
 
         // abort on transient stores or auto save mode
-        if (!isPersistent() || autoSave) {
+        if (autoSave) {
             return;
         }
 
@@ -367,18 +363,7 @@ public final class JsonStores {
      * If stores are persistent {@link JsonStore#save()} will be invoked using parallel stream on all existing stores.
      */
     public void save() {
-
-        // abort on transient stores
-        if (!isPersistent()) {
-            return;
-        }
-
-        // delegate to all stores
         stores.values().parallelStream().forEach(store -> store.save());
         singletonStores.values().parallelStream().forEach(store -> store.save());
-    }
-
-    public boolean isPersistent() {
-        return storageService != null;
     }
 }

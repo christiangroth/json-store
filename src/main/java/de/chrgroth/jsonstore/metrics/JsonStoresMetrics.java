@@ -1,16 +1,25 @@
-package de.chrgroth.jsonstore;
+package de.chrgroth.jsonstore.metrics;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import de.chrgroth.jsonstore.store.JsonStoreMetrics;
-
+/**
+ * Simplified metrics for multiple json store instances.
+ *
+ * @author Christian Groth
+ */
 public class JsonStoresMetrics {
     private final long overallItemCount;
-    private final long overallFileSize;
+    private final long overallStorageSize;
     private final Map<String, JsonStoreMetrics> metrics = new HashMap<>();
 
+    /**
+     * Creates new metrics containing all given store metrics.
+     *
+     * @param metrics
+     *            all store metrics to be contained
+     */
     public JsonStoresMetrics(List<JsonStoreMetrics> metrics) {
         long items = 0;
         long size = 0;
@@ -18,19 +27,19 @@ public class JsonStoresMetrics {
             for (JsonStoreMetrics metric : metrics) {
                 this.metrics.put(metric.getUid(), metric);
                 items += metric.getItemCount();
-                size += metric.getFileSize();
+                size += metric.getStorageSize();
             }
         }
         overallItemCount = items;
-        overallFileSize = size;
+        overallStorageSize = size;
     }
 
     public long getOverallItemCount() {
         return overallItemCount;
     }
 
-    public long getOverallFileSize() {
-        return overallFileSize;
+    public long getOverallStorageSize() {
+        return overallStorageSize;
     }
 
     public Map<String, JsonStoreMetrics> getMetrics() {

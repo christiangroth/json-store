@@ -2,9 +2,9 @@ package de.chrgroth.jsonstore.json.flexjson;
 
 import java.lang.reflect.Method;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -12,20 +12,26 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Stopwatch;
 
-import de.chrgroth.jsonstore.json.JsonService;
+import de.chrgroth.jsonstore.JsonStoreException;
+import de.chrgroth.jsonstore.JsonStoreMetadata;
+import de.chrgroth.jsonstore.JsonStoreUtils;
+import de.chrgroth.jsonstore.VersionMigrationHandler;
+import de.chrgroth.jsonstore.json.AbstractJsonService;
 import de.chrgroth.jsonstore.json.flexjson.FlexjsonHelper.FlexjsonHelperBuilder;
+import de.chrgroth.jsonstore.json.flexjson.custom.AbstractFlexjsonTypeHandler;
 import de.chrgroth.jsonstore.json.flexjson.custom.StringInterningHandler;
-import de.chrgroth.jsonstore.store.JsonStoreMetadata;
-import de.chrgroth.jsonstore.store.JsonStoreUtils;
-import de.chrgroth.jsonstore.store.VersionMigrationHandler;
-import de.chrgroth.jsonstore.store.exception.JsonStoreException;
 import flexjson.JSONDeserializer;
 import flexjson.JSONSerializer;
 import flexjson.JSONTokener;
 import flexjson.JsonNumber;
 import flexjson.ObjectBinder;
 
-public final class FlexjsonService implements JsonService {
+/**
+ * Service to handle JSON serialization and deserialization using Flexjson library.
+ *
+ * @author Christian Groth
+ */
+public class FlexjsonService extends AbstractJsonService {
     private static final Logger LOG = LoggerFactory.getLogger(FlexjsonService.class);
 
     private static final String JSON_FIELD_CLASS = "class";
@@ -39,6 +45,11 @@ public final class FlexjsonService implements JsonService {
     private final boolean deepSerialize;
     private final boolean prettyPrint;
 
+    /**
+     * Builder to configure a new instance of {@link FlexjsonService}.
+     *
+     * @author Christian Groth
+     */
     public static class FlexjsonServiceBuilder {
 
         private final FlexjsonHelperBuilder flexjsonHelperBuilder;
@@ -47,7 +58,7 @@ public final class FlexjsonService implements JsonService {
         private boolean deepSerialize;
         private boolean prettyPrint;
 
-        public FlexjsonServiceBuilder() {
+        private FlexjsonServiceBuilder() {
             flexjsonHelperBuilder = FlexjsonHelper.builder();
             flexjsonHelperBuilderPerStore = new HashMap<>();
         }
@@ -180,6 +191,35 @@ public final class FlexjsonService implements JsonService {
             return flexjsonHelperBuilderPerStore.get(uid);
         }
 
+        /**
+         * Sets the deep serialize mode.
+         *
+         * @param deepSerialize
+         *            true for deep serialization, false to use explicit annotations
+         * @return builder
+         */
+        public FlexjsonServiceBuilder setDeepSerialize(boolean deepSerialize) {
+            this.deepSerialize = deepSerialize;
+            return this;
+        }
+
+        /**
+         * Sets the pretty print serialization mode.
+         *
+         * @param prettyPrint
+         *            true for pretty print mode, false otherwise
+         * @return builder
+         */
+        public FlexjsonServiceBuilder setPrettyPrint(boolean prettyPrint) {
+            this.prettyPrint = prettyPrint;
+            return this;
+        }
+
+        /**
+         * Creates the service instance.
+         *
+         * @return created service
+         */
         public FlexjsonService build() {
             Map<String, FlexjsonHelper> flexjsonHelperPerStore = flexjsonHelperBuilderPerStore.entrySet().stream()
                     .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue().build()));
@@ -187,11 +227,16 @@ public final class FlexjsonService implements JsonService {
         }
     }
 
+    /**
+     * Creates a new builder instance.
+     *
+     * @return builder
+     */
     public static FlexjsonServiceBuilder builder() {
         return new FlexjsonServiceBuilder();
     }
 
-    private FlexjsonService(FlexjsonHelper flexjsonHelper, Map<String, FlexjsonHelper> flexjsonHelperPerStore, boolean deepSerialize, boolean prettyPrint) {
+    protected FlexjsonService(FlexjsonHelper flexjsonHelper, Map<String, FlexjsonHelper> flexjsonHelperPerStore, boolean deepSerialize, boolean prettyPrint) {
         this.flexjsonHelper = flexjsonHelper;
         this.flexjsonHelperPerStore = new HashMap<>();
         if (flexjsonHelperPerStore != null) {
@@ -205,11 +250,7 @@ public final class FlexjsonService implements JsonService {
     public String toJson(JsonStoreMetadata<?, ?> metadata) {
         Stopwatch stopwatch = Stopwatch.createStarted();
         try {
-
-            // get serializer
             final JSONSerializer serializer = resolveFlexjsonHelper(metadata.getUid()).serializer(prettyPrint);
-
-            // create json data
             return deepSerialize ? serializer.deepSerialize(metadata) : serializer.serialize(metadata);
         } finally {
             stopwatch.stop();
@@ -218,11 +259,11 @@ public final class FlexjsonService implements JsonService {
     }
 
     @Override
-    public boolean fromJson(JsonStoreMetadata<?, ?> metadata, Map<Integer, VersionMigrationHandler> migrationHandlers, String json) {
+    public void fromJson(JsonStoreMetadata<?, ?> metadata, Map<Integer, VersionMigrationHandler> migrationHandlers, String json, Consumer<Boolean> successConsumer) {
 
         // null guard
         if (json == null || "".equals(json.trim())) {
-            return false;
+            return;
         }
 
         // deserialize to raw generic structure
@@ -231,91 +272,42 @@ public final class FlexjsonService implements JsonService {
         stopwatch.stop();
         LOG.info(metadata.getUid() + ": raw parsing from json took " + stopwatch.elapsed(TimeUnit.MILLISECONDS) + "ms");
         if (!(genericStructureRaw instanceof Map)) {
-            return false;
+            return;
         }
 
         // ensure metadata wrapper
         @SuppressWarnings("unchecked")
-        Map<String, Object> metadataRaw = (Map<String, Object>) genericStructureRaw;
-        boolean isMetadataAvailable = JsonStoreMetadata.class.getName().equals(metadataRaw.get(JSON_FIELD_CLASS));
-        if (!isMetadataAvailable) {
-            LOG.error(metadata.getUid() + ": json invalid, no metadata wrapper detected.");
-            return false;
+        Map<String, Object> oldMetadataRaw = (Map<String, Object>) genericStructureRaw;
+        boolean isOfMetadataType = JsonStoreMetadata.class.getName().equals(oldMetadataRaw.get(JSON_FIELD_CLASS));
+        if (!isOfMetadataType) {
+            LOG.error(metadata.getUid() + ": json invalid, no/invalid metadata wrapper detected.");
+            return;
         }
 
         // migrate payload data
-        boolean migrated = migrateVersions(metadata, migrationHandlers, metadataRaw);
+        boolean migrated = migrateVersions(metadata, migrationHandlers, oldMetadataRaw);
 
         // process deserialization to payload object instances
-        jsonDeserialization(metadata, metadataRaw);
+        jsonDeserialization(metadata, oldMetadataRaw);
 
-        return migrated;
+        // callback after work is done
+        successConsumer.accept(migrated);
     }
 
-    @SuppressWarnings("unchecked")
-    private boolean migrateVersions(JsonStoreMetadata<?, ?> metadata, Map<Integer, VersionMigrationHandler> migrationHandlers, Map<String, Object> metadataRaw) {
-
-        // determine payload
-        Object rawPayload = metadataRaw.get(JSON_FIELD_PAYLOAD);
-        if (rawPayload == null) {
-            return false;
-        }
+    protected boolean migrateVersions(JsonStoreMetadata<?, ?> metadata, Map<Integer, VersionMigrationHandler> migrationHandlers, Map<String, Object> oldMetadataRaw) {
 
         // determine source information
-        boolean isSingleton = (boolean) metadataRaw.get(JSON_FIELD_SINGLETON);
-        Object sourceTypeVersionRaw = metadataRaw.get(JSON_FIELD_PAYLOAD_TYPE_VERSION);
+        Object rawPayload = oldMetadataRaw.get(JSON_FIELD_PAYLOAD);
+        boolean isSingleton = (boolean) oldMetadataRaw.get(JSON_FIELD_SINGLETON);
+        Object sourceTypeVersionRaw = oldMetadataRaw.get(JSON_FIELD_PAYLOAD_TYPE_VERSION);
         Integer sourceTypeVersion = sourceTypeVersionRaw != null ? ((JsonNumber) sourceTypeVersionRaw).toInteger() : 0;
 
-        // compare version information
-        Integer targetTypeVersion = metadata.getPayloadTypeVersion();
-        if (sourceTypeVersion == null || targetTypeVersion == null) {
-            return false;
-        }
-
-        // abort on newer version than available as code
-        if (sourceTypeVersion > targetTypeVersion) {
-            throw new JsonStoreException("loaded version is newer than specified version in code: " + sourceTypeVersion + " > " + targetTypeVersion + "!!");
-        }
-
-        // run all available version migrators
-        boolean migrated = false;
-        if (sourceTypeVersion < targetTypeVersion) {
-
-            // update per version
-            for (int i = sourceTypeVersion; i <= targetTypeVersion; i++) {
-
-                // check for migration handler
-                VersionMigrationHandler migrationHandler = migrationHandlers.get(i);
-                if (migrationHandler == null) {
-                    continue;
-                }
-
-                // invoke handler per instance, so you don't have to deal with wrapping outer list by yourself
-                LOG.info(metadata.getUid() + ": migrating to version " + i + " using " + migrationHandler);
-                try {
-                    Stopwatch stopwatch = Stopwatch.createStarted();
-                    if (isSingleton) {
-                        migrationHandler.migrate((Map<String, Object>) rawPayload);
-                    } else {
-                        for (Object genericStructurePayloadItem : (List<Object>) rawPayload) {
-                            migrationHandler.migrate((Map<String, Object>) genericStructurePayloadItem);
-                        }
-                    }
-                    stopwatch.stop();
-                    migrated = true;
-                    LOG.info(metadata.getUid() + ": migrating to version " + i + " took " + stopwatch.elapsed(TimeUnit.MILLISECONDS) + "ms");
-                } catch (Exception e) {
-                    throw new JsonStoreException("failed to migrate " + metadata.getUid() + " from version " + i + " to " + (i + 1) + ": " + e.getMessage() + "!!", e);
-                }
-            }
-        }
-
-        // done
-        return migrated;
+        // do migration
+        return migrateVersions(metadata, migrationHandlers, rawPayload, isSingleton, sourceTypeVersion);
     }
 
     @SuppressWarnings("unchecked")
-    private <T, P> void jsonDeserialization(JsonStoreMetadata<T, P> metadata, Map<String, Object> metadataRaw) {
+    protected <T, P> void jsonDeserialization(JsonStoreMetadata<T, P> metadata, Map<String, Object> oldMetadataRaw) {
 
         // proceed with deserialization
         try {
@@ -328,7 +320,7 @@ public final class FlexjsonService implements JsonService {
             ObjectBinder binder = (ObjectBinder) method.invoke(deserializer);
 
             // metadata deserialization
-            JsonStoreMetadata<T, P> oldMetadata = (JsonStoreMetadata<T, P>) binder.bind(metadataRaw);
+            JsonStoreMetadata<T, P> oldMetadata = (JsonStoreMetadata<T, P>) binder.bind(oldMetadataRaw);
             metadata.setPayload(oldMetadata.getPayload());
 
             stopwatch.stop();
@@ -338,7 +330,7 @@ public final class FlexjsonService implements JsonService {
         }
     }
 
-    private FlexjsonHelper resolveFlexjsonHelper(String uid) {
+    protected FlexjsonHelper resolveFlexjsonHelper(String uid) {
         return flexjsonHelperPerStore.getOrDefault(uid, flexjsonHelper);
     }
 }

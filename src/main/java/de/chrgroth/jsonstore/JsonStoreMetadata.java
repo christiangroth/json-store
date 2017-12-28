@@ -1,4 +1,4 @@
-package de.chrgroth.jsonstore.store;
+package de.chrgroth.jsonstore;
 
 import java.util.Date;
 
@@ -15,6 +15,7 @@ import flexjson.JSON;
  */
 public class JsonStoreMetadata<T, P> {
 
+    // TODO get rid of this annotation!!
     @JSON
     private P payload;
     private String uid;

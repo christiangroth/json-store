@@ -6,7 +6,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-import de.chrgroth.jsonstore.JsonStores;
+import de.chrgroth.jsonstore.json.flexjson.custom.AbstractFlexjsonTypeHandler;
 import de.chrgroth.jsonstore.json.flexjson.custom.DateTimeTypeHandler;
 import de.chrgroth.jsonstore.json.flexjson.custom.DateTypeHandler;
 import de.chrgroth.jsonstore.json.flexjson.custom.StringInterningHandler;
@@ -14,14 +14,14 @@ import flexjson.JSONDeserializer;
 import flexjson.JSONSerializer;
 
 /**
- * Helper class encapsulating flexjson configuration.
+ * Helper class encapsulating Flexjson configuration.
  *
  * @author Christian Groth
  */
-public final class FlexjsonHelper {
+public class FlexjsonHelper {
 
     /**
-     * Builder class to control creation of {@link JsonStores}.
+     * Builder class to control creation of {@link FlexjsonHelper}.
      *
      * @author Christian Groth
      */
@@ -34,7 +34,7 @@ public final class FlexjsonHelper {
         private final Map<Class<?>, AbstractFlexjsonTypeHandler> handlers;
         private final Map<String, AbstractFlexjsonTypeHandler> pathHandlers;
 
-        public FlexjsonHelperBuilder() {
+        private FlexjsonHelperBuilder() {
             dateTimePattern = DEFAULT_DATE_TIME_PATTERN;
 
             handlers = new HashMap<>();
@@ -128,7 +128,7 @@ public final class FlexjsonHelper {
     private JSONSerializer prettyPrintSerializer;
     private JSONDeserializer<?> deserializer;
 
-    private FlexjsonHelper(Map<Class<?>, AbstractFlexjsonTypeHandler> handlers, Map<String, AbstractFlexjsonTypeHandler> pathHandlers) {
+    protected FlexjsonHelper(Map<Class<?>, AbstractFlexjsonTypeHandler> handlers, Map<String, AbstractFlexjsonTypeHandler> pathHandlers) {
 
         // create serializers
         serializer = createSerializer(handlers, pathHandlers, false);
@@ -138,7 +138,7 @@ public final class FlexjsonHelper {
         deserializer = createDeserializer(handlers, pathHandlers);
     }
 
-    private JSONSerializer createSerializer(Map<Class<?>, AbstractFlexjsonTypeHandler> handlers, Map<String, AbstractFlexjsonTypeHandler> pathHandlers, boolean prettyPrint) {
+    protected JSONSerializer createSerializer(Map<Class<?>, AbstractFlexjsonTypeHandler> handlers, Map<String, AbstractFlexjsonTypeHandler> pathHandlers, boolean prettyPrint) {
         JSONSerializer serializer = new JSONSerializer();
         serializer.prettyPrint(prettyPrint);
         handlers.entrySet().stream().filter(e -> !(e.getValue() instanceof StringInterningHandler)).forEach(e -> serializer.transform(e.getValue(), e.getKey()));
@@ -146,7 +146,7 @@ public final class FlexjsonHelper {
         return serializer;
     }
 
-    private JSONDeserializer<?> createDeserializer(Map<Class<?>, AbstractFlexjsonTypeHandler> handlers, Map<String, AbstractFlexjsonTypeHandler> pathHandlers) {
+    protected JSONDeserializer<?> createDeserializer(Map<Class<?>, AbstractFlexjsonTypeHandler> handlers, Map<String, AbstractFlexjsonTypeHandler> pathHandlers) {
         JSONDeserializer<?> deserializer = new JSONDeserializer<>();
         handlers.forEach((k, v) -> deserializer.use(k, v));
         pathHandlers.forEach((k, v) -> deserializer.use(k, v));

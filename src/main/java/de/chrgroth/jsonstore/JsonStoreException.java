@@ -1,11 +1,9 @@
-package de.chrgroth.jsonstore.store.exception;
-
-import de.chrgroth.jsonstore.store.AbstractJsonStore;
+package de.chrgroth.jsonstore;
 
 /**
- * Custom exception indicating datal errors during data handling in an instance of {@link AbstractJsonStore} or subtypes.
+ * Custom exception indicating errors during handling an instance of {@link AbstractJsonStore} or subtypes.
  *
- * @author chris
+ * @author Christian Groth
  */
 public class JsonStoreException extends RuntimeException {
     private static final long serialVersionUID = -3791619692782895072L;

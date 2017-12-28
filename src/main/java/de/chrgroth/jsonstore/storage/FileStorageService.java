@@ -16,11 +16,17 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Stopwatch;
 
-import de.chrgroth.jsonstore.store.JsonStoreMetadata;
-import de.chrgroth.jsonstore.store.exception.JsonStoreException;
+import de.chrgroth.jsonstore.JsonStoreException;
+import de.chrgroth.jsonstore.JsonStoreMetadata;
+import de.chrgroth.jsonstore.StorageService;
 
-public final class FileStorageService implements StorageService {
-    private static final Logger LOG = LoggerFactory.getLogger(StorageService.class);
+/**
+ * Implementation storing each store in a separate file using metadata uid.
+ *
+ * @author Christian Groth
+ */
+public class FileStorageService implements StorageService {
+    private static final Logger LOG = LoggerFactory.getLogger(FileStorageService.class);
 
     public static final String FILE_SEPARATOR = ".";
     public static final String FILE_PREFIX = "storage";
@@ -31,33 +37,76 @@ public final class FileStorageService implements StorageService {
     private final File storage;
     private final Charset charset;
 
+    /**
+     * Builder to configure a new instance of {@link FileStorageService}. Be sure to set the base path calling {@link #storage(File)}.
+     *
+     * @author Christian Groth
+     */
     public static class FileStorageServiceBuilder {
         private static final Charset DEFAULT_CHARSET = StandardCharsets.UTF_8;
 
         private File storage;
         private Charset charset = DEFAULT_CHARSET;
 
+        private FileStorageServiceBuilder() {
+
+        }
+
+        /**
+         * Sets the given storage directory as base path for all files.
+         *
+         * @param storage
+         *            base path for all files
+         * @return builder
+         */
         public FileStorageServiceBuilder storage(File storage) {
             this.storage = storage;
             return this;
         }
 
+        /**
+         * Sets the given charset to be used.
+         *
+         * @param charset
+         *            charset to be used
+         * @return builder
+         */
         public FileStorageServiceBuilder charset(Charset charset) {
             this.charset = charset;
             return this;
         }
 
+        /**
+         * Creates the service instance.
+         *
+         * @return create service
+         */
         public FileStorageService build() {
             return new FileStorageService(storage.getAbsoluteFile(), charset);
         }
     }
 
+    /**
+     * Creates a new builder instance.
+     *
+     * @return builder
+     */
     public static FileStorageServiceBuilder builder() {
         return new FileStorageServiceBuilder();
     }
 
-    private FileStorageService(File storage, Charset charset) {
+    protected FileStorageService(File storage, Charset charset) {
+
+        // storage base path
+        if (storage == null) {
+            throw new JsonStoreException("storage base path must not be null!!");
+        }
         this.storage = storage;
+
+        // storage charset
+        if (charset == null) {
+            throw new JsonStoreException("storage charset must not be null!!");
+        }
         this.charset = charset;
     }
 
@@ -76,7 +125,7 @@ public final class FileStorageService implements StorageService {
     }
 
     @Override
-    public long storageSize(JsonStoreMetadata<?, ?> metadata) {
+    public long size(JsonStoreMetadata<?, ?> metadata) {
 
         long fileSize = 0;
         File file = resolveFile(metadata);
@@ -142,8 +191,14 @@ public final class FileStorageService implements StorageService {
         }
     }
 
-    protected File resolveFile(JsonStoreMetadata<?, ?> metadata) {
-        String fileNameExtraPrefix = metadata.isSingleton() ? FILE_SINGLETON + FILE_SEPARATOR : "";
-        return storage != null ? new File(storage, FILE_PREFIX + FILE_SEPARATOR + fileNameExtraPrefix + metadata.getUid() + FILE_SEPARATOR + FILE_SUFFIX) : null;
+    /**
+     * Resolves the persistent file for given store metadata.
+     *
+     * @param metadata
+     *            store metadata
+     * @return storage file
+     */
+    public File resolveFile(JsonStoreMetadata<?, ?> metadata) {
+        return new File(storage, FILE_PREFIX + FILE_SEPARATOR + (metadata.isSingleton() ? FILE_SINGLETON + FILE_SEPARATOR : "") + metadata.getUid() + FILE_SEPARATOR + FILE_SUFFIX);
     }
 }

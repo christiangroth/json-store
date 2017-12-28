@@ -1,7 +1,4 @@
-package de.chrgroth.jsonstore.store;
-
-import de.chrgroth.jsonstore.json.JsonService;
-import de.chrgroth.jsonstore.storage.StorageService;
+package de.chrgroth.jsonstore;
 
 /**
  * Represents a JSON store for a concrete class holding none or one instance. You may use flexjson annotations to control conversion from/to JSON.

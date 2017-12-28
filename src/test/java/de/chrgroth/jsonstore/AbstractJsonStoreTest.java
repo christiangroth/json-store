@@ -1,4 +1,4 @@
-package de.chrgroth.jsonstore.store;
+package de.chrgroth.jsonstore;
 
 import java.io.File;
 import java.util.HashSet;
@@ -11,12 +11,13 @@ import org.junit.Test;
 
 import com.google.common.io.Files;
 
+import de.chrgroth.jsonstore.StorageService;
+import de.chrgroth.jsonstore.VersionMigrationHandler;
 import de.chrgroth.jsonstore.json.flexjson.FlexjsonHelper;
 import de.chrgroth.jsonstore.json.flexjson.FlexjsonService;
+import de.chrgroth.jsonstore.model.TestDataVersion1;
+import de.chrgroth.jsonstore.model.TestDataVersion2;
 import de.chrgroth.jsonstore.storage.FileStorageService;
-import de.chrgroth.jsonstore.storage.StorageService;
-import de.chrgroth.jsonstore.store.model.TestDataVersion1;
-import de.chrgroth.jsonstore.store.model.TestDataVersion2;
 import flexjson.JsonNumber;
 
 public class AbstractJsonStoreTest {

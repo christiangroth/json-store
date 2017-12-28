@@ -1,4 +1,4 @@
-package de.chrgroth.jsonstore.json.flexjson;
+package de.chrgroth.jsonstore.json.flexjson.custom;
 
 import java.lang.reflect.Type;
 
@@ -7,7 +7,7 @@ import flexjson.ObjectFactory;
 import flexjson.transformer.AbstractTransformer;
 
 /**
- * Abstract base class for all custom type handler controlling serialization and deserialization of ustom types.
+ * Abstract base class for all custom type handler controlling serialization and deserialization of custom types.
  *
  * @author Christian Groth
  */

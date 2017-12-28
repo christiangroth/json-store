@@ -1,4 +1,4 @@
-package de.chrgroth.jsonstore.store;
+package de.chrgroth.jsonstore;
 
 import java.util.Map;
 
@@ -10,7 +10,6 @@ import flexjson.JSONDeserializer;
  *
  * @author Christian Groth
  */
-// TODO exception during migration will lead to updated payload info in store but no data!!!
 public interface VersionMigrationHandler {
 
     /**

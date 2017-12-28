@@ -6,7 +6,6 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.TemporalAccessor;
 
-import de.chrgroth.jsonstore.json.flexjson.AbstractFlexjsonTypeHandler;
 import flexjson.JSONException;
 import flexjson.ObjectBinder;
 

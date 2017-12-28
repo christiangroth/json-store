@@ -1,4 +1,4 @@
-package de.chrgroth.jsonstore.store.model;
+package de.chrgroth.jsonstore.model;
 
 public class TestDataVersion2 {
     public int id;

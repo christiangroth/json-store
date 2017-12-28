@@ -1,4 +1,4 @@
-package de.chrgroth.jsonstore.store;
+package de.chrgroth.jsonstore;
 
 import java.io.File;
 

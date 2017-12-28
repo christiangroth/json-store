@@ -2,11 +2,10 @@ package de.chrgroth.jsonstore.json.flexjson.custom;
 
 import java.lang.reflect.Type;
 
-import de.chrgroth.jsonstore.json.flexjson.AbstractFlexjsonTypeHandler;
 import flexjson.ObjectBinder;
 
 /**
- * Handler to intern all deserialized {@link String} instances. This may save a lot of memory if strings are reused quire often.
+ * Handler to intern all deserialized {@link String} instances. This may save a lot of memory if strings are reused often.
  *
  * @author Christian Groth
  */

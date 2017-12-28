@@ -190,7 +190,7 @@ You may configure the date/time pattern used to serialize and deserialize instan
 
 	JsonStores.builder().dateTimePattern("HH:mm:ss.SSS dd.MM.yyyy").build();
 
-You may also provide custom handlers for serialization (transformer) and deserialization (object factory). The abstract ase class de.chrgroth.jsonstore.json.flexjson.AbstractFlexjsonTypeHandler is used to provide both transformations with one implementation. In case the date timer pattern configured will also be passed to a predefined custom handler of this type. 
+You may also provide custom handlers for serialization (transformer) and deserialization (object factory). The abstract ase class de.chrgroth.jsonstore.json.flexjson.custom.AbstractFlexjsonTypeHandler is used to provide both transformations with one implementation. In case the date timer pattern configured will also be passed to a predefined custom handler of this type. 
 
 You don't need to implement this classes to be able to handle your POJOs in a generic way (see Define payload classes). However if you want to customize JSON serialization and deserialization you may provide your custom handlers using the following methods.
 

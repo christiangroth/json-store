@@ -11,12 +11,8 @@ import org.junit.Test;
 import com.google.common.io.Files;
 
 import de.chrgroth.jsonstore.json.flexjson.FlexjsonService;
+import de.chrgroth.jsonstore.metrics.JsonStoreMetrics;
 import de.chrgroth.jsonstore.storage.FileStorageService;
-import de.chrgroth.jsonstore.storage.StorageService;
-import de.chrgroth.jsonstore.store.AbstractJsonStore;
-import de.chrgroth.jsonstore.store.JsonSingletonStore;
-import de.chrgroth.jsonstore.store.JsonStore;
-import de.chrgroth.jsonstore.store.JsonStoreMetrics;
 
 public class JsonStoresTest {
 
@@ -235,7 +231,7 @@ public class JsonStoresTest {
             return ((JsonSingletonStore<String>) store).get();
         }
 
-        return ((JsonStore<String>) store).isEmpty() ? null : ((JsonStore<String>) store).copy().iterator().next();
+        return ((JsonStore) store).isEmpty() ? null : ((JsonStore<String>) store).copy().iterator().next();
     }
 
     @SuppressWarnings("unchecked")

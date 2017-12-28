@@ -1,4 +1,4 @@
-package de.chrgroth.jsonstore.store;
+package de.chrgroth.jsonstore;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -6,9 +6,6 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
-
-import de.chrgroth.jsonstore.json.JsonService;
-import de.chrgroth.jsonstore.storage.StorageService;
 
 /**
  * Represents a JSON store for a concrete class holding zero to many instances. Access is provided using delegate methods to Java built in stream API. You may
