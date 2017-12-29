@@ -8,8 +8,8 @@ import java.util.Date;
  * @author Christian Groth
  */
 public class JsonStoreMetrics {
+
     private final String uid;
-    private final String type;
     private final long itemCount;
     private final Date lastModified;
     private final long storageSize;
@@ -19,8 +19,6 @@ public class JsonStoreMetrics {
      *
      * @param uid
      *            store uid
-     * @param type
-     *            store payload type
      * @param itemCount
      *            store item count
      * @param lastModified
@@ -28,9 +26,8 @@ public class JsonStoreMetrics {
      * @param storageSize
      *            store storage size
      */
-    public JsonStoreMetrics(String uid, String type, long itemCount, Date lastModified, long storageSize) {
+    public JsonStoreMetrics(String uid, long itemCount, Date lastModified, long storageSize) {
         this.uid = uid;
-        this.type = type;
         this.itemCount = itemCount;
         this.lastModified = lastModified != null ? new Date(lastModified.getTime()) : null;
         this.storageSize = storageSize;
@@ -38,10 +35,6 @@ public class JsonStoreMetrics {
 
     public String getUid() {
         return uid;
-    }
-
-    public String getType() {
-        return type;
     }
 
     public long getItemCount() {

@@ -15,20 +15,20 @@ public class TransientStorageService implements StorageService {
     }
 
     @Override
-    public long size(JsonStoreMetadata<?, ?> metadata) {
+    public long size(JsonStoreMetadata<?> metadata) {
         return 0;
     }
 
     @Override
-    public void write(JsonStoreMetadata<?, ?> metadata, String json) {
+    public void write(JsonStoreMetadata<?> metadata, String json) {
     }
 
     @Override
-    public String read(JsonStoreMetadata<?, ?> metadata) {
+    public String read(JsonStoreMetadata<?> metadata) {
         return null;
     }
 
     @Override
-    public void delete(JsonStoreMetadata<?, ?> metadata) {
+    public void delete(JsonStoreMetadata<?> metadata) {
     }
 }

@@ -8,11 +8,10 @@ import java.util.stream.Stream;
 import de.chrgroth.jsonstore.metrics.JsonStoresMetrics;
 
 /**
- * Central API class to create JSON stores. Stores are maintained using {@link #resolve(Class, String)},
- * {@link #ensure(Class, String, Integer, VersionMigrationHandler...)} and {@link #drop(Class, String)} and similar methods for singleton stores. The
- * {@link #save()} method acts as shortcut to save all stores. If an instance is created with auto save mode enabled (see
- * {@link JsonStoresBuilder#autoSave(boolean)}) then {@link #ensure(Class, String, Integer, VersionMigrationHandler...)} and
- * {@link #ensureSingleton(Class, String, Integer, VersionMigrationHandler...)} will automatically load possibly existing data using configured storage service.
+ * Central API class to create JSON stores. Stores are maintained using {@link #resolve(String)}, {@link #ensure(String, Integer, VersionMigrationHandler...)}
+ * and {@link #drop(String)} and similar methods for singleton stores. The {@link #save()} method acts as shortcut to save all stores. If an instance is created
+ * with auto save mode enabled (see {@link JsonStoresBuilder#autoSave(boolean)}) then {@link #ensure(String, Integer, VersionMigrationHandler...)} and
+ * {@link #ensureSingleton(String, Integer, VersionMigrationHandler...)} will automatically load possibly existing data using configured storage service.
  *
  * @author Christian Groth
  */
@@ -100,13 +99,11 @@ public class JsonStores {
 
     /**
      * Ensures existence of JSON store for given class. If auto save mode is enabled store will automatically load possibly existing data from configured
-     * storage path. If any error occurs during load of eisting data a {@link JsonStoreException} will be thrown cause otherwise data loss may occur on next
+     * storage path. If any error occurs during load of existing data a {@link JsonStoreException} will be thrown cause otherwise data loss may occur on next
      * successful save.
      *
-     * @param payloadClass
-     *            class for JSON store
-     * @param optionalQualifier
-     *            optional payload class qualifier
+     * @param uid
+     *            use {@link JsonStoreUtils#buildStoreUid(Class, String)} to generate appropriate value
      * @param payloadClassVersion
      *            version of payload class, next version is always supposed to be increased by one
      * @param versionMigrationHandlers
@@ -116,16 +113,13 @@ public class JsonStores {
      *            concrete type of data
      * @see VersionMigrationHandler
      */
-    public <T> JsonStore<T> ensure(Class<T> payloadClass, String optionalQualifier, Integer payloadClassVersion, VersionMigrationHandler... versionMigrationHandlers) {
-
-        // build uid
-        String uid = JsonStoreUtils.buildStoreUid(payloadClass, optionalQualifier);
+    public <T> JsonStore<T> ensure(String uid, Integer payloadClassVersion, VersionMigrationHandler... versionMigrationHandlers) {
 
         // ensure store
         boolean initialDataLod = false;
         if (!stores.containsKey(uid)) {
             initialDataLod = true;
-            create(uid, payloadClass, payloadClassVersion, versionMigrationHandlers);
+            create(uid, payloadClassVersion, versionMigrationHandlers);
         }
 
         // load data
@@ -142,23 +136,8 @@ public class JsonStores {
         return store;
     }
 
-    protected void create(String uid, Class<?> payloadClass, Integer payloadClassVersion, VersionMigrationHandler... versionMigrationHandlers) {
-        stores.put(uid, new JsonStore<>(jsonService, storageService, uid, payloadClass, payloadClassVersion, autoSave, versionMigrationHandlers));
-    }
-
-    /**
-     * Resolves JSON store for given payload class and qualifier.
-     *
-     * @param payloadClass
-     *            class for JSON store
-     * @param optionalQualifier
-     *            optional payload class qualifier
-     * @return existing JSON store, may be null
-     * @param <T>
-     *            concrete type of data
-     */
-    public <T> JsonStore<T> resolve(Class<?> payloadClass, String optionalQualifier) {
-        return resolve(JsonStoreUtils.buildStoreUid(payloadClass, optionalQualifier));
+    protected void create(String uid, Integer payloadClassVersion, VersionMigrationHandler... versionMigrationHandlers) {
+        stores.put(uid, new JsonStore<>(jsonService, storageService, uid, payloadClassVersion, autoSave, versionMigrationHandlers));
     }
 
     /**
@@ -173,99 +152,6 @@ public class JsonStores {
     @SuppressWarnings("unchecked")
     public <T> JsonStore<T> resolve(String uid) {
         return (JsonStore<T>) stores.get(uid);
-    }
-
-    /**
-     * Ensures existence of JSON singleton store for given class. If auto save mode is enabled store will automatically load possibly existing data from
-     * configured storage path. If any error occurs during load of eisting data a {@link JsonStoreException} will be thrown cause otherwise data loss may occur
-     * on next successful save.
-     *
-     * @param payloadClass
-     *            class for JSON store
-     * @param optionalQualifier
-     *            optional payload class qualifier
-     * @param payloadClassVersion
-     *            version of payload class, next version is always supposed to be increased by one
-     * @param versionMigrationHandlers
-     *            all migration handlers
-     * @return existing or created JSON singleton store
-     * @param <T>
-     *            concrete type of data
-     * @see VersionMigrationHandler
-     */
-    public <T> JsonSingletonStore<T> ensureSingleton(Class<T> payloadClass, String optionalQualifier, Integer payloadClassVersion,
-            VersionMigrationHandler... versionMigrationHandlers) {
-
-        // build uid
-        String uid = JsonStoreUtils.buildStoreUid(payloadClass, optionalQualifier);
-
-        // ensure store
-        boolean initialDataLod = false;
-        if (!singletonStores.containsKey(uid)) {
-            initialDataLod = true;
-            createSingleton(uid, payloadClass, payloadClassVersion, versionMigrationHandlers);
-        }
-
-        // load data
-        JsonSingletonStore<T> store = resolveSingleton(uid);
-        if (initialDataLod && autoSave) {
-            try {
-                store.load();
-            } catch (Exception e) {
-                throw new JsonStoreException("Unable to delegate data load for " + store.getUid() + "!!", e);
-            }
-        }
-
-        // done
-        return store;
-    }
-
-    protected void createSingleton(String uid, Class<?> payloadClass, Integer payloadClassVersion, VersionMigrationHandler... versionMigrationHandlers) {
-        singletonStores.put(uid, new JsonSingletonStore<>(jsonService, storageService, uid, payloadClass, payloadClassVersion, autoSave, versionMigrationHandlers));
-    }
-
-    /**
-     * Resolves JSON singleton store for given class and qualifier.
-     *
-     * @param payloadClass
-     *            class for JSON store
-     * @param optionalQualifier
-     *            optional payload class qualifier
-     * @return existing JSON singleton store, may be null
-     * @param <T>
-     *            concrete type of data
-     */
-    public <T> JsonSingletonStore<T> resolveSingleton(Class<T> payloadClass, String optionalQualifier) {
-        return resolveSingleton(JsonStoreUtils.buildStoreUid(payloadClass, optionalQualifier));
-    }
-
-    /**
-     * Resolves JSON singleton store for given uid.
-     *
-     * @param uid
-     *            store uid
-     * @return existing JSON singleton store, may be null
-     * @param <T>
-     *            concrete type of data
-     */
-    @SuppressWarnings("unchecked")
-    public <T> JsonSingletonStore<T> resolveSingleton(String uid) {
-        return (JsonSingletonStore<T>) singletonStores.get(uid);
-    }
-
-    /**
-     * Drops JSON store for given class and qualifier, is existent. Results in calling {@link JsonStore#drop()} if using auto-save mode and store exists.
-     *
-     * @param payloadClass
-     *            class for JSON store
-     * @param optionalQualifier
-     *            optional payload class qualifier
-     * @return dropped JSON store
-     * @param <T>
-     *            concrete type of data
-     */
-    public <T> JsonStore<T> drop(Class<T> payloadClass, String optionalQualifier) {
-        return drop(JsonStoreUtils.buildStoreUid(payloadClass, optionalQualifier));
     }
 
     /**
@@ -293,19 +179,60 @@ public class JsonStores {
     }
 
     /**
-     * Drops JSON singleton store for given class and qualifier, is existent. Results in calling {@link JsonSingletonStore#drop()} if using auto-save mode and
-     * store exists.
+     * Ensures existence of JSON singleton store for given class. If auto save mode is enabled store will automatically load possibly existing data from
+     * configured storage path. If any error occurs during load of eisting data a {@link JsonStoreException} will be thrown cause otherwise data loss may occur
+     * on next successful save.
      *
-     * @param payloadClass
-     *            class for JSON store
-     * @param optionalQualifier
-     *            optional payload class qualifier
-     * @return dropped JSON singleton store
+     * @param uid
+     *            use {@link JsonStoreUtils#buildStoreUid(Class, String)} to generate appropriate value
+     * @param payloadClassVersion
+     *            version of payload class, next version is always supposed to be increased by one
+     * @param versionMigrationHandlers
+     *            all migration handlers
+     * @return existing or created JSON singleton store
+     * @param <T>
+     *            concrete type of data
+     * @see VersionMigrationHandler
+     */
+    public <T> JsonSingletonStore<T> ensureSingleton(String uid, Integer payloadClassVersion, VersionMigrationHandler... versionMigrationHandlers) {
+
+        // ensure store
+        boolean initialDataLod = false;
+        if (!singletonStores.containsKey(uid)) {
+            initialDataLod = true;
+            createSingleton(uid, payloadClassVersion, versionMigrationHandlers);
+        }
+
+        // load data
+        JsonSingletonStore<T> store = resolveSingleton(uid);
+        if (initialDataLod && autoSave) {
+            try {
+                store.load();
+            } catch (Exception e) {
+                throw new JsonStoreException("Unable to delegate data load for " + store.getUid() + "!!", e);
+            }
+        }
+
+        // done
+        return store;
+    }
+
+    protected void createSingleton(String uid, Integer payloadClassVersion, VersionMigrationHandler... versionMigrationHandlers) {
+        singletonStores.put(uid, new JsonSingletonStore<>(jsonService, storageService, uid, payloadClassVersion, autoSave, versionMigrationHandlers));
+    }
+
+    /**
+     * Resolves JSON singleton store for given uid.
+     *
+     * @param uid
+     *            store uid
+     * @return existing JSON singleton store, may be null
      * @param <T>
      *            concrete type of data
      */
-    public <T> JsonSingletonStore<T> dropSingleton(Class<T> payloadClass, String optionalQualifier) {
-        return dropSingleton(JsonStoreUtils.buildStoreUid(payloadClass, optionalQualifier));
+    @SuppressWarnings("unchecked")
+    public <T> JsonSingletonStore<T> resolveSingleton(String uid) {
+        return (JsonSingletonStore<T>) singletonStores.get(uid);
     }
 
     /**
@@ -338,7 +265,7 @@ public class JsonStores {
      */
     public void load() {
 
-        // abort on transient stores or auto save mode
+        // abort on auto save mode
         if (autoSave) {
             return;
         }
@@ -360,9 +287,15 @@ public class JsonStores {
     }
 
     /**
-     * If stores are persistent {@link JsonStore#save()} will be invoked using parallel stream on all existing stores.
+     * If stores auto save mode is disabled, this method invokes {@link JsonStore#save()} on all existing stores.
      */
     public void save() {
+
+        // abort on auto save mode
+        if (autoSave) {
+            return;
+        }
+
         stores.values().parallelStream().forEach(store -> store.save());
         singletonStores.values().parallelStream().forEach(store -> store.save());
     }

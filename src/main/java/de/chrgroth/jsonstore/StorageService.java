@@ -19,7 +19,7 @@ public interface StorageService {
      *            store metadata
      * @return storge size in bytes
      */
-    long size(JsonStoreMetadata<?, ?> metadata);
+    long size(JsonStoreMetadata<?> metadata);
 
     /**
      * Writes the given JSON data for given store metadata.
@@ -29,7 +29,7 @@ public interface StorageService {
      * @param json
      *            JSON data to be written
      */
-    void write(JsonStoreMetadata<?, ?> metadata, String json);
+    void write(JsonStoreMetadata<?> metadata, String json);
 
     /**
      * Reads the JSON data for given store metadata.
@@ -38,7 +38,7 @@ public interface StorageService {
      *            store metadata
      * @return persistent JSON data
      */
-    String read(JsonStoreMetadata<?, ?> metadata);
+    String read(JsonStoreMetadata<?> metadata);
 
     /**
      * Deletes the persistent storage for given store metadata.
@@ -46,5 +46,5 @@ public interface StorageService {
      * @param metadata
      *            store metadata
      */
-    void delete(JsonStoreMetadata<?, ?> metadata);
+    void delete(JsonStoreMetadata<?> metadata);
 }

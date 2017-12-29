@@ -26,8 +26,6 @@ public class JsonStore<T> extends AbstractJsonStore<T, Set<T>> {
      *            storage service implementation
      * @param uid
      *            store uid
-     * @param payloadClass
-     *            type of objects to be stored
      * @param payloadTypeVersion
      *            version of payload type class
      * @param autoSave
@@ -35,15 +33,15 @@ public class JsonStore<T> extends AbstractJsonStore<T, Set<T>> {
      * @param migrationHandlers
      *            all migration handlers to be applied
      */
-    public JsonStore(JsonService jsonService, StorageService storageService, String uid, Class<T> payloadClass, Integer payloadTypeVersion, boolean autoSave,
-            VersionMigrationHandler... migrationHandlers) {
-        super(jsonService, storageService, uid, payloadClass, payloadTypeVersion, false, autoSave, migrationHandlers);
+    public JsonStore(JsonService jsonService, StorageService storageService, String uid, int payloadTypeVersion, boolean autoSave, VersionMigrationHandler... migrationHandlers) {
+        super(jsonService, storageService, uid, payloadTypeVersion, autoSave, migrationHandlers);
         metadata.setPayload(new HashSet<>());
     }
 
     @Override
     protected void metadataRefreshed() {
 
+        // TODO move to JsonService somehow?
         // change payload to set, gets loaded as list by flexjson
         Set<T> payload = new HashSet<T>();
         payload.addAll(metadata.getPayload());

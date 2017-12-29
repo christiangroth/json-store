@@ -33,28 +33,25 @@ public abstract class AbstractJsonService implements JsonService {
      *            migrations handlers to be used
      * @param rawPayload
      *            the raw payload to be migrated
-     * @param isSingleton
-     *            true if given metadata belonds to a singleton store
      * @param sourceTypeVersion
      *            version of given raw metadata
      * @return true if payload was migrated, false otherwise
      */
     @SuppressWarnings("unchecked")
-    protected boolean migrateVersions(JsonStoreMetadata<?, ?> metadata, Map<Integer, VersionMigrationHandler> migrationHandlers, Object rawPayload, boolean isSingleton,
-            Integer sourceTypeVersion) {
+    protected boolean migrateVersions(JsonStoreMetadata<?> metadata, Map<Integer, VersionMigrationHandler> migrationHandlers, Object rawPayload, Integer sourceTypeVersion) {
 
         // ensure payload
         if (rawPayload == null) {
             return false;
         }
 
-        // compare version information
-        Integer targetTypeVersion = metadata.getPayloadTypeVersion();
-        if (sourceTypeVersion == null || targetTypeVersion == null) {
+        // ensure source version information
+        if (sourceTypeVersion == null) {
             return false;
         }
 
         // abort on newer version than available as code
+        int targetTypeVersion = metadata.getPayloadTypeVersion();
         if (sourceTypeVersion > targetTypeVersion) {
             throw new JsonStoreException("loaded version is newer than specified version in code: " + sourceTypeVersion + " > " + targetTypeVersion + "!!");
         }
@@ -64,7 +61,7 @@ public abstract class AbstractJsonService implements JsonService {
         if (sourceTypeVersion < targetTypeVersion) {
 
             // update per version
-            for (int i = sourceTypeVersion; i <= targetTypeVersion; i++) {
+            for (int i = sourceTypeVersion + 1; i <= targetTypeVersion; i++) {
 
                 // check for migration handler
                 VersionMigrationHandler migrationHandler = migrationHandlers.get(i);
@@ -76,7 +73,7 @@ public abstract class AbstractJsonService implements JsonService {
                 LOG.info(metadata.getUid() + ": migrating to version " + i + " using " + migrationHandler);
                 try {
                     Stopwatch stopwatch = Stopwatch.createStarted();
-                    if (isSingleton) {
+                    if (metadata.isSingleton()) {
                         migrationHandler.migrate((Map<String, Object>) rawPayload);
                     } else {
                         for (Object genericStructurePayloadItem : (List<Object>) rawPayload) {

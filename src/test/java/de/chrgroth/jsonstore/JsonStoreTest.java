@@ -1,41 +1,36 @@
 package de.chrgroth.jsonstore;
 
-import java.io.File;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Stream;
 
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-
-import com.google.common.io.Files;
-
-import de.chrgroth.jsonstore.json.flexjson.FlexjsonService;
-import de.chrgroth.jsonstore.storage.FileStorageService;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.MockitoAnnotations;
 
 public class JsonStoreTest {
-    public static final String DATE_TIME_PATTERN = "HH:mm:ss.SSS dd.MM.yyyy";
 
-    private File tempDir;
-    private JsonStore<String> persistentStore;
-    private JsonStore<String> persistentStoreCopy;
-    private JsonStore<String> transientStore;
-    private JsonStore<String> transientStoreCopy;
+    private JsonStore<String> store;
 
     private String testDataOne;
     private String testDataTwo;
     private List<String> testData;
 
+    @Mock
+    private JsonService jsonService;
+
+    @Mock
+    private StorageService storageService;
+
     @Before
     public void init() {
-        tempDir = Files.createTempDir();
-        FlexjsonService flexjsonService = FlexjsonService.builder().dateTimePattern(DATE_TIME_PATTERN).build();
-        FileStorageService storageService = FileStorageService.builder().storage(tempDir).build();
-        persistentStore = new JsonStore<>(flexjsonService, storageService, "uid1", String.class, null, true);
-        persistentStoreCopy = new JsonStore<>(flexjsonService, storageService, "uid2", String.class, null, true);
-        transientStore = new JsonStore<>(flexjsonService, storageService, "uid3", String.class, null, false);
-        transientStoreCopy = new JsonStore<>(flexjsonService, storageService, "uid4", String.class, null, false);
+
+        // configure mocks
+        MockitoAnnotations.initMocks(this);
+
+        store = new JsonStore<>(jsonService, storageService, "uid1", 0, true);
         testDataOne = "test data foo";
         testDataTwo = "test data bar";
         testData = Arrays.asList(testDataOne, testDataTwo);
@@ -43,15 +38,19 @@ public class JsonStoreTest {
 
     @Test
     public void dataLifecycle() {
-        dataLifecycle(persistentStore);
+        assertDataLifecycle(true);
     }
 
     @Test
-    public void transientDataLifecycle() {
-        dataLifecycle(transientStore);
+    public void dataLifecycleNoAutoSave() {
+        store = new JsonStore<>(jsonService, storageService, "uid1", 0, false);
+        assertDataLifecycle(false);
     }
 
-    public void dataLifecycle(JsonStore<String> store) {
+    private void assertDataLifecycle(boolean autoSave) {
+
+        // no interactions
+        assertPersistenceInteractions(0);
 
         // no data
         Assert.assertTrue(store.isEmpty());
@@ -59,6 +58,7 @@ public class JsonStoreTest {
 
         // add element
         store.add(testDataOne);
+        assertPersistenceInteractions(autoSave ? 1 : 0);
         Assert.assertFalse(store.isEmpty());
         Assert.assertEquals(1, store.size());
         Assert.assertEquals(1, store.copy().size());
@@ -71,127 +71,49 @@ public class JsonStoreTest {
 
         // add element two
         store.add(testDataTwo);
+        assertPersistenceInteractions(autoSave ? 2 : 0);
         Assert.assertEquals(2, store.size());
         Assert.assertTrue(store.containsAll(testData));
 
         // retain
         store.retainAll(Arrays.asList(testDataOne));
+        assertPersistenceInteractions(autoSave ? 3 : 0);
         Assert.assertEquals(1, store.size());
         Assert.assertTrue(store.contains(testDataOne));
 
         // remove
         store.remove(testDataOne);
+        assertPersistenceInteractions(autoSave ? 4 : 0);
         Assert.assertTrue(store.isEmpty());
 
         // remove all
         store.addAll(testData);
+        assertPersistenceInteractions(autoSave ? 5 : 0);
         Assert.assertEquals(2, store.size());
         store.removeAll(testData);
+        assertPersistenceInteractions(autoSave ? 6 : 0);
         Assert.assertTrue(store.isEmpty());
 
         // remove if
         store.addAll(testData);
+        assertPersistenceInteractions(autoSave ? 7 : 0);
         Assert.assertEquals(2, store.size());
         store.removeIf(s -> testDataTwo.equals(s));
+        assertPersistenceInteractions(autoSave ? 8 : 0);
         Assert.assertEquals(1, store.size());
         Assert.assertTrue(store.contains(testDataOne));
 
         // clear
         store.addAll(testData);
+        assertPersistenceInteractions(autoSave ? 9 : 0);
         Assert.assertEquals(2, store.size());
         store.clear();
+        assertPersistenceInteractions(autoSave ? 10 : 0);
         Assert.assertTrue(store.isEmpty());
     }
 
-    @Test
-    public void jsonLifecycle() {
-        jsonLifecycle(persistentStore, persistentStoreCopy);
-    }
-
-    @Test
-    public void transientJsonLifecycle() {
-        jsonLifecycle(transientStore, transientStoreCopy);
-    }
-
-    private void jsonLifecycle(JsonStore<String> store, JsonStore<String> storeCopy) {
-
-        // export data
-        store.add(testDataOne);
-        String json = store.toJson();
-        Assert.assertNotNull(json);
-
-        // copy still empty
-        Assert.assertTrue(storeCopy.isEmpty());
-
-        // import into copy
-        storeCopy.fromJson(json);
-        Assert.assertEquals(1, storeCopy.size());
-        Assert.assertEquals(store.copy().iterator().next(), storeCopy.copy().iterator().next());
-    }
-
-    @Test
-    public void nullJson() {
-        nullJson(persistentStoreCopy);
-    }
-
-    @Test
-    public void transientNullJson() {
-        nullJson(transientStoreCopy);
-    }
-
-    private void nullJson(JsonStore<String> store) {
-
-        // still empty
-        Assert.assertTrue(store.isEmpty());
-
-        // import into copy
-        store.fromJson(null);
-        Assert.assertTrue(store.isEmpty());
-    }
-
-    @Test
-    public void concurrentStreamAccessAndModification() {
-        concurrentStreamAccessAndModification(persistentStore);
-    }
-
-    @Test
-    public void transientConcurrentStreamAccessAndModification() {
-        concurrentStreamAccessAndModification(transientStore);
-    }
-
-    private void concurrentStreamAccessAndModification(JsonStore<String> store) {
-
-        // prepare stream
-        store.addAll(testData);
-        Stream<String> stream = store.stream();
-
-        // concurrent change
-        store.remove(testDataTwo);
-
-        // go on with stream
-        Assert.assertEquals(2, stream.count());
-    }
-
-    @Test
-    public void concurrentParallelStreamAccessAndModification() {
-        concurrentParallelStreamAccessAndModification(persistentStore);
-    }
-
-    @Test
-    public void transientConcurrentParallelStreamAccessAndModification() {
-        concurrentParallelStreamAccessAndModification(transientStore);
-    }
-
-    private void concurrentParallelStreamAccessAndModification(JsonStore<String> store) {
-
-        // prepare stream
-        store.addAll(testData);
-        Stream<String> stream = store.parallelStream();
-
-        // concurrent change
-        store.remove(testDataTwo);
-
-        // go on with stream
-        Assert.assertEquals(2, stream.count());
+    private void assertPersistenceInteractions(int times) {
+        Mockito.verify(jsonService, Mockito.times(times)).toJson(Mockito.any());
+        Mockito.verify(storageService, Mockito.times(times)).write(Mockito.any(), Mockito.any());
     }
 }

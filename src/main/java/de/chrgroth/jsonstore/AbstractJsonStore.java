@@ -21,12 +21,12 @@ public abstract class AbstractJsonStore<T, P> {
     protected final JsonService jsonService;
     protected final StorageService storageService;
 
-    protected final JsonStoreMetadata<T, P> metadata;
+    protected final JsonStoreMetadata<P> metadata;
     protected final boolean autoSave;
     protected final Map<Integer, VersionMigrationHandler> migrationHandlers;
 
-    protected AbstractJsonStore(JsonService jsonService, StorageService storageService, String uid, Class<T> payloadClass, Integer payloadTypeVersion, boolean singleton,
-            boolean autoSave, VersionMigrationHandler... migrationHandlers) {
+    protected AbstractJsonStore(JsonService jsonService, StorageService storageService, String uid, int payloadTypeVersion, boolean autoSave,
+            VersionMigrationHandler... migrationHandlers) {
 
         // set json service
         if (jsonService == null) {
@@ -43,9 +43,8 @@ public abstract class AbstractJsonStore<T, P> {
         // create empty metadata
         metadata = new JsonStoreMetadata<>();
         metadata.setUid(uid);
-        metadata.setPayloadType(payloadClass.getName());
         metadata.setPayloadTypeVersion(payloadTypeVersion);
-        metadata.setSingleton(singleton);
+        metadata.setSingleton(this instanceof JsonSingletonStore);
         metadata.setCreated(new Date());
 
         // set auto-save mode
@@ -82,7 +81,7 @@ public abstract class AbstractJsonStore<T, P> {
      * @return metrics, never null
      */
     public JsonStoreMetrics computeMetrics() {
-        return new JsonStoreMetrics(metadata.getUid(), metadata.getPayloadType(), size(), metadata.getModified(), storageService.size(metadata));
+        return new JsonStoreMetrics(metadata.getUid(), size(), metadata.getModified(), storageService.size(metadata));
     }
 
     /**

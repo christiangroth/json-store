@@ -23,6 +23,19 @@ public final class JsonStoreUtils {
      * @return store uid
      */
     public static String buildStoreUid(Class<?> payloadClass, String optionalQualifier) {
-        return payloadClass.getName() + (Strings.isNullOrEmpty(optionalQualifier) ? "" : "." + optionalQualifier);
+
+        // null guard
+        if (payloadClass == null) {
+            throw new JsonStoreException("payload class must not be null!!");
+        }
+
+        // compute qualifierAppendix
+        String appendix = "";
+        if (optionalQualifier != null && !Strings.isNullOrEmpty(optionalQualifier.trim())) {
+            appendix = "." + optionalQualifier.replaceAll("\\s", "");
+        }
+
+        // done
+        return payloadClass.getName() + appendix;
     }
 }

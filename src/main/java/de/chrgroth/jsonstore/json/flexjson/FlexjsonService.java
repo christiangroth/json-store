@@ -14,7 +14,6 @@ import com.google.common.base.Stopwatch;
 
 import de.chrgroth.jsonstore.JsonStoreException;
 import de.chrgroth.jsonstore.JsonStoreMetadata;
-import de.chrgroth.jsonstore.JsonStoreUtils;
 import de.chrgroth.jsonstore.VersionMigrationHandler;
 import de.chrgroth.jsonstore.json.AbstractJsonService;
 import de.chrgroth.jsonstore.json.flexjson.FlexjsonHelper.FlexjsonHelperBuilder;
@@ -36,14 +35,16 @@ public class FlexjsonService extends AbstractJsonService {
 
     private static final String JSON_FIELD_CLASS = "class";
     private static final String JSON_FIELD_PAYLOAD = "payload";
-    private static final String JSON_FIELD_SINGLETON = "singleton";
     private static final String JSON_FIELD_PAYLOAD_TYPE_VERSION = "payloadTypeVersion";
 
     private final FlexjsonHelper flexjsonHelper;
     private final Map<String, FlexjsonHelper> flexjsonHelperPerStore;
 
     private final boolean deepSerialize;
+    private final Map<String, Boolean> deepSerializePerStore;
+
     private final boolean prettyPrint;
+    private final Map<String, Boolean> prettyPrintPerStore;
 
     /**
      * Builder to configure a new instance of {@link FlexjsonService}.
@@ -56,11 +57,16 @@ public class FlexjsonService extends AbstractJsonService {
         private final Map<String, FlexjsonHelperBuilder> flexjsonHelperBuilderPerStore;
 
         private boolean deepSerialize;
+        private final Map<String, Boolean> deepSerializePerStore;
+
         private boolean prettyPrint;
+        private final Map<String, Boolean> prettyPrintPerStore;
 
         private FlexjsonServiceBuilder() {
             flexjsonHelperBuilder = FlexjsonHelper.builder();
             flexjsonHelperBuilderPerStore = new HashMap<>();
+            deepSerializePerStore = new HashMap<>();
+            prettyPrintPerStore = new HashMap<>();
         }
 
         /**
@@ -78,16 +84,14 @@ public class FlexjsonService extends AbstractJsonService {
         /**
          * {@link FlexjsonHelperBuilder#dateTimePattern(String)}
          *
-         * @param payloadClass
-         *            use for store matching
-         * @param optionalQualifier
-         *            use for store matching
+         * @param uid
+         *            used for store matching
          * @param dateTimePattern
          *            date time pattern to be used.
          * @return builder
          */
-        public FlexjsonServiceBuilder dateTimePattern(Class<?> payloadClass, String optionalQualifier, String dateTimePattern) {
-            ensureFlexjsonHelperBuilderPerStore(payloadClass, optionalQualifier).dateTimePattern(dateTimePattern);
+        public FlexjsonServiceBuilder dateTimePattern(String uid, String dateTimePattern) {
+            ensureFlexjsonHelperBuilderPerStore(uid).dateTimePattern(dateTimePattern);
             return this;
         }
 
@@ -104,14 +108,12 @@ public class FlexjsonService extends AbstractJsonService {
         /**
          * Adds {@link StringInterningHandler} as custom handler for {@link String} class.
          *
-         * @param payloadClass
-         *            use for store matching
-         * @param optionalQualifier
-         *            use for store matching
+         * @param uid
+         *            used for store matching
          * @return builder
          */
-        public FlexjsonServiceBuilder useStringInterning(Class<?> payloadClass, String optionalQualifier) {
-            ensureFlexjsonHelperBuilderPerStore(payloadClass, optionalQualifier).useStringInterning();
+        public FlexjsonServiceBuilder useStringInterning(String uid) {
+            ensureFlexjsonHelperBuilderPerStore(uid).useStringInterning();
             return this;
         }
 
@@ -132,18 +134,16 @@ public class FlexjsonService extends AbstractJsonService {
         /**
          * {@link FlexjsonHelperBuilder#handler(Class, AbstractFlexjsonTypeHandler)}
          *
-         * @param payloadClass
-         *            use for store matching
-         * @param optionalQualifier
-         *            use for store matching
+         * @param uid
+         *            used for store matching
          * @param type
          *            type the handler applies on
          * @param handler
          *            handler to be applied
          * @return builder
          */
-        public FlexjsonServiceBuilder factory(Class<?> payloadClass, String optionalQualifier, Class<?> type, AbstractFlexjsonTypeHandler handler) {
-            ensureFlexjsonHelperBuilderPerStore(payloadClass, optionalQualifier).handler(type, handler);
+        public FlexjsonServiceBuilder factory(String uid, Class<?> type, AbstractFlexjsonTypeHandler handler) {
+            ensureFlexjsonHelperBuilderPerStore(uid).handler(type, handler);
             return this;
         }
 
@@ -164,25 +164,22 @@ public class FlexjsonService extends AbstractJsonService {
         /**
          * {@link FlexjsonHelperBuilder#handler(String, AbstractFlexjsonTypeHandler)}
          *
-         * @param payloadClass
-         *            use for store matching
-         * @param optionalQualifier
-         *            use for store matching
+         * @param uid
+         *            used for store matching
          * @param path
          *            path the handler applies on
          * @param handler
          *            handler to be applied
          * @return builder
          */
-        public FlexjsonServiceBuilder factory(Class<?> payloadClass, String optionalQualifier, String path, AbstractFlexjsonTypeHandler handler) {
-            ensureFlexjsonHelperBuilderPerStore(payloadClass, optionalQualifier).handler(path, handler);
+        public FlexjsonServiceBuilder factory(String uid, String path, AbstractFlexjsonTypeHandler handler) {
+            ensureFlexjsonHelperBuilderPerStore(uid).handler(path, handler);
             return this;
         }
 
-        private FlexjsonHelperBuilder ensureFlexjsonHelperBuilderPerStore(Class<?> payloadClass, String optionalQualifier) {
+        private FlexjsonHelperBuilder ensureFlexjsonHelperBuilderPerStore(String uid) {
 
             // create
-            final String uid = JsonStoreUtils.buildStoreUid(payloadClass, optionalQualifier);
             if (!flexjsonHelperBuilderPerStore.containsKey(uid)) {
                 flexjsonHelperBuilderPerStore.put(uid, FlexjsonHelper.builder());
             }
@@ -204,6 +201,20 @@ public class FlexjsonService extends AbstractJsonService {
         }
 
         /**
+         * Sets the deep serialize mode for matching store with given uid.
+         *
+         * @param uid
+         *            used for store matching
+         * @param deepSerialize
+         *            true for deep serialization, false to use explicit annotations
+         * @return builder
+         */
+        public FlexjsonServiceBuilder setDeepSerialize(String uid, boolean deepSerialize) {
+            deepSerializePerStore.put(uid, deepSerialize);
+            return this;
+        }
+
+        /**
          * Sets the pretty print serialization mode.
          *
          * @param prettyPrint
@@ -216,6 +227,20 @@ public class FlexjsonService extends AbstractJsonService {
         }
 
         /**
+         * Sets the pretty print serialization mode for matching store with given uid.
+         *
+         * @param uid
+         *            used for store matching
+         * @param prettyPrint
+         *            true for pretty print mode, false otherwise
+         * @return builder
+         */
+        public FlexjsonServiceBuilder setPrettyPrint(String uid, boolean prettyPrint) {
+            prettyPrintPerStore.put(uid, prettyPrint);
+            return this;
+        }
+
+        /**
          * Creates the service instance.
          *
          * @return created service
@@ -223,7 +248,7 @@ public class FlexjsonService extends AbstractJsonService {
         public FlexjsonService build() {
             Map<String, FlexjsonHelper> flexjsonHelperPerStore = flexjsonHelperBuilderPerStore.entrySet().stream()
                     .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue().build()));
-            return new FlexjsonService(flexjsonHelperBuilder.build(), flexjsonHelperPerStore, deepSerialize, prettyPrint);
+            return new FlexjsonService(flexjsonHelperBuilder.build(), flexjsonHelperPerStore, deepSerialize, deepSerializePerStore, prettyPrint, prettyPrintPerStore);
         }
     }
 
@@ -236,22 +261,39 @@ public class FlexjsonService extends AbstractJsonService {
         return new FlexjsonServiceBuilder();
     }
 
-    protected FlexjsonService(FlexjsonHelper flexjsonHelper, Map<String, FlexjsonHelper> flexjsonHelperPerStore, boolean deepSerialize, boolean prettyPrint) {
+    protected FlexjsonService(FlexjsonHelper flexjsonHelper, Map<String, FlexjsonHelper> flexjsonHelperPerStore, boolean deepSerialize, Map<String, Boolean> deepSerializePerStore,
+            boolean prettyPrint, Map<String, Boolean> prettyPrintPerStore) {
+
         this.flexjsonHelper = flexjsonHelper;
         this.flexjsonHelperPerStore = new HashMap<>();
         if (flexjsonHelperPerStore != null) {
             this.flexjsonHelperPerStore.putAll(flexjsonHelperPerStore);
         }
+
         this.deepSerialize = deepSerialize;
+        this.deepSerializePerStore = new HashMap<>();
+        if (deepSerializePerStore != null) {
+            this.deepSerializePerStore.putAll(deepSerializePerStore);
+        }
+
         this.prettyPrint = prettyPrint;
+        this.prettyPrintPerStore = new HashMap<>();
+        if (prettyPrintPerStore != null) {
+            this.prettyPrintPerStore.putAll(prettyPrintPerStore);
+        }
     }
 
     @Override
-    public String toJson(JsonStoreMetadata<?, ?> metadata) {
+    public String toJson(JsonStoreMetadata<?> metadata) {
         Stopwatch stopwatch = Stopwatch.createStarted();
         try {
-            final JSONSerializer serializer = resolveFlexjsonHelper(metadata.getUid()).serializer(prettyPrint);
-            return deepSerialize ? serializer.deepSerialize(metadata) : serializer.serialize(metadata);
+            final String uid = metadata.getUid();
+
+            final boolean prettyPrintForStore = prettyPrintPerStore.getOrDefault(metadata.getUid(), prettyPrint);
+            final JSONSerializer serializer = resolveFlexjsonHelper(uid).serializer(prettyPrintForStore);
+
+            final boolean deepSerializeForStore = deepSerializePerStore.getOrDefault(metadata.getUid(), deepSerialize);
+            return deepSerializeForStore ? serializer.deepSerialize(metadata) : serializer.serialize(metadata);
         } finally {
             stopwatch.stop();
             LOG.info(metadata.getUid() + ": converting to json took " + stopwatch.elapsed(TimeUnit.MILLISECONDS) + "ms");
@@ -259,7 +301,7 @@ public class FlexjsonService extends AbstractJsonService {
     }
 
     @Override
-    public void fromJson(JsonStoreMetadata<?, ?> metadata, Map<Integer, VersionMigrationHandler> migrationHandlers, String json, Consumer<Boolean> successConsumer) {
+    public void fromJson(JsonStoreMetadata<?> metadata, Map<Integer, VersionMigrationHandler> migrationHandlers, String json, Consumer<Boolean> successConsumer) {
 
         // null guard
         if (json == null || "".equals(json.trim())) {
@@ -291,23 +333,24 @@ public class FlexjsonService extends AbstractJsonService {
         jsonDeserialization(metadata, oldMetadataRaw);
 
         // callback after work is done
-        successConsumer.accept(migrated);
+        if (successConsumer != null) {
+            successConsumer.accept(migrated);
+        }
     }
 
-    protected boolean migrateVersions(JsonStoreMetadata<?, ?> metadata, Map<Integer, VersionMigrationHandler> migrationHandlers, Map<String, Object> oldMetadataRaw) {
+    protected boolean migrateVersions(JsonStoreMetadata<?> metadata, Map<Integer, VersionMigrationHandler> migrationHandlers, Map<String, Object> oldMetadataRaw) {
 
         // determine source information
         Object rawPayload = oldMetadataRaw.get(JSON_FIELD_PAYLOAD);
-        boolean isSingleton = (boolean) oldMetadataRaw.get(JSON_FIELD_SINGLETON);
         Object sourceTypeVersionRaw = oldMetadataRaw.get(JSON_FIELD_PAYLOAD_TYPE_VERSION);
         Integer sourceTypeVersion = sourceTypeVersionRaw != null ? ((JsonNumber) sourceTypeVersionRaw).toInteger() : 0;
 
         // do migration
-        return migrateVersions(metadata, migrationHandlers, rawPayload, isSingleton, sourceTypeVersion);
+        return migrateVersions(metadata, migrationHandlers, rawPayload, sourceTypeVersion);
     }
 
     @SuppressWarnings("unchecked")
-    protected <T, P> void jsonDeserialization(JsonStoreMetadata<T, P> metadata, Map<String, Object> oldMetadataRaw) {
+    protected <T> void jsonDeserialization(JsonStoreMetadata<T> metadata, Map<String, Object> oldMetadataRaw) {
 
         // proceed with deserialization
         try {
@@ -320,7 +363,7 @@ public class FlexjsonService extends AbstractJsonService {
             ObjectBinder binder = (ObjectBinder) method.invoke(deserializer);
 
             // metadata deserialization
-            JsonStoreMetadata<T, P> oldMetadata = (JsonStoreMetadata<T, P>) binder.bind(oldMetadataRaw);
+            JsonStoreMetadata<T> oldMetadata = (JsonStoreMetadata<T>) binder.bind(oldMetadataRaw);
             metadata.setPayload(oldMetadata.getPayload());
 
             stopwatch.stop();

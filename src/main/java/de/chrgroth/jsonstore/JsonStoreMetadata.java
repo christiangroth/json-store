@@ -8,19 +8,16 @@ import flexjson.JSON;
  * Represents metadata information about any JSON store instance.
  *
  * @author Christian Groth
- * @param <T>
- *            type of objects being stored
  * @param <P>
  *            type of object being serialized and deserialized in order to store and load objects of type T
  */
-public class JsonStoreMetadata<T, P> {
+public class JsonStoreMetadata<P> {
 
     // TODO get rid of this annotation!!
     @JSON
     private P payload;
     private String uid;
-    private String payloadType;
-    private Integer payloadTypeVersion;
+    private int payloadTypeVersion;
     private boolean singleton;
     private Date created;
     private Date modified;
@@ -41,19 +38,11 @@ public class JsonStoreMetadata<T, P> {
         this.uid = uid;
     }
 
-    public String getPayloadType() {
-        return payloadType;
-    }
-
-    public void setPayloadType(String payloadType) {
-        this.payloadType = payloadType;
-    }
-
-    public Integer getPayloadTypeVersion() {
+    public int getPayloadTypeVersion() {
         return payloadTypeVersion;
     }
 
-    public void setPayloadTypeVersion(Integer payloadTypeVersion) {
+    public void setPayloadTypeVersion(int payloadTypeVersion) {
         this.payloadTypeVersion = payloadTypeVersion;
     }
 

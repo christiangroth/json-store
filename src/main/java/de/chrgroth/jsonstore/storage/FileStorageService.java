@@ -82,7 +82,7 @@ public class FileStorageService implements StorageService {
          * @return create service
          */
         public FileStorageService build() {
-            return new FileStorageService(storage.getAbsoluteFile(), charset);
+            return new FileStorageService(storage != null ? storage.getAbsoluteFile() : null, charset);
         }
     }
 
@@ -125,7 +125,7 @@ public class FileStorageService implements StorageService {
     }
 
     @Override
-    public long size(JsonStoreMetadata<?, ?> metadata) {
+    public long size(JsonStoreMetadata<?> metadata) {
 
         long fileSize = 0;
         File file = resolveFile(metadata);
@@ -136,7 +136,7 @@ public class FileStorageService implements StorageService {
     }
 
     @Override
-    public void write(JsonStoreMetadata<?, ?> metadata, String json) {
+    public void write(JsonStoreMetadata<?> metadata, String json) {
 
         // write to file
         File file = resolveFile(metadata);
@@ -153,7 +153,7 @@ public class FileStorageService implements StorageService {
     }
 
     @Override
-    public String read(JsonStoreMetadata<?, ?> metadata) {
+    public String read(JsonStoreMetadata<?> metadata) {
 
         // abort if not data file is present
         File file = resolveFile(metadata);
@@ -179,7 +179,7 @@ public class FileStorageService implements StorageService {
     }
 
     @Override
-    public void delete(JsonStoreMetadata<?, ?> metadata) {
+    public void delete(JsonStoreMetadata<?> metadata) {
         try {
             LOG.info(metadata.getUid() + ": dropping strage file");
             File file = resolveFile(metadata);
@@ -198,7 +198,7 @@ public class FileStorageService implements StorageService {
      *            store metadata
      * @return storage file
      */
-    public File resolveFile(JsonStoreMetadata<?, ?> metadata) {
+    public File resolveFile(JsonStoreMetadata<?> metadata) {
         return new File(storage, FILE_PREFIX + FILE_SEPARATOR + (metadata.isSingleton() ? FILE_SINGLETON + FILE_SEPARATOR : "") + metadata.getUid() + FILE_SEPARATOR + FILE_SUFFIX);
     }
 }

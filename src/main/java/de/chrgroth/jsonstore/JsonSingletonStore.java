@@ -18,8 +18,6 @@ public class JsonSingletonStore<T> extends AbstractJsonStore<T, T> {
      *            storage service implementation
      * @param uid
      *            store uid
-     * @param payloadClass
-     *            type of objects to be stored
      * @param payloadTypeVersion
      *            version of payload type class
      * @param autoSave
@@ -27,9 +25,9 @@ public class JsonSingletonStore<T> extends AbstractJsonStore<T, T> {
      * @param migrationHandlers
      *            all migration handlers to be applied
      */
-    public JsonSingletonStore(JsonService jsonService, StorageService storageService, String uid, Class<T> payloadClass, Integer payloadTypeVersion, boolean autoSave,
+    public JsonSingletonStore(JsonService jsonService, StorageService storageService, String uid, int payloadTypeVersion, boolean autoSave,
             VersionMigrationHandler... migrationHandlers) {
-        super(jsonService, storageService, uid, payloadClass, payloadTypeVersion, true, autoSave, migrationHandlers);
+        super(jsonService, storageService, uid, payloadTypeVersion, autoSave, migrationHandlers);
     }
 
     @Override

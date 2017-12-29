@@ -17,7 +17,7 @@ public interface JsonService {
      *            store metadata
      * @return serialized JSON data
      */
-    String toJson(JsonStoreMetadata<?, ?> metadata);
+    String toJson(JsonStoreMetadata<?> metadata);
 
     /**
      * Converts the given JSON and updates the payload in given store metadata.
@@ -31,5 +31,5 @@ public interface JsonService {
      * @param successConsumer
      *            success callback
      */
-    void fromJson(JsonStoreMetadata<?, ?> metadata, Map<Integer, VersionMigrationHandler> migrationHandlers, String json, Consumer<Boolean> successConsumer);
+    void fromJson(JsonStoreMetadata<?> metadata, Map<Integer, VersionMigrationHandler> migrationHandlers, String json, Consumer<Boolean> successConsumer);
 }

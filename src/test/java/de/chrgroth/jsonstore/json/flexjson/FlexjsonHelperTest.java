@@ -13,8 +13,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import de.chrgroth.jsonstore.json.flexjson.FlexjsonHelper;
-import de.chrgroth.jsonstore.json.flexjson.model.DateTestEntity;
+import de.chrgroth.jsonstore.json.flexjson.model.FlexjsonTestDataParent;
 
 public class FlexjsonHelperTest {
     public static final String DATE_TIME_PATTERN = "HH:mm:ss.SSS dd.MM.yyyy";
@@ -22,18 +21,18 @@ public class FlexjsonHelperTest {
     private FlexjsonHelper flexjsonHelper;
     private Date date;
     private LocalDateTime localDateTime;
-    private DateTestEntity entity1;
-    private DateTestEntity entity2;
+    private FlexjsonTestDataParent entity1;
+    private FlexjsonTestDataParent entity2;
 
     @Before
     public void init() {
         flexjsonHelper = FlexjsonHelper.builder().dateTimePattern(DATE_TIME_PATTERN).build();
         date = new Date();
         localDateTime = LocalDateTime.now();
-        entity1 = new DateTestEntity();
+        entity1 = new FlexjsonTestDataParent();
         entity1.setDate(date);
         entity1.setDateTime(localDateTime);
-        entity2 = new DateTestEntity();
+        entity2 = new FlexjsonTestDataParent();
         entity2.setDate(date);
         entity2.setDateTime(localDateTime);
     }
@@ -43,7 +42,7 @@ public class FlexjsonHelperTest {
 
         // JSON roundtrip
         String json = flexjsonHelper.serializer(false).serialize(entity1);
-        DateTestEntity deserialized = (DateTestEntity) flexjsonHelper.deserializer().deserialize(json);
+        FlexjsonTestDataParent deserialized = (FlexjsonTestDataParent) flexjsonHelper.deserializer().deserialize(json);
 
         // assert data
         Assert.assertNotNull(deserialized);
@@ -62,7 +61,7 @@ public class FlexjsonHelperTest {
 
         // JSON roundtrip
         String json = flexjsonHelper.serializer(false).serialize(entity1);
-        DateTestEntity deserialized = (DateTestEntity) flexjsonHelper.deserializer().deserialize(json);
+        FlexjsonTestDataParent deserialized = (FlexjsonTestDataParent) flexjsonHelper.deserializer().deserialize(json);
 
         // assert data
         Assert.assertNotNull(deserialized);
@@ -175,14 +174,14 @@ public class FlexjsonHelperTest {
     public void entitySet() {
 
         // JSON roundtrip
-        Set<DateTestEntity> data = new HashSet<>();
+        Set<FlexjsonTestDataParent> data = new HashSet<>();
         data.add(entity1);
         data.add(entity2);
         String json = flexjsonHelper.serializer(false).serialize(data);
         // always deserialized as list
         @SuppressWarnings("unchecked")
-        List<DateTestEntity> deserializedRaw = (List<DateTestEntity>) flexjsonHelper.deserializer().deserialize(json);
-        Set<DateTestEntity> deserialized = new HashSet<>();
+        List<FlexjsonTestDataParent> deserializedRaw = (List<FlexjsonTestDataParent>) flexjsonHelper.deserializer().deserialize(json);
+        Set<FlexjsonTestDataParent> deserialized = new HashSet<>();
         deserialized.addAll(deserializedRaw);
 
         // assert data
@@ -242,10 +241,10 @@ public class FlexjsonHelperTest {
     public void entityList() {
 
         // JSON roundtrip
-        List<DateTestEntity> data = Arrays.asList(entity1, entity2);
+        List<FlexjsonTestDataParent> data = Arrays.asList(entity1, entity2);
         String json = flexjsonHelper.serializer(false).serialize(data);
         @SuppressWarnings("unchecked")
-        List<DateTestEntity> deserialized = (List<DateTestEntity>) flexjsonHelper.deserializer().deserialize(json);
+        List<FlexjsonTestDataParent> deserialized = (List<FlexjsonTestDataParent>) flexjsonHelper.deserializer().deserialize(json);
 
         // assert data
         Assert.assertNotNull(deserialized);
@@ -296,12 +295,12 @@ public class FlexjsonHelperTest {
     public void stringToEntityMap() {
 
         // JSON roundtrip
-        Map<String, DateTestEntity> data = new HashMap<>();
+        Map<String, FlexjsonTestDataParent> data = new HashMap<>();
         data.put("1", entity1);
         data.put("2", entity2);
         String json = flexjsonHelper.serializer(false).serialize(data);
         @SuppressWarnings("unchecked")
-        Map<String, DateTestEntity> deserialized = (Map<String, DateTestEntity>) flexjsonHelper.deserializer().deserialize(json);
+        Map<String, FlexjsonTestDataParent> deserialized = (Map<String, FlexjsonTestDataParent>) flexjsonHelper.deserializer().deserialize(json);
 
         // assert data
         Assert.assertNotNull(deserialized);
@@ -312,7 +311,7 @@ public class FlexjsonHelperTest {
     public void entityToStringMap() {
 
         // JSON roundtrip
-        Map<DateTestEntity, String> data = new HashMap<>();
+        Map<FlexjsonTestDataParent, String> data = new HashMap<>();
         data.put(entity1, "1");
         data.put(entity2, "2");
         String json = flexjsonHelper.serializer(false).serialize(data);
@@ -325,19 +324,19 @@ public class FlexjsonHelperTest {
         Assert.assertEquals(data.get(entity1), deserialized.get(entity1.toString()));
         Assert.assertEquals(data.get(entity2), deserialized.get(entity2.toString()));
         @SuppressWarnings("unused")
-        DateTestEntity key = (DateTestEntity) deserialized.entrySet().iterator().next().getKey();
+        FlexjsonTestDataParent key = (FlexjsonTestDataParent) deserialized.entrySet().iterator().next().getKey();
     }
 
     @Test
     public void entityToEntityMap() {
 
         // JSON roundtrip
-        Map<DateTestEntity, DateTestEntity> data = new HashMap<>();
+        Map<FlexjsonTestDataParent, FlexjsonTestDataParent> data = new HashMap<>();
         data.put(entity1, entity1);
         data.put(entity2, entity2);
         String json = flexjsonHelper.serializer(false).serialize(data);
         @SuppressWarnings("unchecked")
-        Map<?, DateTestEntity> deserialized = (Map<?, DateTestEntity>) flexjsonHelper.deserializer().deserialize(json);
+        Map<?, FlexjsonTestDataParent> deserialized = (Map<?, FlexjsonTestDataParent>) flexjsonHelper.deserializer().deserialize(json);
 
         // assert data
         Assert.assertNotNull(deserialized);
