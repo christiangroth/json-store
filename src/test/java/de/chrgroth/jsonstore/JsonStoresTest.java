@@ -41,28 +41,28 @@ public class JsonStoresTest {
 
     @Test
     public void storeLifecycle() {
-        assertStoreLifecycle(false);
+        assertStoreLifecycle(false, true);
     }
 
     @Test
     public void storeLifecycleSingleton() {
-        assertStoreLifecycle(true);
+        assertStoreLifecycle(true, true);
     }
 
     @Test
     public void storeLifecycleNoAutoSave() {
         stores = JsonStores.builder(jsonService, storageService).build();
-        assertStoreLifecycle(false);
+        assertStoreLifecycle(false, false);
     }
 
     @Test
     public void storeLifecycleSingletonNoAutoSave() {
         stores = JsonStores.builder(jsonService, storageService).build();
-        assertStoreLifecycle(true);
+        assertStoreLifecycle(true, false);
     }
 
     @SuppressWarnings("unchecked")
-    private void assertStoreLifecycle(boolean isSingleton) {
+    private void assertStoreLifecycle(boolean isSingleton, boolean isAutoSave) {
 
         // nothing there
         AbstractJsonStore<?, ?> store = isSingleton ? stores.resolveSingleton(UID_SINGLETON) : stores.resolve(UID);
@@ -100,7 +100,7 @@ public class JsonStoresTest {
         }
         stores.save();
         assertLoadInteractions(1);
-        assertSaveInteractions(1);
+        assertSaveInteractions(isAutoSave ? 2 : 1);
 
         // drop
         AbstractJsonStore<?, ?> droppedStore = isSingleton ? stores.dropSingleton(UID_SINGLETON) : stores.drop(UID);
@@ -109,7 +109,7 @@ public class JsonStoresTest {
         Assert.assertNull(store);
         Assert.assertEquals(0, stores.computeMetrics().getMetrics().size());
         assertLoadInteractions(1);
-        assertSaveInteractions(1);
+        assertSaveInteractions(isAutoSave ? 2 : 1);
     }
 
     private void assertLoadInteractions(int times) {

@@ -126,7 +126,7 @@ public class FlexjsonService extends AbstractJsonService {
          *            handler to be applied
          * @return builder
          */
-        public FlexjsonServiceBuilder factory(Class<?> type, AbstractFlexjsonTypeHandler handler) {
+        public FlexjsonServiceBuilder typeHandler(Class<?> type, AbstractFlexjsonTypeHandler handler) {
             flexjsonHelperBuilder.handler(type, handler);
             return this;
         }
@@ -142,7 +142,7 @@ public class FlexjsonService extends AbstractJsonService {
          *            handler to be applied
          * @return builder
          */
-        public FlexjsonServiceBuilder factory(String uid, Class<?> type, AbstractFlexjsonTypeHandler handler) {
+        public FlexjsonServiceBuilder typeHandler(String uid, Class<?> type, AbstractFlexjsonTypeHandler handler) {
             ensureFlexjsonHelperBuilderPerStore(uid).handler(type, handler);
             return this;
         }
@@ -156,7 +156,7 @@ public class FlexjsonService extends AbstractJsonService {
          *            handler to be applied
          * @return builder
          */
-        public FlexjsonServiceBuilder factory(String path, AbstractFlexjsonTypeHandler handler) {
+        public FlexjsonServiceBuilder pathHandler(String path, AbstractFlexjsonTypeHandler handler) {
             flexjsonHelperBuilder.handler(path, handler);
             return this;
         }
@@ -172,7 +172,7 @@ public class FlexjsonService extends AbstractJsonService {
          *            handler to be applied
          * @return builder
          */
-        public FlexjsonServiceBuilder factory(String uid, String path, AbstractFlexjsonTypeHandler handler) {
+        public FlexjsonServiceBuilder pathHandler(String uid, String path, AbstractFlexjsonTypeHandler handler) {
             ensureFlexjsonHelperBuilderPerStore(uid).handler(path, handler);
             return this;
         }

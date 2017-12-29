@@ -9,51 +9,101 @@ Easy and simple POJO persistence using JSON (de)serialization, filesystem storag
 
 ## Table of Contents
 - [Creating stores](#creating-stores)
+- [JSON Service](#json-service)
+- [Storage Service](#storage-service)
 - [Define payload classes](#define-payload-classes)
 - [Add and remove data](#add-and-remove-data)
 - [Query data](#query-data)
 - [Migration of existing data on class changes](#migration-of-existing-data-on-class-changes)
-- [Flexjson configuration](#flexjson-configuration)
 - [String interning](#string-interning)
 - [Requirements](#requirements)
 
 ## Creating stores
 
-JSON Store instances are created using static builder invoked via de.chrgroth.jsonstore.JsonStores. This central object is responsible for managing all your concrete store instances. You may create transient in-memory only instances or persistent instances saving contents to one file per store in given directory.
+JSON Store instances are created using static builder invoked via de.chrgroth.jsonstore.JsonStores. This central object is responsible for managing all your concrete store instances.
 	
-	// transient mode, do not provide any storage options
-	JsonStores stores = JsonStores.builder().build();
+	// create stores instance
+	JsonService jsonService = ...
+	StorageService storageService = ...
+	JsonStores stores = JsonStores.builder(jsonService, storageService).build();
 	
-	// persistent mode, provide path to directory
-	File storageDir = new File("path/to/some/directory/that/must/not/exist");
-	JsonStores stores = JsonStores.builder().storage(storageDir).build();
-
-Persistent mode may also be configured using some more details, like charset, pretty print mode, auto save mode and deep serialization mode (see Add and remove data).
-
-	// persistent mode (full control)
-	Charset charset = StandardCharsets.UTF_8;
-	boolean prettyPrint = true;
-	boolean autoSave = true;
-	boolean deepSerialization = true;
-	JsonStores stores = JsonStores.builder().storage(storageDir, charset, prettyPrint, autoSave, deepSerialization).build();
-
-A concrete JSON store instance is created for it's root type and might be a singleton store for exactly one instance only or a regular store containing multiple instances backed by a Set. Additionally you may specify the version of your data (see Migration of existing data on class changes).
+A concrete JSON store instance is created for it's root type and might be a singleton store for exactly one instance only or a regular store containing multiple instances backed by a Set. You also have to specify the version of your model (java class) to be able to migrate the data on model changes (see Migration of existing data on class changes).
 
 	try {
 	
 		// single instance store
-		JsonSingletonStore<MyEntity> singletonStore = stores.ensureSingleton(MyEntity.class, MyEntity.VERSION);	
+		String singletonUid = JsonStoreUtils.buildUid(MyEntity.class, "singleton");
+		JsonSingletonStore<MyEntity> singletonStore = stores.ensureSingleton(singletonUid, MyEntity.VERSION);	
 		singletonStore.set(new MyEntity(...));
 	
 		// multiple instances store
-		JsonStore<MyEntity> store = stores.ensure(MyEntity.class, MyEntity.VERSION);
+		String uid = JsonStoreUtils.buildUid(MyEntity.class, null);
+		JsonStore<MyEntity> store = stores.ensure(uid, MyEntity.VERSION);
 		store.add(new MyEntity(...));
 	) catch(JsonStoreException e) {
 		
 		// TODO handle error during load of existing data
 	}
 
-*Please use a payload version value >= 1 to start with. The version with value 0 is expected for old legacy stores running on json-store version prior to 0.5.0. These stores do not contain any any metadata and get converted on first load to version 0. Afterwards all migration handlers are applied, see also Migration of existing data on class changes.*
+back to [top](#table-of-contents).
+
+## JSON service
+
+*de.chrgroth.jsonstore.JsonService* interface defines an exchangeable JSON implementation. Currently only flexjson is available out of the box.
+
+### Flexjson
+
+*de.chrgroth.jsonstore.json.flexjson.FlexjsonService* provides access to flexjson library. Be sure to use the builder and configure flexjson accordingly.
+
+#### Deep serialize
+
+You may configure to use flexjsons deep serialize mode to avoid usng annotations spread out on your models.
+
+	FlexjsonService.builder().setDeepSerialize(true).build();
+
+#### Pretty print
+
+You may configure flexjsons to prett print the serialized JSON data.
+
+	FlexjsonService.builder().setPrettyPrint(true).build();
+
+#### Date/Time patterns
+
+You may configure the date/time pattern used to serialize and deserialize instances of types java.util.Date and java.time.LocalDateTime. Please refer to java.time.format.DateTimeFormatter to specify the pattern.
+
+	FlexjsonService.builder().dateTimePattern("HH:mm:ss.SSS dd.MM.yyyy").build();
+
+#### Custom handlers
+
+You may also provide custom handlers for serialization (transformer) and deserialization (object factory). The abstract ase class de.chrgroth.jsonstore.json.flexjson.custom.AbstractFlexjsonTypeHandler is used to provide both transformations with one implementation. In case the date timer pattern configured will also be passed to a predefined custom handler of this type. 
+
+You don't need to implement this classes to be able to handle your POJOs in a generic way (see Define payload classes). However if you want to customize JSON serialization and deserialization you may provide your custom handlers using the following methods.
+
+	FlexjsonService.builder().typeHandler(MyEntity.class, new MyEntityTypeHandler()).build();
+	FlexjsonService.builder().pathHandler("myEntity.someAttribute", new MyEntityPathBasedTypeHandler()).build();
+
+Please refer to [flexjson][2] documentation for more details about custom type object factories and transformers.
+
+#### String interning
+
+Depending on the data used a lot of instances of java.util.String will be created during deserialization. For better and more efficient memory usage java.util.String#intern() may be used. A custom handler de.chrgroth.jsonstore.json.flexjson.custom.StringInterningHandler is contained since version 0.7.0 and can be activated.
+
+	FlexjsonService.builder().useStringInterning().build();
+
+The effect heavily depends on the data being deserialized.
+
+#### Per store settings
+
+All settings can also be configured per store using the store uid. There are overloaded methods with store uid as first parameter.
+
+back to [top](#table-of-contents).
+
+## Storage service
+
+*de.chrgroth.jsonstore.StorageService* interface is responsible for data storage operations. Currently there are two implementations available.
+
+- *de.chrgroth.jsonstore.storage.TransientStorageService*: Does not storage at all. In memory only.
+- *de.chrgroth.jsonstore.storage.FileStorageService*: Creates on file per store. Be sure to configure base directory and optional charset using builder.
 
 back to [top](#table-of-contents).
 
@@ -179,31 +229,6 @@ During load of data JSON store will execute all registered migration handlers an
 
 	MyEntity#1 -> id="1", name="first entity", description="Some auto-generated description for first entity"
 	MyEntity#2 -> id="2", name="a second one", description="Some auto-generated description for a second one"
-
-back to [top](#table-of-contents).
-
-## Flexjson configuration
-
-FlexjsonHelper is used to configure JSON serialization and deserialization of payload in JSON stores. To influence configuration of flexjson the JsonStoresBuilder provides some configuration methods. If you want to create and maintain instances of JsonStore and JsonSingletonStore by yourself, you may use FlexjsonHelperBuilder.
-
-You may configure the date/time pattern used to serialize and deserialize instances of types java.util.Date and java.time.LocalDateTime. Please refer to java.time.format.DateTimeFormatter to specify the pattern.
-
-	JsonStores.builder().dateTimePattern("HH:mm:ss.SSS dd.MM.yyyy").build();
-
-You may also provide custom handlers for serialization (transformer) and deserialization (object factory). The abstract ase class de.chrgroth.jsonstore.json.flexjson.custom.AbstractFlexjsonTypeHandler is used to provide both transformations with one implementation. In case the date timer pattern configured will also be passed to a predefined custom handler of this type. 
-
-You don't need to implement this classes to be able to handle your POJOs in a generic way (see Define payload classes). However if you want to customize JSON serialization and deserialization you may provide your custom handlers using the following methods.
-
-	JsonStores.builder().handler(MyEntity.class, new MyEntityTypeHandler()).build();
-	JsonStores.builder().handler("myEntity.someAttribute", new MyEntityPathBasedTypeHandler()).build();
-
-Please refer to [flexjson][2] documentation for more details about custom type object factories and transformers.
-
-back to [top](#table-of-contents).
-
-## String interning
-
-Depending on the data used a lot of instances of java.util.String will be created during deserialization. For better and more efficient memory usage java.util.String#intern() may be used. A custom handler de.chrgroth.jsonstore.json.flexjson.custom.StringInterningHandler is contained since version 0.7.0 and can be activated using de.chrgroth.jsonstore.json.flexjson.FlexjsonHelper.FlexjsonHelperBuilder.useStringInterning(). The effect heavily depends on the data being deserialized.
 
 back to [top](#table-of-contents).
 

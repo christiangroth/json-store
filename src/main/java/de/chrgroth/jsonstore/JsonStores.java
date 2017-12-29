@@ -103,7 +103,7 @@ public class JsonStores {
      * successful save.
      *
      * @param uid
-     *            use {@link JsonStoreUtils#buildStoreUid(Class, String)} to generate appropriate value
+     *            use {@link JsonStoreUtils#buildUid(Class, String)} to generate appropriate value
      * @param payloadClassVersion
      *            version of payload class, next version is always supposed to be increased by one
      * @param versionMigrationHandlers
@@ -184,7 +184,7 @@ public class JsonStores {
      * on next successful save.
      *
      * @param uid
-     *            use {@link JsonStoreUtils#buildStoreUid(Class, String)} to generate appropriate value
+     *            use {@link JsonStoreUtils#buildUid(Class, String)} to generate appropriate value
      * @param payloadClassVersion
      *            version of payload class, next version is always supposed to be increased by one
      * @param versionMigrationHandlers
@@ -287,15 +287,9 @@ public class JsonStores {
     }
 
     /**
-     * If stores auto save mode is disabled, this method invokes {@link JsonStore#save()} on all existing stores.
+     * Triggers {@link JsonStore#save()} on all existing stores.
      */
     public void save() {
-
-        // abort on auto save mode
-        if (autoSave) {
-            return;
-        }
-
         stores.values().parallelStream().forEach(store -> store.save());
         singletonStores.values().parallelStream().forEach(store -> store.save());
     }

@@ -22,7 +22,7 @@ public final class JsonStoreUtils {
      *            optional qualifier in case payload class is used for multiple stores
      * @return store uid
      */
-    public static String buildStoreUid(Class<?> payloadClass, String optionalQualifier) {
+    public static String buildUid(Class<?> payloadClass, String optionalQualifier) {
 
         // null guard
         if (payloadClass == null) {

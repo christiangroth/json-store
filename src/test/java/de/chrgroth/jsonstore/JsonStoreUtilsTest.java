@@ -7,31 +7,31 @@ public class JsonStoreUtilsTest {
 
     @Test(expected = JsonStoreException.class)
     public void uidNullPayloadClass() {
-        JsonStoreUtils.buildStoreUid(null, null);
+        JsonStoreUtils.buildUid(null, null);
     }
 
     @Test
     public void uidNullQualifier() {
-        Assert.assertEquals(JsonStoreUtilsTest.class.getName(), JsonStoreUtils.buildStoreUid(JsonStoreUtilsTest.class, null));
+        Assert.assertEquals(JsonStoreUtilsTest.class.getName(), JsonStoreUtils.buildUid(JsonStoreUtilsTest.class, null));
     }
 
     @Test
     public void uidEmptyQualifier() {
-        Assert.assertEquals(JsonStoreUtilsTest.class.getName(), JsonStoreUtils.buildStoreUid(JsonStoreUtilsTest.class, ""));
+        Assert.assertEquals(JsonStoreUtilsTest.class.getName(), JsonStoreUtils.buildUid(JsonStoreUtilsTest.class, ""));
     }
 
     @Test
     public void uidWhitespaceQualifier() {
-        Assert.assertEquals(JsonStoreUtilsTest.class.getName(), JsonStoreUtils.buildStoreUid(JsonStoreUtilsTest.class, "  "));
+        Assert.assertEquals(JsonStoreUtilsTest.class.getName(), JsonStoreUtils.buildUid(JsonStoreUtilsTest.class, "  "));
     }
 
     @Test
     public void uidQualifier() {
-        Assert.assertEquals(JsonStoreUtilsTest.class.getName() + ".qualifier", JsonStoreUtils.buildStoreUid(JsonStoreUtilsTest.class, "qualifier"));
+        Assert.assertEquals(JsonStoreUtilsTest.class.getName() + ".qualifier", JsonStoreUtils.buildUid(JsonStoreUtilsTest.class, "qualifier"));
     }
 
     @Test
     public void uidQualifierContainsWhitespace() {
-        Assert.assertEquals(JsonStoreUtilsTest.class.getName() + ".qualifier", JsonStoreUtils.buildStoreUid(JsonStoreUtilsTest.class, "quali fier"));
+        Assert.assertEquals(JsonStoreUtilsTest.class.getName() + ".qualifier", JsonStoreUtils.buildUid(JsonStoreUtilsTest.class, "quali fier"));
     }
 }
