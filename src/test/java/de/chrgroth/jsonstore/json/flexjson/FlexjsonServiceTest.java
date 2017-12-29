@@ -1,6 +1,8 @@
 package de.chrgroth.jsonstore.json.flexjson;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -11,7 +13,6 @@ import de.chrgroth.jsonstore.json.flexjson.model.FlexjsonTestDataParent;
 
 // TODO type handler
 // TODO path handler
-// TODO consumer
 
 public class FlexjsonServiceTest {
 
@@ -19,6 +20,7 @@ public class FlexjsonServiceTest {
 
     private FlexjsonService flexjsonService;
 
+    private AtomicInteger consumerCalled;
     private JsonStoreMetadata<List<FlexjsonTestDataParent>> metadata;
 
     @Before
@@ -28,25 +30,47 @@ public class FlexjsonServiceTest {
         flexjsonService = FlexjsonService.builder().build();
 
         // create test metadata
+        consumerCalled = new AtomicInteger(0);
         metadata = new JsonStoreMetadata<>();
         metadata.setUid(UID);
+        metadata.setPayload(Arrays.asList(new FlexjsonTestDataParent(1, "one")));
     }
 
     @Test
     public void fromJsonNull() {
-        flexjsonService.fromJson(metadata, null, null, null);
+        metadata.setPayload(null);
+        flexjsonService.fromJson(metadata, null, null, migrated -> {
+            consumerCalled.incrementAndGet();
+        });
         Assert.assertNull(metadata.getPayload());
+        Assert.assertEquals(0, consumerCalled.intValue());
     }
 
     @Test
     public void fromJsonEmpty() {
-        flexjsonService.fromJson(metadata, null, "", null);
+        metadata.setPayload(null);
+        flexjsonService.fromJson(metadata, null, "", migrated -> {
+            consumerCalled.incrementAndGet();
+        });
         Assert.assertNull(metadata.getPayload());
+        Assert.assertEquals(0, consumerCalled.intValue());
     }
 
     @Test
     public void fromJsonWhitespace() {
-        flexjsonService.fromJson(metadata, null, "  ", null);
+        metadata.setPayload(null);
+        flexjsonService.fromJson(metadata, null, "  ", migrated -> {
+            consumerCalled.incrementAndGet();
+        });
         Assert.assertNull(metadata.getPayload());
+        Assert.assertEquals(0, consumerCalled.intValue());
+    }
+
+    @Test
+    public void successCallback() {
+        flexjsonService.fromJson(metadata, null, flexjsonService.toJson(metadata), migrated -> {
+            consumerCalled.incrementAndGet();
+        });
+        Assert.assertEquals(1, consumerCalled.intValue());
     }
 }
