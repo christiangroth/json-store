@@ -3,8 +3,12 @@ Release Notes
 
 0.9.0 (in progress)
 -------------------
+- BREAKING: removed backwards compatibility to load stores without metadata (introduced in version 0.5.0)
+- BREAKING: introduced some API changed breaking causing compile errors
 - convenience method to load all stores in case auto save mode is disabled
 - added optional payload class qualifier to be able to handle multiple stores using the same payload class
+- created interface de.chrgroth.jsonstore.JsonService regarding all JSON operations and a default implementation for currently used flexjson library
+- created interface de.chrgroth.jsonstore.StorageService regarding all storage operations and a default implementation for currently used file based storage
 - ...
 
 0.8.1

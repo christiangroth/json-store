@@ -1,264 +1,131 @@
 package de.chrgroth.jsonstore;
 
-import java.io.File;
-import java.nio.charset.StandardCharsets;
-import java.util.UUID;
-
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-
-import com.google.common.io.Files;
-
-import de.chrgroth.jsonstore.store.AbstractJsonStore;
-import de.chrgroth.jsonstore.store.JsonSingletonStore;
-import de.chrgroth.jsonstore.store.JsonStore;
-import de.chrgroth.jsonstore.store.JsonStoreMetrics;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.MockitoAnnotations;
 
 public class JsonStoresTest {
 
-    private File tempDir;
+    private static final String UID = "test-uid";
+    private static final String UID_SINGLETON = "test-uid-singleton";
 
-    private JsonStores persistentStores;
-    private JsonStores persistentStoresCopy;
-
-    private JsonStores persistentStoresNoAutoSave;
-    private JsonStores persistentStoresNoAutoSaveCopy;
-
-    private JsonStores persistentStoresIsoCharset;
-    private JsonStores persistentStoresIsoCharsetCopy;
-
-    private JsonStores transientStores;
-    private JsonStores transientStoresCopy;
+    private JsonStores stores;
 
     private String testData;
 
+    @Mock
+    private JsonService jsonService;
+
+    @Mock
+    private StorageService storageService;
+
     @Before
     public void init() {
-        tempDir = Files.createTempDir();
 
-        persistentStores = JsonStores.builder().storage(tempDir, StandardCharsets.UTF_8, true, true, false).build();
-        persistentStoresCopy = JsonStores.builder().storage(tempDir, StandardCharsets.UTF_8, false, true, false).build();
+        // configure mocks
+        MockitoAnnotations.initMocks(this);
 
-        persistentStoresNoAutoSave = JsonStores.builder().storage(tempDir, StandardCharsets.UTF_8, true, false, false).build();
-        persistentStoresNoAutoSaveCopy = JsonStores.builder().storage(tempDir, StandardCharsets.UTF_8, false, false, false).build();
-
-        persistentStoresIsoCharset = JsonStores.builder().storage(tempDir, StandardCharsets.ISO_8859_1, true, true, false).build();
-        persistentStoresIsoCharsetCopy = JsonStores.builder().storage(tempDir, StandardCharsets.ISO_8859_1, false, true, false).build();
-
-        transientStores = JsonStores.builder().build();
-        transientStoresCopy = JsonStores.builder().build();
-
+        stores = JsonStores.builder(jsonService, storageService).autoSave(true).build();
         testData = "test data";
+    }
+
+    // TODO metrics for all (mixed)
+
+    @Test
+    public void prepareCalled() {
+        Mockito.verify(storageService, Mockito.times(1)).prepare();
     }
 
     @Test
     public void storeLifecycle() {
-        assertStoreLifecycle(persistentStores, persistentStoresCopy, false, true, true);
+        assertStoreLifecycle(false, true);
     }
 
     @Test
-    public void storeNoAutoSaveLifecycle() {
-        assertStoreLifecycle(persistentStoresNoAutoSave, persistentStoresNoAutoSaveCopy, false, true, false);
+    public void storeLifecycleSingleton() {
+        assertStoreLifecycle(true, true);
     }
 
     @Test
-    public void storeIsoCharsetLifecycle() {
-        assertStoreLifecycle(persistentStoresIsoCharset, persistentStoresIsoCharsetCopy, false, true, true);
+    public void storeLifecycleNoAutoSave() {
+        stores = JsonStores.builder(jsonService, storageService).build();
+        assertStoreLifecycle(false, false);
     }
 
     @Test
-    public void transientStoreLifecycle() {
-        assertStoreLifecycle(transientStores, transientStoresCopy, false, false, false);
-    }
-
-    @Test
-    public void singletonStoreLifecycle() {
-        assertStoreLifecycle(persistentStores, persistentStoresCopy, true, true, true);
-    }
-
-    @Test
-    public void singletonStoreNoAutoSaveLifecycle() {
-        assertStoreLifecycle(persistentStoresNoAutoSave, persistentStoresNoAutoSaveCopy, true, true, false);
-    }
-
-    @Test
-    public void singletonStoreIsoCharsetLifecycle() {
-        assertStoreLifecycle(persistentStoresIsoCharset, persistentStoresIsoCharsetCopy, true, true, true);
-    }
-
-    @Test
-    public void transientSingletonStoreLifecycle() {
-        assertStoreLifecycle(transientStores, transientStoresCopy, true, false, false);
-    }
-
-    private void assertStoreLifecycle(JsonStores stores, JsonStores storesCopy, boolean isSingleton, boolean isPersistent, boolean isAutoSave) {
-
-        // nothing there
-        Class<String> dataClass = String.class;
-        AbstractJsonStore<?, ?> store = resolve(stores, isSingleton, dataClass);
-        Assert.assertNull(store);
-        Assert.assertTrue(tempDir.exists());
-        Assert.assertTrue(tempDir.isDirectory());
-        Assert.assertTrue(tempDir.canRead());
-        Assert.assertEquals(0, tempDir.listFiles().length);
-
-        // ensure
-        store = ensure(stores, isSingleton, dataClass);
-        Assert.assertNotNull(store);
-        Assert.assertEquals(0, tempDir.listFiles().length);
-        store = resolve(stores, isSingleton, dataClass);
-        Assert.assertNotNull(store);
-        JsonStoreMetrics storeMetrics = store.computeMetrics();
-        Assert.assertNotNull(storeMetrics);
-        Assert.assertEquals(dataClass.getName(), storeMetrics.getType());
-        Assert.assertEquals(0, storeMetrics.getItemCount());
-        Assert.assertEquals(null, storeMetrics.getLastModified());
-        Assert.assertEquals(0, storeMetrics.getFileSize());
-
-        // explicit save
-        stores.save();
-        if (isPersistent) {
-            Assert.assertEquals(1, tempDir.listFiles().length);
-            Assert.assertEquals(file(store, isSingleton), tempDir.listFiles()[0]);
-        } else {
-            Assert.assertEquals(0, tempDir.listFiles().length);
-        }
-        storeMetrics = store.computeMetrics();
-        Assert.assertNotNull(storeMetrics);
-        Assert.assertEquals(dataClass.getName(), storeMetrics.getType());
-        Assert.assertEquals(0, storeMetrics.getItemCount());
-        long fileSize = storeMetrics.getFileSize();
-        if (isPersistent) {
-            Assert.assertNotNull(storeMetrics.getLastModified());
-            Assert.assertTrue(fileSize > 0);
-        } else {
-            Assert.assertNull(storeMetrics.getLastModified());
-            Assert.assertEquals(0, fileSize);
-        }
-
-        // drop
-        AbstractJsonStore<?, ?> droppedStore = drop(stores, isSingleton, dataClass);
-        Assert.assertEquals(store, droppedStore);
-        Assert.assertEquals(0, tempDir.listFiles().length);
-        store = resolve(stores, isSingleton, dataClass);
-        Assert.assertNull(store);
-        storeMetrics = droppedStore.computeMetrics();
-        Assert.assertNotNull(storeMetrics);
-        Assert.assertEquals(dataClass.getName(), storeMetrics.getType());
-        Assert.assertEquals(0, storeMetrics.getItemCount());
-        if (isPersistent) {
-            Assert.assertNotNull(storeMetrics.getLastModified());
-        } else {
-            Assert.assertNull(storeMetrics.getLastModified());
-        }
-        Assert.assertEquals(0, storeMetrics.getFileSize());
-
-        // create again with data
-        store = ensure(stores, isSingleton, dataClass);
-        setOrAddData(store, isSingleton);
-        if (isPersistent) {
-            if (isAutoSave) {
-                Assert.assertEquals(1, tempDir.listFiles().length);
-            } else {
-                Assert.assertEquals(0, tempDir.listFiles().length);
-                save(store, isSingleton);
-                Assert.assertEquals(1, tempDir.listFiles().length);
-            }
-        } else {
-            Assert.assertEquals(0, tempDir.listFiles().length);
-            save(store, isSingleton);
-            Assert.assertEquals(0, tempDir.listFiles().length);
-        }
-        storeMetrics = store.computeMetrics();
-        Assert.assertNotNull(storeMetrics);
-        Assert.assertEquals(dataClass.getName(), storeMetrics.getType());
-        Assert.assertEquals(1, storeMetrics.getItemCount());
-        if (isPersistent) {
-            Assert.assertNotNull(storeMetrics.getLastModified());
-            Assert.assertTrue(fileSize < storeMetrics.getFileSize());
-        } else {
-            Assert.assertNull(storeMetrics.getLastModified());
-            Assert.assertEquals(0, storeMetrics.getFileSize());
-        }
-
-        // copy still empty
-        AbstractJsonStore<?, ?> storeCopy = resolve(storesCopy, isSingleton, dataClass);
-        Assert.assertNull(storeCopy);
-
-        // load into stores copy
-        storeCopy = ensure(storesCopy, isSingleton, dataClass);
-        if (isPersistent) {
-            Assert.assertNotNull(storeCopy);
-            Assert.assertEquals(file(storeCopy, isSingleton), tempDir.listFiles()[0]);
-            if (isAutoSave) {
-                Assert.assertEquals(testData, getData(storeCopy, isSingleton));
-            } else {
-                Assert.assertNull(getData(storeCopy, isSingleton));
-            }
-            Assert.assertEquals(1, tempDir.listFiles().length);
-        } else {
-            Assert.assertNotNull(storeCopy);
-            Assert.assertNull(getData(storeCopy, isSingleton));
-        }
-    }
-
-    private AbstractJsonStore<?, ?> resolve(JsonStores stores, boolean isSingleton, Class<String> dataClass) {
-        return isSingleton ? stores.resolveSingleton(dataClass, null) : stores.resolve(dataClass, null);
-    }
-
-    private AbstractJsonStore<?, ?> ensure(JsonStores stores, boolean isSingleton, Class<String> dataClass) {
-        return isSingleton ? stores.ensureSingleton(dataClass, null, 1) : stores.ensure(dataClass, null, 1);
-    }
-
-    private AbstractJsonStore<?, ?> drop(JsonStores stores, boolean isSingleton, Class<String> dataClass) {
-        return isSingleton ? stores.dropSingleton(dataClass, null) : stores.drop(dataClass, null);
-    }
-
-    private File file(AbstractJsonStore<?, ?> store, boolean isSingleton) {
-        return isSingleton ? ((JsonSingletonStore<?>) store).getFile() : ((JsonStore<?>) store).getFile();
+    public void storeLifecycleSingletonNoAutoSave() {
+        stores = JsonStores.builder(jsonService, storageService).build();
+        assertStoreLifecycle(true, false);
     }
 
     @SuppressWarnings("unchecked")
-    private void setOrAddData(Object store, boolean isSingleton) {
+    private void assertStoreLifecycle(boolean isSingleton, boolean isAutoSave) {
+
+        // nothing there
+        AbstractJsonStore<?, ?> store = isSingleton ? stores.resolveSingleton(UID_SINGLETON) : stores.resolve(UID);
+        Assert.assertNull(store);
+        Assert.assertEquals(0, stores.computeMetrics().getMetrics().size());
+        assertLoadInteractions(0);
+        assertSaveInteractions(0);
+
+        // ensure
+        store = isSingleton ? stores.ensureSingleton(UID_SINGLETON, 0) : stores.ensure(UID, 0);
+        Assert.assertNotNull(store);
+        Assert.assertEquals(1, stores.computeMetrics().getMetrics().size());
+        stores.load();
+        assertLoadInteractions(1);
+        assertSaveInteractions(0);
+
+        // duplicate ensure
+        store = isSingleton ? stores.ensureSingleton(UID_SINGLETON, 0) : stores.ensure(UID, 0);
+        Assert.assertNotNull(store);
+        Assert.assertEquals(1, stores.computeMetrics().getMetrics().size());
+        assertLoadInteractions(1);
+        assertSaveInteractions(0);
+
+        // resolve
+        store = isSingleton ? stores.resolveSingleton(UID_SINGLETON) : stores.resolve(UID);
+        Assert.assertNotNull(store);
+        assertLoadInteractions(1);
+        assertSaveInteractions(0);
+
+        // set data
         if (isSingleton) {
             ((JsonSingletonStore<String>) store).set(testData);
         } else {
             ((JsonStore<String>) store).add(testData);
         }
+        stores.save();
+        assertLoadInteractions(1);
+        assertSaveInteractions(isAutoSave ? 2 : 1);
+
+        // drop
+        AbstractJsonStore<?, ?> droppedStore = isSingleton ? stores.dropSingleton(UID_SINGLETON) : stores.drop(UID);
+        Assert.assertEquals(store, droppedStore);
+        store = isSingleton ? stores.resolveSingleton(UID_SINGLETON) : stores.resolve(UID);
+        Assert.assertNull(store);
+        Assert.assertEquals(0, stores.computeMetrics().getMetrics().size());
+        assertLoadInteractions(1);
+        assertSaveInteractions(isAutoSave ? 2 : 1);
     }
 
-    @SuppressWarnings("unchecked")
-    private String getData(Object store, boolean isSingleton) {
-        if (isSingleton) {
-            return ((JsonSingletonStore<String>) store).get();
-        }
-
-        return ((JsonStore<String>) store).isEmpty() ? null : ((JsonStore<String>) store).copy().iterator().next();
+    private void assertLoadInteractions(int times) {
+        Mockito.verify(jsonService, Mockito.times(times)).fromJson(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
+        Mockito.verify(storageService, Mockito.times(times)).read(Mockito.any());
     }
 
-    @SuppressWarnings("unchecked")
-    private void save(Object store, boolean isSingleton) {
-        if (isSingleton) {
-            ((JsonSingletonStore<String>) store).save();
-        } else {
-            ((JsonStore<String>) store).save();
-        }
+    private void assertSaveInteractions(int times) {
+        Mockito.verify(jsonService, Mockito.times(times)).toJson(Mockito.any());
+        Mockito.verify(storageService, Mockito.times(times)).write(Mockito.any(), Mockito.any());
     }
 
     @Test
-    public void nonExistentStorage() {
-
-        // create stores with non existent storage directory
-        String subdir = UUID.randomUUID().toString();
-        File storage = new File(tempDir, subdir);
-        Assert.assertFalse(storage.exists());
-
-        // check empty storage created on startup
-        JsonStores.builder().storage(storage).build();
-        Assert.assertTrue(storage.exists());
-        Assert.assertTrue(storage.isDirectory());
-        Assert.assertTrue(storage.canRead());
-        Assert.assertEquals(0, storage.listFiles().length);
+    public void mixedMetrics() {
+        stores.ensure(UID, 0);
+        stores.ensureSingleton(UID_SINGLETON, 0);
+        Assert.assertEquals(2, stores.computeMetrics().getMetrics().size());
     }
 }
