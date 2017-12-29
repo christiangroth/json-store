@@ -11,9 +11,6 @@ import org.junit.Test;
 import de.chrgroth.jsonstore.JsonStoreMetadata;
 import de.chrgroth.jsonstore.json.flexjson.model.FlexjsonTestDataParent;
 
-// TODO type handler
-// TODO path handler
-
 public class FlexjsonServiceTest {
 
     private static final String UID = "common";
