@@ -4,6 +4,7 @@ Release Notes
 0.9.0 (in progress)
 -------------------
 - BREAKING: removed backwards compatibility to load stores without metadata (introduced in version 0.5.0)
+- BREAKING: moved *de.chrgroth.jsonstore.store.JsonStoreMetadata* to *de.chrgroth.jsonstore.JsonStoreMetadata* class so please correct classname in existing json files manually once
 - BREAKING: introduced some API changed breaking causing compile errors
 - convenience method to load all stores in case auto save mode is disabled
 - added optional payload class qualifier to be able to handle multiple stores using the same payload class
