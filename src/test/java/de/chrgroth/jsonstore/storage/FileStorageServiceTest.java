@@ -43,7 +43,7 @@ public class FileStorageServiceTest {
 
     @Test(expected = JsonStoreException.class)
     public void buildServiceNullCharset() {
-        FileStorageService.builder().charset(null).build();
+        FileStorageService.builder().storage(baseDir).charset(null).build();
     }
 
     @Test
