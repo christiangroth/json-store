@@ -11,6 +11,7 @@ import com.google.common.collect.Sets;
 import de.chrgroth.jsonstore.JsonStoreMetadata;
 import de.chrgroth.jsonstore.json.flexjson.model.FlexjsonTestDataParent;
 
+// just testing if nothing fails at the moment cause we can't check the string pool size
 public class FlexjsonServiceStringInterningTest {
 
     private static final String COMMON_UID = "common";
